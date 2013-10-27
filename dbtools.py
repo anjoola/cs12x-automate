@@ -6,6 +6,8 @@ Contains helper methods involving the database and queries.
 
 import mysql.connector
 import sqlparse
+import prettytable
+from response import Result
 
 def source_files(files, cursor):
   """
@@ -44,6 +46,15 @@ def get_schema(cursor):
   return cursor.description
 
 
+def get_column_names(cursor):
+  """
+  Function: get_column_names
+  --------------------------
+  TODO
+  """
+  return [col[0] for col in cursor.description]
+
+
 def run_query(setup, query, cursor):
   """
   Function: run_query
@@ -54,11 +65,9 @@ def run_query(setup, query, cursor):
   query: The query to run.
   cursor: The database cursor.
 
-  returns: A tuple of the form (schema, results) where schema is the schema
-           of the results.
+  returns: A Result object containing the result, the schema of the results and
+           pretty-printed output.
   """
-  results = []
-
   # Source files to insert data needed for the query.
   source_files(setup["source"], cursor)
 
@@ -67,8 +76,17 @@ def run_query(setup, query, cursor):
   cursor.execute(query)
 
   # Get the query results and schema.
-  results = [str(row) for row in cursor]
-  schema = get_schema(cursor)
+  result = Result()
+  result.results = [row for row in cursor]
+  result.schema = get_schema(cursor)
 
+  # Pretty-print output.
+  output = prettytable.PrettyTable(get_column_names(cursor))
+  output.align = "l"
+  for row in result.results:
+    output.add_row(row)
+  result.output = output.get_string()
+
+  # Query teardown.
   cursor.execute(setup["teardown"])
-  return (schema, results)
+  return result

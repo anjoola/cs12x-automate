@@ -2,7 +2,7 @@ import argparse
 import dbtools, iotools
 from iotools import write
 import mysql.connector
-from response import Response
+from response import Response, Result
 import sys
 
 # Database to connect to for data.
@@ -63,20 +63,19 @@ def grade(filename, student):
         if needs_comments == "true":
           write(o, "**Comments**\n")
           write(o, responses[num].comments)
-        result = dbtools.run_query(test, responses[num].query, cursor)
+        actual = dbtools.run_query(test, responses[num].query, cursor)
 
         # Compare the student's code to the results.
         # TODO check sorting order, schema
         # TODO what if don't need to check order of results or columns?
-        if str(expected) != str(result):
-          write(o, "**Test**")
-          write(o, iotools.format_lines("    ", test["query"]))
+        # TODO comparing results doesn't quite work?
+        if expected.results != actual.results:
+          write(o, "**Test** (" + str(test_points) + " points)")
+          write(o, iotools.format_lines("   ", test["query"]))
           write(o, "_Expected Results_")
-          write(o, iotools.format_lines("    ", str(expected[1])))
-          #write(o, iotools.format_tuples("    ", expected[1]))
+          write(o, iotools.format_lines("   ", expected.output))
           write(o, "_Actual Results_")
-          write(o, iotools.format_lines("    ", str(result[1])))
-          #write(o, iotools.format_tuples("    ", result[1]))
+          write(o, iotools.format_lines("   ", actual.output))
 
           got_points -= test_points
 
@@ -84,12 +83,12 @@ def grade(filename, student):
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
         write(o, "**Incorrect Code**")
-        write(o, iotools.format_lines("    ", responses[num].query))
+        write(o, iotools.format_lines("   ", responses[num].query))
         write(o, "_MySQL Error:_ " + str(e))
         got_points -= test_points
 
-      except Exception:
-        pass
+      except Exception as e:
+        print "TODO" , str(e)
         # TODO handle
 
     # Add to the total point count.
