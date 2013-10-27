@@ -20,6 +20,19 @@ def format_lines(sep, lines):
     filter(None, [line.strip() for line in lines.split("\n")])) + "\n"
 
 
+def format_tuples(tuples):
+  """
+  Function: format_tuples
+  -----------------------
+  TODO
+
+  """
+  print str(tuples)
+  for tup in tuples:
+    pass
+  return ""
+
+
 def get_students(assignment):
   # TODO grade students who'ev submitted after a given time
   """

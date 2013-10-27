@@ -15,6 +15,9 @@ assignment = None
 # The specifications for the assignment.
 specs = None
 
+# The results file.
+o = None
+
 def grade(filename, student):
   """
   Function: grade
@@ -32,7 +35,7 @@ def grade(filename, student):
     responses = iotools.parse_file(f)
     f.close()
   except IOError:
-    print "TODO"
+    write(o, "File does not exist.")
   except Exception:
     print "TODO"
 
@@ -64,24 +67,37 @@ def grade(filename, student):
 
         # Compare the student's code to the results.
         # TODO check sorting order, schema
-        if str(sorted(expected)) != str(sorted(result)):
-          # TODO: print out the wrong query
+        # TODO what if don't need to check order of results or columns?
+        if str(expected) != str(result):
+          write(o, "**Test**")
+          write(o, iotools.format_lines("    ", test["query"]))
+          write(o, "_Expected Results_")
+          write(o, iotools.format_lines("    ", str(expected[1])))
+          #write(o, iotools.format_tuples("    ", expected[1]))
+          write(o, "_Actual Results_")
+          write(o, iotools.format_lines("    ", str(result[1])))
+          #write(o, iotools.format_tuples("    ", result[1]))
+
           got_points -= test_points
 
-      # If the code doesn't work, they don't get any points.
-      except Exception:
-        # TODO print out the error
-        # Print out the non-working code just in case it was a syntax error.
+      # If there was a MySQL error, print out the error that occurred and the
+      # code that caused the error.
+      except mysql.connector.errors.ProgrammingError as e:
         write(o, "**Incorrect Code**")
         write(o, iotools.format_lines("    ", responses[num].query))
+        write(o, "_MySQL Error:_ " + str(e))
         got_points -= test_points
+
+      except Exception:
+        pass
+        # TODO handle
 
     # Add to the total point count.
     got_points = (got_points if got_points > 0 else 0)
     total_points += got_points
     write(o, "> ##### Points: " + str(got_points) + " / " + str(num_points))
 
-  write(o, "\n### Total Points:" + str(total_points))
+  write(o, "\n### Total Points: " + str(total_points))
   cursor.close()
 
 
@@ -154,6 +170,7 @@ if __name__ == "__main__":
   o = open(assignment + "/_results.md", "w") # TODO append current time
   # Grade each student, and grade each file.
   for student in students:
+    write(o, "-----------------------")
     write(o, "# <" + student + ">")
     print "\n\n" + student + ":"
     for f in files:
