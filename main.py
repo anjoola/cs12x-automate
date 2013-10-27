@@ -1,51 +1,41 @@
 import argparse
-import dbtools
-import json
+import dbtools, iotools
 import mysql.connector
-import os, sys
+from response import Response
+import sys
 
 # Database to connect to for data.
 DB = mysql.connector.connect(user="angela", password="cs121",
   host="sloppy.cs.caltech.edu", database="angela_db", port="4306")
 
-class Problem:
+# The assignment to grade.
+assignment = None
+
+# The specifications for the assignment.
+specs = None
+
+def grade(filename, student):
   """
-  Problem
-  -------
-  Represents a problem on the homework, including the response and the
-  comments on the response if needed.
+  Function: grade
+  ---------------
+  Grades a student's submission for a particular file in the assignment.
+
+  specs: The specifications for the assignment.
+  filename: The name of the file to grade.
+  student: The student to grade.
   """
-  def __init__(self):
-    self.comments = ""
-    self.response = ""
-
-  def __repr__(self):
-    return self.__str__()
-
-  def __str__(self):
-    return "(" + self.comments + ", " + self.response + ")"
-
-
-def grade(specs, filename):
-  """
-  grade
-  -----
-  Grades a file according to the specs. Will search the specs may contain
-  details about multiple files, so gets the specs for the corresponding file.
-
-  specs: The specs (an object).
-  filename: The file name of the file to grade.
-  """
-  f = open(filename, "r")
+  responses = {}
   try:
-    responses = parse_file(f)
-  except Exception:
-    print "SAD"
-  finally:
+    f = open(assignment + "/" + student + "/" + filename, "r")
+    # TODO run their file through the stylechecker?
+    responses = iotools.parse_file(f)
     f.close()
+  except IOError:
+    print "TODO"
+  except Exception:
+    print "TODO"
 
-  # TODO be able to grade multiple files
-  problems = specs["queries.sql"]
+  problems = specs[filename]
   total_points = 0
   for problem in problems:
     # Problem definitions.
@@ -53,7 +43,7 @@ def grade(specs, filename):
     needs_comments = problem["comments"]
     num_points = int(problem["points"])
 
-    print "-- Problem " + problem_num + " (" + str(num_points) + " points) "
+    print "==== Problem " + problem_num + " (" + str(num_points) + " points)\n"
 
     # Run each test for the problem.
     for test in problem["tests"]:
@@ -66,8 +56,9 @@ def grade(specs, filename):
       try:
         # If there are comments to grade for this problem, print them out.
         if needs_comments == "true":
-          print responses[problem_num].comments
-        result = dbtools.run_query(test, responses[problem_num].response, cursor)
+          print "-- COMMENTS" ,
+          iotools.format_lines(responses[problem_num].comments)
+        result = dbtools.run_query(test, responses[problem_num].query, cursor)
 
         # Compare the student's code to the results.
         # TODO check sorting order, schema
@@ -79,28 +70,31 @@ def grade(specs, filename):
       except Exception:
         # TODO print out the error
         # Print out the non-working code just in case it was a syntax error.
-        print "Non-working code: \"" + responses[problem_num].response + "\""
+        print "-- INCORRECT CODE" ,
+        iotools.format_lines(responses[problem_num].query)
         num_points -= test_points
+
+      print ""
 
     # Add to the total point count.
     total_points += (num_points if num_points > 0 else 0)
 
-  print "Total points: " + str(total_points)
+  print "TOTAL POINTS: " + str(total_points)
   cursor.close()
 
 
 def parse_file(f):
   """
-  parse_file
-  ----------
-  Parses the file into a dictionary of questions and the student's responses.
+  Function: parse_file
+  --------------------
+  Parses the file into a dict of the question number and the student's response
+  to that question.
 
   f: The file object to parse.
-  returns: A dictionary containing a mapping of the question number and the
-           student's response.
+  returns: The dictionary.
   """
 
-  # Dictionary containing a mapping from the problem number to the response.
+  # Dictionary containing a mapping from the question number to the response.
   responses = {}
   # The current problem number being parsed.
   current_problem = ""
@@ -114,14 +108,15 @@ def parse_file(f):
     elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
       current_problem = line.replace("-- [Problem ", "").replace("]", "")
       current_problem = current_problem.strip()
-      # Create an empty response to with no comments or responses.
+      # This is a new problem, so create an empty response to with no comments.
       responses[current_problem] = Problem()
 
     # Lines with comments.
     elif line.startswith("--"):
-      responses[current_problem].comments += line.replace("-- ", "").replace("--", "")
+      responses[current_problem].comments += \
+        line.replace("-- ", "").replace("--", "")
 
-    # Lines with SQL queries.
+    # Continuation of a response from a previous line.
     else:
       responses[current_problem].response += line
 
@@ -131,43 +126,35 @@ def parse_file(f):
 if __name__ == "__main__":
   # Parse command-line arguments.
   parser = argparse.ArgumentParser(description="Get the arguments.")
-  parser.add_argument("--specs")
-  # The files to grade. Can be one or more files, or all files if * or nothing
-  # is specified.
+  parser.add_argument("--assignment")
   parser.add_argument("--files", nargs="+")
+  parser.add_argument("--students", nargs="+")
   args = parser.parse_args()
-  (specs, files) = (args.specs, args.files)
+  (assignment, files, students) = (args.assignment, args.files, args.students)
 
-  # If no arguments specified.
-  if specs is None:
-    print "Usage: main.py --specs <spec folder> [--files <files to check>]"
+  # If the assignment argument isn't specified, print usage statement.
+  if assignment is None:
+    print "Usage: main.py --assignment <assignment folder> ", \
+      "[--files <files to check>] [--students <students to check>]"
     sys.exit()
 
-  # Open the spec folder to find the spec file. This file is a JSON string.
-  # Convert it into a JSON object.
-  spec_file = open(specs + "/" + specs + "." + "spec", "r")
-  specs = json.loads("".join(spec_file.readlines()))
-  spec_file.close()
+  # Get the specs, files, and students.
+  specs = iotools.parse_specs(assignment)
+  # If nothing specified for the files, grade all the files.
+  if files is None or files[0] == "*":
+    files = specs["files"]
+  # If nothing specified for the students, grade all the students.
+  if students is None or students[0] == "*":
+    students = iotools.get_students(assignment)
 
   print "\n\n========================START GRADING========================\n\n"
 
-  # If * or nothing is specified for the files, grade all the files in the
-  # assignment. This is in the specs file.
-  if files is None or files[0] == "*":
-    files = specs["files"]
-    
-    # TODO go through each subdirectory and get all files
-    # TODO: deal with directories
-    # TODO only find files corresponding to this spec
-    # TODO: need to untar stuff
-    files = [f for f in os.listdir(".")] # TODO f.startswith(... etc)
+  # Grade each student, and grade each file.
+  for student in students:
+    for f in files:
+      grade(f, student)
 
-# TODO stopped here,
-# want to grade per student, then for each student, per file
-  # Grade each file.
-  for f in files:
-    grade(specs, f)
+  print "\n\n=========================END GRADING=========================\n\n"
 
   # Close connection with the database.
   DB.close()
-  print "\n\n=========================END GRADING=========================\n\n"

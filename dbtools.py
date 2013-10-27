@@ -1,17 +1,16 @@
 """
-dbtools
--------
+Module: dbtools
+---------------
 Contains helper methods involving the database and queries.
 """
 
 import mysql.connector
 import sqlparse
 
-
 def source_files(files, cursor):
   """
-  source_files
-  ------------
+  Function: source_files
+  ----------------------
   Sources files into the database. Since the "source" command is for the
   MySQL command-line interface, we have to parse the source file and run
   each command one at a time.
@@ -34,8 +33,8 @@ def source_files(files, cursor):
 
 def get_schema(cursor):
   """
-  schema
-  ------
+  Function: get_schema
+  --------------------
   Gets the schema of the result. Returns a list of tuples, where each tuple is
   of the form (column_name, type, None, None, None, None, null_ok, flags).
 
@@ -47,8 +46,8 @@ def get_schema(cursor):
 
 def run_query(setup, query, cursor):
   """
-  run_query
-  ---------
+  Function: run_query
+  -------------------
   Runs a query and does all the setup and teardown required for the query.
 
   setup: A JSON object containing the setup for the query.
