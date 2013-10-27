@@ -20,6 +20,9 @@ for assignment `cs121hw3`, the directory structure is:
             |-- queries.sql
             |-- make-auto.sql
 
+The specifications for the assignment must be in a file called `<assignment name>.spec`.
+Each student's submission should be in a separate folder of the form `<username>-<assignment name>`.
+
 Running
 -------
 
