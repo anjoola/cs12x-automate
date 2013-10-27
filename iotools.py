@@ -8,15 +8,15 @@ import json
 import os
 from response import Response
 
-def format_lines(lines):
+def format_lines(sep, lines):
   """
   Function: format_lines
   ----------------------
-  Print out lines in a nice formatted way. Gets rid of extra spacing.
+  Format lines in a nice way. Gets rid of extra spacing.
 
   lines: The lines to print and format.
   """
-  print "\n+ " + ("\n+ ").join( \
+  return "\n" + sep + " " + ("\n" + sep + " ").join( \
     filter(None, [line.strip() for line in lines.split("\n")])) + "\n"
 
 
@@ -30,8 +30,8 @@ def get_students(assignment):
   assignment: The assignment.
   returns: A list of students who've submitted for that assignment.
   """
-  return [f for f in os.walk(assignment + "/").next()[1] \
-    if f.endswith("-" + assignment)]
+  return [f.replace("-" + assignment, "") for f in \
+    os.walk(assignment + "/").next()[1] if f.endswith("-" + assignment)]
 
 
 def parse_specs(assignment):
@@ -87,3 +87,12 @@ def parse_file(f):
       responses[current_problem].query += line
 
   return responses
+
+
+def write(f, line):
+  """
+  Function: write
+  ---------------
+  TODO
+  """
+  f.write(line + "\n\n")

@@ -1,5 +1,6 @@
 import argparse
 import dbtools, iotools
+from iotools import write
 import mysql.connector
 from response import Response
 import sys
@@ -26,7 +27,7 @@ def grade(filename, student):
   """
   responses = {}
   try:
-    f = open(assignment + "/" + student + "/" + filename, "r")
+    f = open(assignment + "/" + student + "-" + assignment + "/" + filename, "r")
     # TODO run their file through the stylechecker?
     responses = iotools.parse_file(f)
     f.close()
@@ -39,11 +40,12 @@ def grade(filename, student):
   total_points = 0
   for problem in problems:
     # Problem definitions.
-    problem_num = problem["number"]
+    num = problem["number"]
     needs_comments = problem["comments"]
     num_points = int(problem["points"])
-
-    print "==== Problem " + problem_num + " (" + str(num_points) + " points)\n"
+    got_points = num_points
+    write(o, "#### Problem " + num + " (" + str(num_points) + " points)")
+    print "." ,
 
     # Run each test for the problem.
     for test in problem["tests"]:
@@ -56,30 +58,30 @@ def grade(filename, student):
       try:
         # If there are comments to grade for this problem, print them out.
         if needs_comments == "true":
-          print "-- COMMENTS" ,
-          iotools.format_lines(responses[problem_num].comments)
-        result = dbtools.run_query(test, responses[problem_num].query, cursor)
+          write(o, "**Comments**\n")
+          write(o, responses[num].comments)
+        result = dbtools.run_query(test, responses[num].query, cursor)
 
         # Compare the student's code to the results.
         # TODO check sorting order, schema
         if str(sorted(expected)) != str(sorted(result)):
           # TODO: print out the wrong query
-          num_points -= test_points
+          got_points -= test_points
 
       # If the code doesn't work, they don't get any points.
       except Exception:
         # TODO print out the error
         # Print out the non-working code just in case it was a syntax error.
-        print "-- INCORRECT CODE" ,
-        iotools.format_lines(responses[problem_num].query)
-        num_points -= test_points
-
-      print ""
+        write(o, "**Incorrect Code**")
+        write(o, iotools.format_lines("    ", responses[num].query))
+        got_points -= test_points
 
     # Add to the total point count.
-    total_points += (num_points if num_points > 0 else 0)
+    got_points = (got_points if got_points > 0 else 0)
+    total_points += got_points
+    write(o, "> ##### Points: " + str(got_points) + " / " + str(num_points))
 
-  print "TOTAL POINTS: " + str(total_points)
+  write(o, "\n### Total Points:" + str(total_points))
   cursor.close()
 
 
@@ -147,12 +149,18 @@ if __name__ == "__main__":
   if students is None or students[0] == "*":
     students = iotools.get_students(assignment)
 
-  print "\n\n========================START GRADING========================\n\n"
+  print "\n\n========================START GRADING========================" ,
 
+  o = open(assignment + "/_results.md", "w") # TODO append current time
   # Grade each student, and grade each file.
   for student in students:
+    write(o, "# <" + student + ">")
+    print "\n\n" + student + ":"
     for f in files:
+      print "- " + f + ":" ,
+      write(o, "### " + f)
       grade(f, student)
+  o.close()
 
   print "\n\n=========================END GRADING=========================\n\n"
 
