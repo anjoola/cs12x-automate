@@ -1,7 +1,8 @@
 """
 Module: iotools
 ---------------
-TODO
+Functions involving input and output into the system, as well as file-related
+functions.
 """
 
 import json
@@ -34,21 +35,6 @@ def get_students(assignment):
     os.walk(assignment + "/").next()[1] if f.endswith("-" + assignment)]
 
 
-def parse_specs(assignment):
-  """
-  Function: parse_specs
-  ---------------------
-  Parse the specs for a given assignment.
-
-  assignment: The assignment.
-  returns: A JSON object containing the specs for that assignment.
-  """
-  f = open(assignment + "/" + assignment + "." + "spec", "r")
-  specs = json.loads("".join(f.readlines()))
-  f.close()
-  return specs
-
-
 def parse_file(f):
   """
   Function: parse_file
@@ -77,10 +63,13 @@ def parse_file(f):
       # This is a new problem, so create an empty response to with no comments.
       responses[current_problem] = Response()
 
-    # Lines with comments.
+    # Lines with comments of the form "--".
     elif line.startswith("--"):
       responses[current_problem].comments += \
         line.replace("-- ", "").replace("--", "")
+
+    # Lines with comments of the form /* */.
+    # TODO
 
     # Continuation of a response from a previous line.
     else:
@@ -89,10 +78,26 @@ def parse_file(f):
   return responses
 
 
+def parse_specs(assignment):
+  """
+  Function: parse_specs
+  ---------------------
+  Parse the specs for a given assignment.
+
+  assignment: The assignment.
+  returns: A JSON object containing the specs for that assignment.
+  """
+  f = open(assignment + "/" + assignment + "." + "spec", "r")
+  specs = json.loads("".join(f.readlines()))
+  f.close()
+  return specs
+
+
 def write(f, line):
   """
   Function: write
   ---------------
-  TODO
+  Writes out a line to a provided file. Adds two newlines since this is in
+  markdown.
   """
   f.write(line + "\n\n")

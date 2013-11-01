@@ -50,7 +50,7 @@ def get_column_names(cursor):
   """
   Function: get_column_names
   --------------------------
-  TODO
+  Gets the column names of the results.
   """
   return [col[0] for col in cursor.description]
 

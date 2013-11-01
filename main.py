@@ -100,46 +100,6 @@ def grade(filename, student):
   cursor.close()
 
 
-def parse_file(f):
-  """
-  Function: parse_file
-  --------------------
-  Parses the file into a dict of the question number and the student's response
-  to that question.
-
-  f: The file object to parse.
-  returns: The dictionary.
-  """
-
-  # Dictionary containing a mapping from the question number to the response.
-  responses = {}
-  # The current problem number being parsed.
-  current_problem = ""
-
-  for line in f:
-    # If this is a blank line, just skip it.
-    if len(line.strip()) == 0:
-      continue
-
-    # Find the indicator denoting the start of an response.
-    elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
-      current_problem = line.replace("-- [Problem ", "").replace("]", "")
-      current_problem = current_problem.strip()
-      # This is a new problem, so create an empty response to with no comments.
-      responses[current_problem] = Problem()
-
-    # Lines with comments.
-    elif line.startswith("--"):
-      responses[current_problem].comments += \
-        line.replace("-- ", "").replace("--", "")
-
-    # Continuation of a response from a previous line.
-    else:
-      responses[current_problem].response += line
-
-  return responses
-
-
 if __name__ == "__main__":
   # Parse command-line arguments.
   parser = argparse.ArgumentParser(description="Get the arguments.")
