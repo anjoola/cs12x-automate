@@ -28,8 +28,11 @@ class Result:
   Represents the result of a query.
   """
   def __init__(self):
-    # The schema of the results.
+    # The schema of the result.
     self.schema = []
+
+    # The column names of the result.
+    self.col_names = []
 
     # The actual results.
     self.results = None

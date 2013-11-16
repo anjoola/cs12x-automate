@@ -81,6 +81,7 @@ def run_query(setup, query, cursor):
   result = Result()
   result.results = [row for row in cursor]
   result.schema = get_schema(cursor)
+  result.col_names = get_column_names(cursor)
 
   # Truncate the output if it is too long.
   output_results = result.results

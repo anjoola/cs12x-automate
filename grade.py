@@ -157,12 +157,26 @@ class Grade:
 
     returns: True if the test passed, False otherwise.
     """
+    # TODO
+    boolean = True
+    
+    
     expected = dbtools.run_query(test, test["query"], cursor)
     actual = dbtools.run_query(test, response.sql, cursor)
 
+    # If we don't need to check that the results are ordered, then sort the
+    # results for easier checking.
+    if "ordered" not in test or not test["ordered"]:
+      expected.results = sorted(expected.results)
+      actual.results = sorted(actual.results)
+
+    # If we don't need to check that the columns are ordered in the same way,
+    # then sort each tuple for easier checking.
+    if "column-order" not in test or not test["column-order"]:
+      expected.results = [tuple(sorted(x)) for x in expected.results]
+      actual.results = [tuple(sorted(x)) for x in actual.results]
+
     # Compare the student's code to the results.
-    # TODO
-    
     if expected.results != actual.results:
       self.write("**`TEST FAILED`** (Lost " + str(test["points"]) + " points)")
       self.write(iotools.format_lines("   ", test["query"]))
@@ -170,8 +184,37 @@ class Grade:
       self.write(iotools.format_lines("   ", expected.output))
       self.write("_Actual Results_")
       self.write(iotools.format_lines("   ", actual.output))
-      return False
-    return True
+
+      # Check to see if they forgot to ORDER BY.
+      if "ordered" in test and test["ordered"]:
+        eresults = sorted(expected.results)
+        aresults = sorted(actual.results)
+        if aresults == eresults:
+          self.write("`MISSING ORDER BY`")
+        # TODO poitns off? add points back and only take points off for order by?
+
+      # See if they chose the wrong column order.
+      if "column-order" in test and test["column-order"]:
+        eresults = [tuple(sorted(x)) for x in expected.results]
+        aresults = [tuple(sorted(x)) for x in actual.results]
+        if eresults == aresults:
+          self.write("`WRONG COLUMN ORDERING`")
+          # TODO add points back?
+
+      boolean = False
+
+    # Check to see if they named aggregates.
+    # TODO check for other things? must contain a certain word in col name?
+    if "rename" in test and test["rename"]:
+      for col in actual.col_names:
+        if col.find("(") + col.find(")") != -2:
+          self.write("`DID NOT RENAME AGGREGATES`")
+          # TODO take points off
+          boolean = False
+          break
+
+    # TODO don't return true or false, return how many points to take off
+    return boolean
 
 
   def create(self):
