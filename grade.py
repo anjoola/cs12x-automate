@@ -37,7 +37,13 @@ class Grade:
 
 
   def write(self, string):
+    """
+    Function: write
+    ---------------
+    Writes a string out to the output file.
+    """
     write(self.o, string)
+
 
   def grade(self, problem, response, cursor):
     """
@@ -62,9 +68,16 @@ class Grade:
     if "comments" in problem and problem["comments"]:
       self.write("**Comments**\n")
       self.write(response.comments)
+
+    # Print out the query results if required.
+    if "show-results" in problem and problem["show-results"]:
+      self.write("**Submitted Results**\n")
+      self.write(iotools.format_lines("   ", response.results))
+
     # Print out the student's code for this problem.
+    if "comments" in problem or "show-results" in problem:
+      self.write("**SQL**\n")
     self.write(iotools.format_lines("   ", response.sql))
-    # TODO what if student's included query results?
 
     # The number of points this student has received so far on this problem.
     got_points = num_points

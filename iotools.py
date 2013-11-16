@@ -64,6 +64,21 @@ def parse_file(f):
   curr = ""
   # True if in the middle of parsing a block comment.
   started_block_comment = False
+  # True if in the middle of parsing results.
+  started_results = False
+
+
+  def add_line(line):
+    """
+    Function: add_line
+    ------------------
+    Adds a line to the results or comments depending on where we are at parsing.
+    """
+    if started_results:
+      responses[curr].results += line
+    else:
+      responses[curr].comments += line
+
 
   for line in f:
     # If in the middle of a block comment.
@@ -75,14 +90,19 @@ def parse_file(f):
       # Strip out leading *'s if they have any.
       if line.strip().startswith("*"):
         line = (line[line.find("*") + 1:]).strip()
-      responses[curr].comments += line
+      add_line(line)
 
     # If this is a blank line, just skip it.
     elif len(line.strip()) == 0:
       continue
 
+    # Query results.
+    elif line.strip().startswith("-- [Problem " + curr + " Results]"):
+      started_results = True
+
     # Indicator denoting the start of an response.
     elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
+      started_results = False
       curr = line.replace("-- [Problem ", "").replace("]", "")
       curr = curr.strip()
       # This is a new problem, so create an empty response to with no comments.
@@ -90,7 +110,7 @@ def parse_file(f):
 
     # Lines with comments of the form "--".
     elif line.strip().startswith("--"):
-      responses[curr].comments += line.replace("-- ", "").replace("--", "")
+      add_line(line.replace("-- ", "").replace("--", ""))
 
     # Block comments of the form /* */.
     elif line.strip().startswith("/*"):
@@ -100,7 +120,7 @@ def parse_file(f):
       if line.strip().endswith("*/"):
         started_block_comment = False
         line = line.replace(" */", "").replace("*/", "")
-      responses[curr].comments += line
+      add_line(line)
 
     # Continuation of a response from a previous line.
     else:

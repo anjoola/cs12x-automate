@@ -20,6 +20,7 @@
       "number": "1b",
       "comments": true,
       "points": 4,
+      "show-results": true,
       "tests": [
         {
           "points": 4,
