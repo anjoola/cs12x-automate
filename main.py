@@ -1,10 +1,12 @@
 import argparse
+from datetime import datetime
 from grade import Grade
 import iotools
 from iotools import write
 import mysql.connector
 from response import Response, Result
 import sys
+from time import strftime
 
 # Database to connect to for data.
 DB = mysql.connector.connect(user="angela", password="cs121",
@@ -83,18 +85,22 @@ if __name__ == "__main__":
 
   print "\n\n========================START GRADING========================" ,
 
-  o = open(assignment + "/_results.md", "w") # TODO append current time
+  o = open(assignment + "/_results_" + \
+    datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
   g = Grade(specs, o)
   # Grade each student, and grade each file.
   for student in students:
-    write(o, "-----------------------")
-    write(o, "# <" + student + ">")
+    write(o, "# -------------------------------------------")
+    write(o, "# [" + student + "]")
     print "\n\n" + student + ":"
     for f in files:
+      write(o, "#### " + ("-" * 95))
       print "- " + f + ":" ,
       write(o, "### " + f)
       grade(f, student)
   o.close()
+
+  print "\n\n==== RESULTS: " + o.name
 
   print "\n\n=========================END GRADING=========================\n\n"
 

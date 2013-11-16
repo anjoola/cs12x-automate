@@ -73,7 +73,7 @@ def parse_file(f):
 
     # Continuation of a response from a previous line.
     else:
-      responses[current_problem].query += line
+      responses[current_problem].sql += line
 
   return responses
 

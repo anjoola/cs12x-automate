@@ -2,30 +2,39 @@ class Response:
   """
   Class: Response
   ---------------
-  Represents a response to a problem on the homework, including the query and
-  the comments for the query.
+  Represents a student's response to a particular homework problem.
   """
   def __init__(self):
+    # Their comments (if required).
     self.comments = ""
-    self.query = ""
+
+    # The SQL for that problem.
+    self.sql = ""
+
+    # The results of the query (if required).
+    self.results = ""
 
   def __repr__(self):
     return self.__str__()
 
   def __str__(self):
-    return "(" + self.comments + ", " + self.query + ")"
+    return "(" + self.comments + ", " + self.sql + ", " + self.results + ")"
 
 
 class Result:
   """
   Class: Result
   -------------
-  Represents the result of a query, including its schema, actual results, and
-  pretty-printout.
+  Represents the result of a query.
   """
   def __init__(self):
+    # The schema of the results.
     self.schema = []
+
+    # The actual results.
     self.results = None
+
+    # Pretty-formatted output to print.
     self.output = ""
 
   def __repr__(self):

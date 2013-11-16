@@ -54,21 +54,24 @@ class Grade:
     """
     # Problem definitions.
     num = problem["number"]
-    needs_comments = problem["comments"]
-    num_points = int(problem["points"])
+    num_points = problem["points"]
+    self.write("---")
     self.write("#### Problem " + num + " (" + str(num_points) + " points)")
 
     # Print out the comments for this problem if they are required.
-    if needs_comments == "true":
+    if "comments" in problem and problem["comments"]:
       self.write("**Comments**\n")
       self.write(response.comments)
+    # Print out the student's code for this problem.
+    self.write(iotools.format_lines("   ", response.sql))
+    # TODO what if student's included query results?
 
     # The number of points this student has received so far on this problem.
     got_points = num_points
 
     # Run each test for the problem.
     for test in problem["tests"]:
-      test_points = int(test["points"])
+      test_points = test["points"]
 
       try:
         # Figure out what kind of test it is and call the appropriate function.
@@ -78,9 +81,7 @@ class Grade:
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
-        self.write("**Incorrect Code**")
-        self.write(iotools.format_lines("   ", response.query))
-        self.write("_MySQL Error:_ " + str(e))
+        self.write("**_MySQL Error:_** " + str(e))
         got_points -= test_points
 
       except Exception as e:
@@ -89,7 +90,10 @@ class Grade:
 
     # Get the total number of points received.
     got_points = (got_points if got_points > 0 else 0)
-    self.write("> ##### Points: " + str(got_points) + " / " + str(num_points))
+    if got_points > 0:
+      self.write("> ##### Points: " + str(got_points) + " / " + str(num_points))
+    else:
+      self.write("> `Points: " + str(got_points) + " / " + str(num_points) + "`")
     return got_points
 
 
@@ -106,14 +110,14 @@ class Grade:
     returns: True if the test passed, False otherwise.
     """
     expected = dbtools.run_query(test, test["query"], cursor)
-    actual = dbtools.run_query(test, response.query, cursor)
+    actual = dbtools.run_query(test, response.sql, cursor)
 
     # Compare the student's code to the results.
     # TODO check sorting order, schema
     # TODO what if don't need to check order of results or columns?
     # TODO comparing results doesn't quite work?
     if expected.results != actual.results:
-      self.write("**Test** (" + str(test_points) + " points)")
+      self.write("**Test `FAILED`** (" + str(test["points"]) + " points)")
       self.write(iotools.format_lines("   ", test["query"]))
       self.write("_Expected Results_")
       self.write(iotools.format_lines("   ", expected.output))

@@ -69,10 +69,12 @@ def run_query(setup, query, cursor):
            pretty-printed output.
   """
   # Source files to insert data needed for the query.
-  source_files(setup["source"], cursor)
+  if "source" in setup:
+    source_files(setup["source"], cursor)
 
   # Query setup.
-  cursor.execute(setup["setup"])
+  if "setup" in setup:
+    cursor.execute(setup["setup"])
   cursor.execute(query)
 
   # Get the query results and schema.
@@ -80,13 +82,21 @@ def run_query(setup, query, cursor):
   result.results = [row for row in cursor]
   result.schema = get_schema(cursor)
 
+  # Truncate the output if it is too long.
+  output_results = result.results
+  if len(output_results) > 15:
+    output_results = result.results[0:7]
+    filler = ("   ...  ", ) * len(output_results[0])
+    output_results += [filler] + result.results[-7:]
+
   # Pretty-print output.
   output = prettytable.PrettyTable(get_column_names(cursor))
   output.align = "l"
-  for row in result.results:
+  for row in output_results:
     output.add_row(row)
   result.output = output.get_string()
 
   # Query teardown.
-  cursor.execute(setup["teardown"])
+  if "teardown" in setup:
+    cursor.execute(setup["teardown"])
   return result
