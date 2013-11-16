@@ -73,6 +73,9 @@ def parse_file(f):
     ------------------
     Adds a line to the results or comments depending on where we are at parsing.
     """
+    # If these are comments at the top of the file, ignore them.
+    if curr == "":
+      return
     if started_results:
       responses[curr].results += line
     else:

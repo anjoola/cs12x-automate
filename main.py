@@ -4,6 +4,7 @@ from grade import Grade
 import iotools
 from iotools import write
 import mysql.connector
+import os
 from response import Response, Result
 import sys
 from time import strftime
@@ -52,8 +53,8 @@ def grade(filename, student):
   except IOError:
     write(o, "File does not exist.")
 
-  except Exception as e:
-    print "TODO", e
+  #except Exception as e:
+  #  print "TODO", e
 
   write(o, "\n### Total Points: " + str(total_points))
   DB.cursor().close()
@@ -89,7 +90,9 @@ if __name__ == "__main__":
 
   print "\n\n========================START GRADING========================" ,
 
-  o = open(assignment + "/_results_" + \
+  # Make the results file.
+  os.mkdir(assignment + "/_results/", 0644)
+  o = open(assignment + "/_results/" + \
     datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
   g = Grade(specs, o)
   # Grade each student, and grade each file.
