@@ -15,7 +15,7 @@ class Grade:
   def __init__(self, specs, o):
     # The specifications for this assignment.
     self.specs = specs
-    # THe file to output to.
+    # The file to output to.
     self.o = o
 
 
@@ -64,20 +64,8 @@ class Grade:
     self.write("---")
     self.write("#### Problem " + num + " (" + str(num_points) + " points)")
 
-    # Print out the comments for this problem if they are required.
-    if "comments" in problem and problem["comments"]:
-      self.write("**Comments**\n")
-      self.write(response.comments)
-
-    # Print out the query results if required.
-    if "show-results" in problem and problem["show-results"]:
-      self.write("**Submitted Results**\n")
-      self.write(iotools.format_lines("   ", response.results))
-
-    # Print out the student's code for this problem.
-    if "comments" in problem or "show-results" in problem:
-      self.write("**SQL**\n")
-    self.write(iotools.format_lines("   ", response.sql))
+    # Print out some things before running tests.
+    self.pretest(problem, response)
 
     # The number of points this student has received so far on this problem.
     got_points = num_points
@@ -94,7 +82,7 @@ class Grade:
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
-        self.write("**_MySQL Error:_** " + str(e))
+        self.write("**`MYSQL ERROR`** " + str(e))
         got_points -= test_points
 
       except Exception as e:
@@ -110,11 +98,58 @@ class Grade:
     return got_points
 
 
+  def pretest(self, problem, response):
+    """
+    Function: pretest
+    -----------------
+    Check for certain things before running the tests and print them out.
+    This includes:
+      - Comments
+      - Attaching results of query
+      - Checking their SQL for certain keywords
+      - Printing out their actual SQL
+
+    problem: The problem specification.
+    response: The student's response.
+    """
+    # Print out the comments for this problem if they are required.
+    if "comments" in problem and problem["comments"]:
+      self.write("**Comments**\n")
+      self.write(response.comments)
+
+    # Print out the query results if required.
+    if "show-results" in problem and problem["show-results"]:
+      self.write("**Submitted Results**\n")
+      self.write(iotools.format_lines("   ", response.results))
+
+    # Print out the student's code for this problem.
+    if "comments" in problem or "show-results" in problem:
+      self.write("**SQL**\n")
+    self.write(iotools.format_lines("   ", response.sql))
+
+    # Check for keywords.
+    if "keywords" in problem:
+      missing = False
+      missing_keywords = []
+      for keyword in problem["keywords"]:
+        if keyword not in response.sql:
+          missing = True
+          missing_keywords.append(keyword)
+      if missing:
+        self.write("**`MISSING KEYWORDS`** " + ", ".join(missing_keywords))
+
+    # TODO take points off for missing keywords?
+
+
   def select(self, test, response, cursor):
     """
     Function: select
     ----------------
-    TODO
+    Runs a test SELECT statement and compares it to the student's SELECT
+    statement. Possibly checks for the following things:
+      - Order of rows
+      - Order of columns
+      - Whether or not derived relations are renamed
 
     test: The test to run.
     response: The student's response.
@@ -126,11 +161,10 @@ class Grade:
     actual = dbtools.run_query(test, response.sql, cursor)
 
     # Compare the student's code to the results.
-    # TODO check sorting order, schema
-    # TODO what if don't need to check order of results or columns?
-    # TODO comparing results doesn't quite work?
+    # TODO
+    
     if expected.results != actual.results:
-      self.write("**Test `FAILED`** (" + str(test["points"]) + " points)")
+      self.write("**`TEST FAILED`** (Lost " + str(test["points"]) + " points)")
       self.write(iotools.format_lines("   ", test["query"]))
       self.write("_Expected Results_")
       self.write(iotools.format_lines("   ", expected.output))

@@ -67,7 +67,6 @@ def parse_file(f):
   # True if in the middle of parsing results.
   started_results = False
 
-
   def add_line(line):
     """
     Function: add_line
