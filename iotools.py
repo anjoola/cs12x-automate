@@ -7,6 +7,7 @@ functions.
 
 import json
 import os
+from os.path import getmtime
 from response import Response
 
 def format_lines(sep, lines):
@@ -21,18 +22,29 @@ def format_lines(sep, lines):
     filter(None, [line.strip() for line in lines.split("\n")])) + "\n"
 
 
-def get_students(assignment):
-  # TODO grade students who'ev submitted after a given time
+def get_students(assignment, after=None):
   """
   Function: get_students
   ----------------------
   Gets all the students for a given assignment.
 
   assignment: The assignment.
+  after: The student to start grading from. Finds all students who've
+         submitted at a time after this student (includes this student).
   returns: A list of students who've submitted for that assignment.
   """
-  return [f.replace("-" + assignment, "") for f in \
-    os.walk(assignment + "/").next()[1] if f.endswith("-" + assignment)]
+  files = [f for f in os.walk(assignment + "/").next()[1] \
+    if f.endswith("-" + assignment)]
+
+  # If looking for files after a particular person.
+  if after is not None:
+    # Sort the files such that the newest are first, then take a slice of
+    # that list so only the newest files are there.
+    files = sorted(files, key=lambda f: getmtime(assignment + "/" + f), \
+      reverse=True)
+    files = files[0:files.index(after + "-" + assignment)+1]
+
+  return [f.replace("-" + assignment, "") for f in files]
 
 
 def parse_file(f):
@@ -40,40 +52,59 @@ def parse_file(f):
   Function: parse_file
   --------------------
   Parses the file into a dict of the question number and the student's response
-  to that question.
+  to that question. Parses their comments, query, and query results.
 
   f: The file object to parse.
   returns: The dict of the question number and student's response.
   """
 
-  # Dictionary containing a mapping from the question number to the response.
+  # Dictionary containing a mapping from the problem number to the response.
   responses = {}
   # The current problem number being parsed.
-  current_problem = ""
+  curr = ""
+  # True if in the middle of parsing a block comment.
+  started_block_comment = False
 
   for line in f:
+    # If in the middle of a block comment.
+    if started_block_comment:
+      # See if they are now ending the block comment.
+      if line.strip().endswith("*/"):
+        started_block_comment = False
+        line = line.replace(" */", "").replace("*/", "")
+      # Strip out leading *'s if they have any.
+      if line.strip().startswith("*"):
+        line = (line[line.find("*") + 1:]).strip()
+      responses[curr].comments += line
+
     # If this is a blank line, just skip it.
-    if len(line.strip()) == 0:
+    elif len(line.strip()) == 0:
       continue
 
-    # Find the indicator denoting the start of an response.
+    # Indicator denoting the start of an response.
     elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
-      current_problem = line.replace("-- [Problem ", "").replace("]", "")
-      current_problem = current_problem.strip()
+      curr = line.replace("-- [Problem ", "").replace("]", "")
+      curr = curr.strip()
       # This is a new problem, so create an empty response to with no comments.
-      responses[current_problem] = Response()
+      responses[curr] = Response()
 
     # Lines with comments of the form "--".
-    elif line.startswith("--"):
-      responses[current_problem].comments += \
-        line.replace("-- ", "").replace("--", "")
+    elif line.strip().startswith("--"):
+      responses[curr].comments += line.replace("-- ", "").replace("--", "")
 
-    # Lines with comments of the form /* */.
-    # TODO
+    # Block comments of the form /* */.
+    elif line.strip().startswith("/*"):
+      started_block_comment = True
+      line = line.replace("/* ", "").replace("/*", "")
+       # See if they are now ending the block comment.
+      if line.strip().endswith("*/"):
+        started_block_comment = False
+        line = line.replace(" */", "").replace("*/", "")
+      responses[curr].comments += line
 
     # Continuation of a response from a previous line.
     else:
-      responses[current_problem].sql += line
+      responses[curr].sql += line
 
   return responses
 

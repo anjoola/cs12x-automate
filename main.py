@@ -65,13 +65,17 @@ if __name__ == "__main__":
   parser.add_argument("--assignment")
   parser.add_argument("--files", nargs="+")
   parser.add_argument("--students", nargs="+")
+  parser.add_argument("--after")
   args = parser.parse_args()
-  (assignment, files, students) = (args.assignment, args.files, args.students)
+  (assignment, files, students, after) = \
+    (args.assignment, args.files, args.students, args.after)
 
   # If the assignment argument isn't specified, print usage statement.
   if assignment is None:
     print "Usage: main.py --assignment <assignment folder> ", \
-      "[--files <files to check>] [--students <students to check>]"
+      "[--files <files to check>] [--students <specific students to check>] ", \
+      "\n[--after <grade submissions that are turned in on or after this ", \
+      "student turned it in>]"
     sys.exit()
 
   # Get the specs, files, and students.
@@ -81,7 +85,7 @@ if __name__ == "__main__":
     files = specs["files"]
   # If nothing specified for the students, grade all the students.
   if students is None or students[0] == "*":
-    students = iotools.get_students(assignment)
+    students = iotools.get_students(assignment, after)
 
   print "\n\n========================START GRADING========================" ,
 
@@ -90,6 +94,7 @@ if __name__ == "__main__":
   g = Grade(specs, o)
   # Grade each student, and grade each file.
   for student in students:
+    # Output stuff to the command-line so we know the progress.
     write(o, "# -------------------------------------------")
     write(o, "# [" + student + "]")
     print "\n\n" + student + ":"
