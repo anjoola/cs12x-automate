@@ -5,11 +5,15 @@ Functions involving input and output into the system, as well as file-related
 functions.
 """
 
+from datetime import datetime
 import json
 import os
 from os.path import getmtime
-from response import Response
+from models import Response
+from time import strftime
 
+
+############### TODO remove
 def format_lines(sep, lines):
   """
   Function: format_lines
@@ -21,6 +25,15 @@ def format_lines(sep, lines):
   return "\n" + sep + " " + ("\n" + sep + " ").join( \
     filter(None, [line.strip() for line in lines.split("\n")])) + "\n"
 
+
+def format_output(output):
+  """
+  Function: format_output
+  -----------------------
+  TODO
+  """
+  pass
+################# TODO remove
 
 def get_students(assignment, after=None):
   """
@@ -45,6 +58,28 @@ def get_students(assignment, after=None):
     files = files[0:files.index(after + "-" + assignment)+1]
 
   return [f.replace("-" + assignment, "") for f in files]
+
+
+def output(json, assignment):
+  """
+  Function: output
+  ----------------
+  Outputs the graded output to a file.
+
+  json: The graded output.
+  assignment: The assignment name.
+  returns: The file where the output was written to.
+  """
+  path = assignment + "/_results/"
+  if not os.path.exists(path):
+    os.mkdir(path, 0644)
+  f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
+
+  # TODO format it nicely
+  f.write(json)
+  
+  f.close()
+  return f
 
 
 def parse_file(f):
@@ -145,7 +180,7 @@ def parse_specs(assignment):
   f.close()
   return specs
 
-
+################ TODO remove
 def write(f, line):
   """
   Function: write
@@ -154,3 +189,4 @@ def write(f, line):
   markdown.
   """
   f.write(line + "\n\n")
+############# TODO remove

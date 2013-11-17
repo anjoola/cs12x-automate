@@ -1,13 +1,12 @@
 import argparse
-from datetime import datetime
+import dbtools
 from grade import Grade
 import iotools
 from iotools import write
 import mysql.connector
 import os
-from response import Response, Result
+from models import *
 import sys
-from time import strftime
 
 # Database to connect to for data.
 DB = mysql.connector.connect(user="angela", password="cs121",
@@ -19,13 +18,13 @@ assignment = None
 # The specifications for the assignment.
 specs = None
 
-# The results file.
+# The graded output.
 o = None
 
 # Grading tool.
 g = None
 
-def grade(filename, student):
+def grade(filename, student, graded_student):
   """
   Function: grade
   ---------------
@@ -34,9 +33,15 @@ def grade(filename, student):
   specs: The specifications for the assignment.
   filename: The name of the file to grade.
   student: The student to grade.
+  graded_student: The graded output for that student.
   """
+  graded_file = {"filename": filename, "problems": [], "errors": []}
+  graded_student["files"].append(graded_file)
+  #graded_file = GradedFile(filename)
+  #graded_student.add(graded_file)
+
   responses = {}
-  total_points = 0
+  got_points = 0
   try:
     f = open(assignment + "/" + student + "-" + assignment + "/" + filename, "r")
     # TODO run their file through the stylechecker?
@@ -46,17 +51,25 @@ def grade(filename, student):
     # Grade each problem in the assignment.
     problems = specs[filename]
     for problem in problems:
-      total_points += g.grade(problem, responses[problem["number"]], DB.cursor())
+      graded_problem = {"num": problem["number"], "tests": [], "errors": []}
+      graded_file["problems"].append(graded_problem)
+      #graded_problem = GradedProblem(problem["number"])
+      #graded_file.add(graded_problem)
+      got_points += g.grade(problem, responses[problem["number"]], \
+        graded_problem, DB.cursor())
       print ".",
 
   # If the file does not exist, then they get 0 points.
   except IOError:
-    write(o, "File does not exist.")
+    graded_file["errors"].append("File does not exist.")
+    #write(o, "File does not exist.")
 
   #except Exception as e:
   #  print "TODO", e
 
-  write(o, "\n### Total Points: " + str(total_points))
+  
+  #write(o, "\n### Total Points: " + str(got_points))
+  graded_file["got_points"] = got_points
   DB.cursor().close()
 
 
@@ -90,31 +103,32 @@ if __name__ == "__main__":
 
   print "\n\n========================START GRADING========================" ,
 
-  # Make the results file.
-  path = assignment + "/_results/"
-  if not os.path.exists(path):
-    os.mkdir(path, 0644)
-  o = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
-  g = Grade(specs, o)
+  o = GradedOutput()
+  g = Grade(specs)
 
   # Source dependencies needed prior to grading.
   if "dependencies" in specs and len(specs["dependencies"]) > 0:
     dbtools.source_files(specs["dependencies"], DB.cursor())
 
-  # Grade each student, and grade each file.
+  # Grade each student, and grade each file for each student.
   for student in students:
+    graded_student = {"student": student, "files": []}
+    #graded_student = StudentGradedOutput(student)
+    o.fields["students"].append(graded_student)
     # Output stuff to the command-line so we know the progress.
-    write(o, "# -------------------------------------------")
-    write(o, "# [" + student + "]")
+    #write(o, "# -------------------------------------------") # TODO
+    #write(o, "# [" + student + "]")  # TODO
     print "\n\n" + student + ":"
     for f in files:
-      write(o, "#### " + ("-" * 95))
+      #write(o, "#### " + ("-" * 95))  # TODO
       print "- " + f + ":" ,
-      write(o, "### " + f)
-      grade(f, student)
-  o.close()
+      #write(o, "### " + f)  # TODO
+      grade(f, student, graded_student)
 
-  print "\n\n==== RESULTS: " + o.name
+  # TODO total up all of stduent's points
+  # Output the graded output.
+  f = iotools.output(o.jsonify(), assignment)
+  print "\n\n==== RESULTS: " + f.name
 
   print "\n\n=========================END GRADING=========================\n\n"
 

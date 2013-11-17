@@ -8,7 +8,7 @@ import codecs
 import mysql.connector
 import sqlparse
 import prettytable
-from response import Result
+from models import Result
 
 def source_files(files, cursor):
   """
@@ -22,6 +22,7 @@ def source_files(files, cursor):
   cursor: The database cursor.
   """
 
+  # TODO source files in a better way
   def quote(value):
     """
     Function: quote

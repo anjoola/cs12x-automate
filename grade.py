@@ -12,11 +12,9 @@ class Grade:
   of tests on that problem.
   """
 
-  def __init__(self, specs, o):
+  def __init__(self, specs):
     # The specifications for this assignment.
     self.specs = specs
-    # The file to output to.
-    self.o = o
 
 
   def get_function(self, test):
@@ -36,16 +34,16 @@ class Grade:
     # TODO
 
 
-  def write(self, string):
+  #def write(self, string):
     """
     Function: write
     ---------------
     Writes a string out to the output file.
     """
-    write(self.o, string)
+    #write(self.o, string)
 
 
-  def grade(self, problem, response, cursor):
+  def grade(self, problem, response, graded, cursor):
     """
     Function: grade
     ---------------
@@ -54,6 +52,7 @@ class Grade:
 
     problem: The problem specification.
     response: The student's response.
+    graded: The graded problem output.
     cursor: The database cursor.
 
     returns: The number of points received for this problem.
@@ -61,29 +60,33 @@ class Grade:
     # Problem definitions.
     num = problem["number"]
     num_points = problem["points"]
-    self.write("---")
-    self.write("#### Problem " + num + " (" + str(num_points) + " points)")
+    #self.write("---")
+    #self.write("#### Problem " + num + " (" + str(num_points) + " points)")
+    graded["num_points"] = num_points
 
     # Print out some things before running tests.
-    self.pretest(problem, response)
+    self.pretest(problem, response, graded)
 
     # The number of points this student has received so far on this problem.
     got_points = num_points
 
     # Run each test for the problem.
     for test in problem["tests"]:
-      test_points = test["points"]
+      points = test["points"]
+      graded_test = {"points": points, "errors": []}
+      graded["tests"].append(graded_test)
 
       try:
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
-        got_points -= (0 if f(test, response, cursor) else test_points)
+        got_points -= (0 if f(test, response, graded_test, cursor) else points)
 
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
-        self.write("**`MYSQL ERROR`** " + str(e))
-        got_points -= test_points
+        graded["errors"].append("MYSQL ERROR " + str(e))
+        #self.write("**`MYSQL ERROR`** " + str(e))
+        got_points -= points
 
       #except Exception as e:
       #  print "TODO", str(e)
@@ -91,14 +94,17 @@ class Grade:
 
     # Get the total number of points received.
     got_points = (got_points if got_points > 0 else 0)
+    graded["got_points"] = got_points
+    """
     if got_points > 0:
       self.write("> ##### Points: " + str(got_points) + " / " + str(num_points))
     else:
       self.write("> `Points: " + str(got_points) + " / " + str(num_points) + "`")
+    """
     return got_points
 
 
-  def pretest(self, problem, response):
+  def pretest(self, problem, response, graded):
     """
     Function: pretest
     -----------------
@@ -111,21 +117,27 @@ class Grade:
 
     problem: The problem specification.
     response: The student's response.
+    graded: The graded problem output.
     """
     # Print out the comments for this problem if they are required.
     if "comments" in problem and problem["comments"]:
-      self.write("**Comments**\n")
-      self.write(response.comments)
+      graded["comments"] = response.comments
+      #self.write("**Comments**\n")
+      #self.write(response.comments)
 
     # Print out the query results if required.
+    # TODO have this anyway? don't need an if condition.
+    # Then when generating the output can check if show results is true
     if "show-results" in problem and problem["show-results"]:
-      self.write("**Submitted Results**\n")
-      self.write(iotools.format_lines("   ", response.results))
+      graded["submitted-results"] = response.results
+      #self.write("**Submitted Results**\n")
+      #self.write(iotools.format_lines("   ", response.results))
 
     # Print out the student's code for this problem.
-    if "comments" in problem or "show-results" in problem:
-      self.write("**SQL**\n")
-    self.write(iotools.format_lines("   ", response.sql))
+    #if "comments" in problem or "show-results" in problem:
+    #  self.write("**SQL**\n")
+    #self.write(iotools.format_lines("   ", response.sql))
+    graded["sql"] = response.sql
 
     # Check for keywords.
     if "keywords" in problem:
@@ -136,12 +148,13 @@ class Grade:
           missing = True
           missing_keywords.append(keyword)
       if missing:
-        self.write("**`MISSING KEYWORDS`** " + ", ".join(missing_keywords))
+        graded["errors"].append("MISSING KEYWORDS " + ", ".join(missing_keywords))
+        #self.write("**`MISSING KEYWORDS`** " + ", ".join(missing_keywords))
 
     # TODO take points off for missing keywords?
 
 
-  def select(self, test, response, cursor):
+  def select(self, test, response, graded, cursor):
     """
     Function: select
     ----------------
@@ -153,6 +166,7 @@ class Grade:
 
     test: The test to run.
     response: The student's response.
+    graded: The graded test output.
     cursor: The database cursor.
 
     returns: True if the test passed, False otherwise.
@@ -178,19 +192,23 @@ class Grade:
 
     # Compare the student's code to the results.
     if expected.results != actual.results:
-      self.write("**`TEST FAILED`** (Lost " + str(test["points"]) + " points)")
-      self.write(iotools.format_lines("   ", test["query"]))
-      self.write("_Expected Results_")
-      self.write(iotools.format_lines("   ", expected.output))
-      self.write("_Actual Results_")
-      self.write(iotools.format_lines("   ", actual.output))
+      graded["success"] = False
+      #self.write("**`TEST FAILED`** (Lost " + str(test["points"]) + " points)")
+      #self.write(iotools.format_lines("   ", test["query"]))
+      graded["expected"] = expected.output
+      #self.write("_Expected Results_")
+      #self.write(iotools.format_lines("   ", expected.output))
+      graded["actual"] = actual.output
+      #self.write("_Actual Results_")
+      #self.write(iotools.format_lines("   ", actual.output))
 
       # Check to see if they forgot to ORDER BY.
       if "ordered" in test and test["ordered"]:
         eresults = sorted(expected.results)
         aresults = sorted(actual.results)
         if aresults == eresults:
-          self.write("`MISSING ORDER BY`")
+          graded["errors"].append("MISSING ORDER BY")
+          #self.write("`MISSING ORDER BY`")
         # TODO poitns off? add points back and only take points off for order by?
 
       # See if they chose the wrong column order.
@@ -198,7 +216,8 @@ class Grade:
         eresults = [tuple(sorted(x)) for x in expected.results]
         aresults = [tuple(sorted(x)) for x in actual.results]
         if eresults == aresults:
-          self.write("`WRONG COLUMN ORDERING`")
+          graded["errors"].append("WRONG COLUMN ORDERING")
+          #self.write("`WRONG COLUMN ORDERING`")
           # TODO add points back?
 
       boolean = False
@@ -208,7 +227,8 @@ class Grade:
     if "rename" in test and test["rename"]:
       for col in actual.col_names:
         if col.find("(") + col.find(")") != -2:
-          self.write("`DID NOT RENAME AGGREGATES`")
+          graded["errors"].append("DID NOT RENAME AGGREGATES")
+          #self.write("`DID NOT RENAME AGGREGATES`")
           # TODO take points off
           boolean = False
           break
