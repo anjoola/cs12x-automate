@@ -85,8 +85,8 @@ class Grade:
         self.write("**`MYSQL ERROR`** " + str(e))
         got_points -= test_points
 
-      except Exception as e:
-        print "TODO", str(e)
+      #except Exception as e:
+      #  print "TODO", str(e)
         # TODO handle
 
     # Get the total number of points received.

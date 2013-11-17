@@ -91,10 +91,16 @@ if __name__ == "__main__":
   print "\n\n========================START GRADING========================" ,
 
   # Make the results file.
-  os.mkdir(assignment + "/_results/", 0644)
-  o = open(assignment + "/_results/" + \
-    datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
+  path = assignment + "/_results/"
+  if not os.path.exists(path):
+    os.mkdir(path, 0644)
+  o = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
   g = Grade(specs, o)
+
+  # Source dependencies needed prior to grading.
+  if "dependencies" in specs and len(specs["dependencies"]) > 0:
+    dbtools.source_files(specs["dependencies"], DB.cursor())
+
   # Grade each student, and grade each file.
   for student in students:
     # Output stuff to the command-line so we know the progress.

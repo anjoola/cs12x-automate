@@ -4,6 +4,7 @@ Module: dbtools
 Contains helper methods involving the database and queries.
 """
 
+import codecs
 import mysql.connector
 import sqlparse
 import prettytable
@@ -20,17 +21,46 @@ def source_files(files, cursor):
   files: The source files to source.
   cursor: The database cursor.
   """
+
+  def quote(value):
+    """
+    Function: quote
+    ---------------
+    Puts quotes around a value to be used in an INSERT statement. If the value
+    is null, then change it to the MySQL syntax.
+    """
+    if value == "\N":
+      return "NULL"
+    else:
+      return "'" + str(value) + "'"
+
   if len(files) <= 0:
     return
 
   # Loop through each source file.
   for source in files:
-    sql = open(source).read()
-    sql_list = sqlparse.split(sql)
-    for sql in sql_list:
-      if len(sql.strip()) == 0:
-        continue
-      cursor.execute(sql)
+    # If the source is a SQL file, run it.
+    if source.find(".sql") != -1:
+      f = codecs.open(source, "r", "utf-8")
+      sql_list = sqlparse.split(f.read())
+      for sql in sql_list:
+        if len(sql.strip()) == 0:
+          continue
+        cursor.execute(sql)
+      f.close()
+
+    # If the source is a TSV file, then read each line individually and
+    # insert the values into the database.
+    else:
+      data = open(source, "r")
+      # Assume the table name is the source file name.
+      table = source[source.rfind("/") + 1:source.rfind(".")]
+      for row in data:
+        insert = "INSERT INTO " + table + " VALUES(" + \
+          ", ".join([quote(x) for x in row.strip().split("\t")]) + \
+          ");"
+        cursor.execute(insert)
+      data.close()
 
 
 def get_schema(cursor):
