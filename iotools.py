@@ -6,34 +6,12 @@ functions.
 """
 
 from datetime import datetime
+import formatter
 import json
 import os
 from os.path import getmtime
 from models import Response
 from time import strftime
-
-
-############### TODO remove
-def format_lines(sep, lines):
-  """
-  Function: format_lines
-  ----------------------
-  Format lines in a nice way. Gets rid of extra spacing.
-
-  lines: The lines to print and format.
-  """
-  return "\n" + sep + " " + ("\n" + sep + " ").join( \
-    filter(None, [line.strip() for line in lines.split("\n")])) + "\n"
-
-
-def format_output(output):
-  """
-  Function: format_output
-  -----------------------
-  TODO
-  """
-  pass
-################# TODO remove
 
 def get_students(assignment, after=None):
   """
@@ -75,9 +53,8 @@ def output(json, assignment):
     os.mkdir(path, 0644)
   f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
 
-  # TODO format it nicely
-  f.write(json)
-  
+  # Format the output nicely before writing it.
+  f.write(formatter.format(json)) # TODO let user be able to specify md or html
   f.close()
   return f
 
@@ -179,14 +156,3 @@ def parse_specs(assignment):
   specs = json.loads("".join(f.readlines()))
   f.close()
   return specs
-
-################ TODO remove
-def write(f, line):
-  """
-  Function: write
-  ---------------
-  Writes out a line to a provided file. Adds two newlines since this is in
-  markdown.
-  """
-  f.write(line + "\n\n")
-############# TODO remove

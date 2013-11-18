@@ -65,7 +65,11 @@ class GradedOutput:
       "end": "",
       "students": [...]
     }
-  
+  Each student is of the form:
+    {
+      "student": "",
+    }
+    TODO
   """
   def __init__(self):
     # Dictionary of fields.
@@ -73,9 +77,9 @@ class GradedOutput:
 
     # Set the start time for grading.
     self.fields["start"] = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-    
-    self.fields["students"] = []
 
+    # List of students graded.
+    self.fields["students"] = []
 
 
   def jsonify(self):
@@ -87,85 +91,5 @@ class GradedOutput:
     # Set the end time for grading.
     self.fields["end"] = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
-    #fields["students"] = []
-    #for student in student:
-    #  fields["students"].append(student.get_fields())
-
     return json.dumps(self.fields, indent=2)
 
-
-############### TODO REMOVE
-class GradedStudent:
-  """
-  Class: GradedStudent
-  --------------------
-  Graded output for a particular student. Contains the following fields:
-  
-  TODO
-  """
-  def __init__(self, name):
-    # Dictionary of fields.
-    self.fields = {}
-
-    # List of graded files.
-    self.files = []
-    
-  def add(self, f):
-    """
-    Function: add
-    -------------
-    TODO
-    """
-    self.files.append(f)
-    
-    
-  def get_fields(self):
-    pass
-  
-  
-    
-class GradedFile:
-  """
-  Class: GradedFile
-  -----------------
-  Graded output for a particular file. Contains the following fields:
-  
-  TODO
-    {
-      "filename": "",
-      "total_points": 0,
-      "problems": [GradedProblem]
-    }
-  """
-  def __init__(self, filename):
-    self.fields = {}
-    self.fields["filename"] = filename
-    self.fields["total_points"] = 0
-    
-    self.problems = []
-    
-    
-  def add(self, problem):
-    self.problems.append(problem)
-    
-    
-  def get_fields(self):
-    pass
-  
-  
-class GradedProblem:
-  """
-  Class: GradedProblem
-  --------------------
-  Graded output for a particular problem. Contains the following fields:
-  
-   TODO
-  """
-  def __init__(self, num):
-    # Dictionary of fields.
-    self.fields = {}
-    self.fields["num"] = num
-    
-############ TODO REMOVE 
-    
-    

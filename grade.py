@@ -1,6 +1,5 @@
 import dbtools
 import iotools
-from iotools import write
 import mysql.connector
 from response import Response
 
@@ -60,8 +59,6 @@ class Grade:
     # Problem definitions.
     num = problem["number"]
     num_points = problem["points"]
-    #self.write("---")
-    #self.write("#### Problem " + num + " (" + str(num_points) + " points)")
     graded["num_points"] = num_points
 
     # Print out some things before running tests.
@@ -73,7 +70,8 @@ class Grade:
     # Run each test for the problem.
     for test in problem["tests"]:
       points = test["points"]
-      graded_test = {"points": points, "errors": []}
+      graded_test = {"points": points, "errors": [], "query": test["query"], \
+        "success": False}
       graded["tests"].append(graded_test)
 
       try:
@@ -85,7 +83,6 @@ class Grade:
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
         graded["errors"].append("MYSQL ERROR " + str(e))
-        #self.write("**`MYSQL ERROR`** " + str(e))
         got_points -= points
 
       #except Exception as e:
@@ -95,12 +92,6 @@ class Grade:
     # Get the total number of points received.
     got_points = (got_points if got_points > 0 else 0)
     graded["got_points"] = got_points
-    """
-    if got_points > 0:
-      self.write("> ##### Points: " + str(got_points) + " / " + str(num_points))
-    else:
-      self.write("> `Points: " + str(got_points) + " / " + str(num_points) + "`")
-    """
     return got_points
 
 
@@ -122,21 +113,13 @@ class Grade:
     # Print out the comments for this problem if they are required.
     if "comments" in problem and problem["comments"]:
       graded["comments"] = response.comments
-      #self.write("**Comments**\n")
-      #self.write(response.comments)
 
     # Print out the query results if required.
     # TODO have this anyway? don't need an if condition.
     # Then when generating the output can check if show results is true
     if "show-results" in problem and problem["show-results"]:
       graded["submitted-results"] = response.results
-      #self.write("**Submitted Results**\n")
-      #self.write(iotools.format_lines("   ", response.results))
 
-    # Print out the student's code for this problem.
-    #if "comments" in problem or "show-results" in problem:
-    #  self.write("**SQL**\n")
-    #self.write(iotools.format_lines("   ", response.sql))
     graded["sql"] = response.sql
 
     # Check for keywords.
@@ -149,7 +132,6 @@ class Grade:
           missing_keywords.append(keyword)
       if missing:
         graded["errors"].append("MISSING KEYWORDS " + ", ".join(missing_keywords))
-        #self.write("**`MISSING KEYWORDS`** " + ", ".join(missing_keywords))
 
     # TODO take points off for missing keywords?
 
@@ -192,15 +174,8 @@ class Grade:
 
     # Compare the student's code to the results.
     if expected.results != actual.results:
-      graded["success"] = False
-      #self.write("**`TEST FAILED`** (Lost " + str(test["points"]) + " points)")
-      #self.write(iotools.format_lines("   ", test["query"]))
       graded["expected"] = expected.output
-      #self.write("_Expected Results_")
-      #self.write(iotools.format_lines("   ", expected.output))
       graded["actual"] = actual.output
-      #self.write("_Actual Results_")
-      #self.write(iotools.format_lines("   ", actual.output))
 
       # Check to see if they forgot to ORDER BY.
       if "ordered" in test and test["ordered"]:
@@ -208,7 +183,6 @@ class Grade:
         aresults = sorted(actual.results)
         if aresults == eresults:
           graded["errors"].append("MISSING ORDER BY")
-          #self.write("`MISSING ORDER BY`")
         # TODO poitns off? add points back and only take points off for order by?
 
       # See if they chose the wrong column order.
@@ -217,7 +191,6 @@ class Grade:
         aresults = [tuple(sorted(x)) for x in actual.results]
         if eresults == aresults:
           graded["errors"].append("WRONG COLUMN ORDERING")
-          #self.write("`WRONG COLUMN ORDERING`")
           # TODO add points back?
 
       boolean = False
@@ -228,12 +201,12 @@ class Grade:
       for col in actual.col_names:
         if col.find("(") + col.find(")") != -2:
           graded["errors"].append("DID NOT RENAME AGGREGATES")
-          #self.write("`DID NOT RENAME AGGREGATES`")
           # TODO take points off
           boolean = False
           break
 
     # TODO don't return true or false, return how many points to take off
+    graded["success"] = boolean
     return boolean
 
 
