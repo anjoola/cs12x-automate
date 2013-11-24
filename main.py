@@ -6,6 +6,8 @@ import iotools
 import mysql.connector
 import os
 from models import *
+from stylechecker import StyleError
+import stylechecker
 import sys
 
 # The database connection. Parameters are specified in the CONFIG.py file.
@@ -44,8 +46,9 @@ def grade(filename, student, graded_student):
   try:
     f = open(assignment + "/" + student + "-" + assignment + \
       "/" + filename, "r")
-    # TODO run their file through the stylechecker
-    # stylechecker.check(f, specs)
+    # Run their files through the style-checker to make sure it is valid and
+    # take points off for violations.
+    graded_student["style-deductions"] = stylechecker.check(f, specs)
     responses = iotools.parse_file(f)
     f.close()
 
@@ -57,6 +60,10 @@ def grade(filename, student, graded_student):
       got_points += g.grade(problem, responses[problem["number"]], \
         graded_problem, DB.cursor())
       print ".",
+
+  # If the file has a style error (and cannot be parsed), they get 0 points.
+  except StyleError:
+    graded_File["errors"].append("File does not follow the style guide.")
 
   # If the file does not exist, then they get 0 points.
   except IOError:
@@ -121,6 +128,8 @@ if __name__ == "__main__":
       got_points += grade(f, student, graded_student)
 
     graded_student["got_points"] = got_points
+    # Apply style deductions.
+    graded_student = stylechecker.deduct(graded_student)
 
   # Output the graded output.
   f = iotools.output(o.jsonify(), assignment)
