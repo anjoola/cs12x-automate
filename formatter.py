@@ -9,11 +9,66 @@ import json
 
 def format(output):
   """
-  Funtion: format_md
+  Function: html
+  --------------
+  Formats the JSON output into HTML.
+  """
+  output = json.loads(output)
+  o = StringIO()
+  o.write("<link rel='stylesheet' type='text/css' href='css.css'>")
+
+  # Print out the list of students to the list.
+  o.write("<div id='left'>\n<div id='students'>Students</div><br>")
+  for student in output["students"]:
+    name = student["name"]
+    o.write("<a onclick='change(\"" + name + "\")'>" + name + "</a><br>")
+  o.write("</div>")
+
+  # Graded output and actual files.
+  first_student = output["students"][0]["name"]
+  o.write("<div draggable='true' class='resizable' id='middle'>\n" + \
+    "<div class='name' id='name'>" + first_student + "</div>\n")
+  o.write("<iframe src='" + first_student + ".html' name='middle' " + \
+    "id='iframe-middle'></iframe></div>\n\n")
+
+  # Raw files.
+  o.write("<div id='right' draggable='true' class='resizable'>\n")
+  for i in range(len(output["files"])):
+    name = output["files"][i]
+    if i == 1:
+      o.write("<div class='label' id='label-active' " + \
+        "onclick='changeFile(\"" + name + "\")'>" + name + "</div>\n")
+    else:
+      o.write("<div class='label' onclick='changeFile(\"" + name + "\")'>" + \
+        name + "</div>\n")
+  o.write("<iframe src='" + output["files"][0] + "' name='right' " + \
+    "id='iframe-right'></iframe></div>")
+
+  return o.getvalue()
+
+
+def html_student(student):
+  """
+  Function: html_student
+  ----------------------
+  Outputs the graded output for a particular student. Each student's output
+  gets written to its own file.
+
+  student: The student's JSON output.
+  """
+  o = StringIO()
+  for f in student["files"]:
+    o.write("<h2>" + f["filename"] + "</h2>")
+
+  pass
+  
+
+
+def markdown(output):
+  """
+  Function: markdown
   ------------------
   Formats the JSON output into markdown.
-
-  output: The JSON string to output.
   """
   output = json.loads(output)
   o = StringIO()
@@ -49,13 +104,13 @@ def format(output):
       write("#### " + ("-" * 95))
       write("### " + f["filename"])
 
-      # Any errors with the file.
-      # Print out all errors that have occurred.
+      # Print out all errors that have occurred with the file.
       if "errors" in f and len(f["errors"]) > 0:
         write("#### File Errors")
         for error in f["errors"]:
           write("* " + error)
 
+      # Loop through all the problems.
       for problem in f["problems"]:
         write("---")
         errors = problem["errors"]
@@ -95,7 +150,6 @@ def format(output):
           write("> ##### Points: " + got_points + " / " + num_points)
         else:
           write("> `Points: " + got_points + " / " + num_points + "`")
-
 
       write("\n### Total Points: " + str(f["got_points"]))
 
