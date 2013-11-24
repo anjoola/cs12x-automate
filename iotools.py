@@ -51,10 +51,11 @@ def output(json, assignment):
   path = assignment + "/_results/"
   if not os.path.exists(path):
     os.mkdir(path, 0644)
+    # TODO .html or .md
   f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
 
   # Format the output nicely before writing it.
-  f.write(formatter.format(json)) # TODO let user be able to specify md or html
+  f.write(formatter.markdown(json)) # TODO let user be able to specify md or html
   f.close()
   return f
 
@@ -78,6 +79,8 @@ def parse_file(f):
   started_block_comment = False
   # True if in the middle of parsing results.
   started_results = False
+  # True if in the middle of parsing SQL.
+  started_sql = True
 
   def add_line(line):
     """
@@ -111,7 +114,7 @@ def parse_file(f):
       continue
 
     # Query results.
-    elif line.strip().startswith("-- [Problem " + curr + " Results]"):
+    elif line.strip().startswith("-- [Results]"):
       started_results = True
 
     # Indicator denoting the start of an response.
@@ -122,8 +125,9 @@ def parse_file(f):
       # This is a new problem, so create an empty response to with no comments.
       responses[curr] = Response()
 
-    # Lines with comments of the form "--".
-    elif line.strip().startswith("--"):
+    # Lines with comments of the form "--". Only add this to the comments if it
+    # is before the SQL starts appearing.
+    elif not started_sql and line.strip().startswith("--"):
       add_line(line.replace("-- ", "").replace("--", ""))
 
     # Block comments of the form /* */.
@@ -136,8 +140,10 @@ def parse_file(f):
         line = line.replace(" */", "").replace("*/", "")
       add_line(line)
 
-    # Continuation of a response from a previous line.
+    # Continuation of a response from a previous line, or the start of a SQL
+    # statement. This could also contain comments.
     else:
+      started_sql = True
       responses[curr].sql += line
 
   return responses

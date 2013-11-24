@@ -67,11 +67,29 @@ class GradedOutput:
     }
   Each student is of the form:
     {
-      "student": "",
+      "name": "",
+      "files": [...]
     }
-    TODO
+  Each file is of the form:
+    {
+      "filename": ""
+      "got_points": 0,
+      "errors": [""],
+      "problems": [...]
+    }
+  Each problem is of the form:
+    {
+      "num": "",
+      "num_points": 0,
+      "errors": [],
+      "submitted-results": "",
+      "got_points" 0,
+      "sql": "",
+      
+      
+    TODO should check this
   """
-  def __init__(self):
+  def __init__(self, specs):
     # Dictionary of fields.
     self.fields = {}
 
@@ -80,6 +98,9 @@ class GradedOutput:
 
     # List of students graded.
     self.fields["students"] = []
+
+    # List of files to grade.
+    self.fields["files"] = specs["files"]
 
 
   def jsonify(self):

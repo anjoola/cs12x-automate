@@ -1,4 +1,5 @@
 import argparse
+from CONFIG import *
 import dbtools
 from grade import Grade
 import iotools
@@ -7,9 +8,9 @@ import os
 from models import *
 import sys
 
-# Database to connect to for data.
-DB = mysql.connector.connect(user="angela", password="cs121",
-  host="sloppy.cs.caltech.edu", database="angela_db", port="4306")
+# The database connection. Parameters are specified in the CONFIG.py file.
+DB = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
+  database=DATABASE, port=PORT)
 
 # The assignment to grade.
 assignment = None
@@ -40,7 +41,8 @@ def grade(filename, student, graded_student):
   responses = {}
   got_points = 0
   try:
-    f = open(assignment + "/" + student + "-" + assignment + "/" + filename, "r")
+    f = open(assignment + "/" + student + "-" + assignment + \
+      "/" + filename, "r")
     # TODO run their file through the stylechecker?
     responses = iotools.parse_file(f)
     f.close()
@@ -58,8 +60,8 @@ def grade(filename, student, graded_student):
   except IOError:
     graded_file["errors"].append("File does not exist.")
 
-  #except Exception as e:
-  #  print "TODO", e
+  except Exception as e:
+    print "RUN-TIME EXCEPTION: ", e
 
   graded_file["got_points"] = got_points
   DB.cursor().close()
@@ -95,7 +97,7 @@ if __name__ == "__main__":
 
   print "\n\n========================START GRADING========================" ,
 
-  o = GradedOutput()
+  o = GradedOutput(specs)
   g = Grade(specs)
 
   # Source dependencies needed prior to grading.
