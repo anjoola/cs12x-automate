@@ -142,7 +142,7 @@ def parse_file(f):
 
     # Continuation of a response from a previous line, or the start of a SQL
     # statement. This could also contain comments.
-    else:
+    elif curr != "":
       started_sql = True
       responses[curr].sql += line
 

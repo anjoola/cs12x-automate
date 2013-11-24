@@ -70,8 +70,7 @@ class Grade:
     # Run each test for the problem.
     for test in problem["tests"]:
       points = test["points"]
-      graded_test = {"points": points, "errors": [], "query": test["query"], \
-        "success": False}
+      graded_test = {"points": points, "errors": [], "success": False}
       graded["tests"].append(graded_test)
 
       try:
@@ -156,6 +155,8 @@ class Grade:
     # TODO
     boolean = True
     
+    graded["query"] = test["query"]
+    
     
     expected = dbtools.run_query(test, test["query"], cursor)
     actual = dbtools.run_query(test, response.sql, cursor)
@@ -210,7 +211,7 @@ class Grade:
     return boolean
 
 
-  def create(self):
+  def create(self, test, response, graded, cursor):
     """
     Function: create
     ----------------
@@ -222,6 +223,8 @@ class Grade:
 
     returns: True if the test passed, False otherwise.
     """
-    pass
+    graded["success"] = True
+    # TODO create table statements are just printed.
+    return True
 
 

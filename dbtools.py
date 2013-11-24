@@ -5,12 +5,14 @@ Contains helper methods involving the database and queries.
 """
 
 import codecs
+from CONFIG import *
 import mysql.connector
 import sqlparse
+import subprocess
 import prettytable
 from models import Result
 
-def source_files(files, cursor):
+def source_files(assignment, files, cursor):
   """
   Function: source_files
   ----------------------
@@ -18,31 +20,19 @@ def source_files(files, cursor):
   MySQL command-line interface, we have to parse the source file and run
   each command one at a time.
 
+  assignment: The assignment name. Is prepended to all the files.
   files: The source files to source.
   cursor: The database cursor.
   """
 
-  # TODO source files in a better way
-  def quote(value):
-    """
-    Function: quote
-    ---------------
-    Puts quotes around a value to be used in an INSERT statement. If the value
-    is null, then change it to the MySQL syntax.
-    """
-    if value == "\N":
-      return "NULL"
-    else:
-      return "'" + str(value) + "'"
-
-  if len(files) <= 0:
+  if len(files) == 0:
     return
 
   # Loop through each source file.
   for source in files:
     # If the source is a SQL file, run it.
     if source.find(".sql") != -1:
-      f = codecs.open(source, "r", "utf-8")
+      f = codecs.open(assignment + "/" + source, "r", "utf-8")
       sql_list = sqlparse.split(f.read())
       for sql in sql_list:
         if len(sql.strip()) == 0:
@@ -50,18 +40,25 @@ def source_files(files, cursor):
         cursor.execute(sql)
       f.close()
 
-    # If the source is a TSV file, then read each line individually and
-    # insert the values into the database.
-    else:
-      data = open(source, "r")
-      # Assume the table name is the source file name.
-      table = source[source.rfind("/") + 1:source.rfind(".")]
-      for row in data:
-        insert = "INSERT INTO " + table + " VALUES(" + \
-          ", ".join([quote(x) for x in row.strip().split("\t")]) + \
-          ");"
-        cursor.execute(insert)
-      data.close()
+
+def import_files(assignment, files):
+  """
+  Function: import_files
+  ----------------------
+  Imports raw data files into the database. This uses the "mysqlimport"
+  command on the terminal. We will have to invoke the command via python.
+
+  assignment: The assignment name. Is prepended to all the files.
+  files: The files to import.
+  """
+  if len(files) == 0:
+    return
+
+  print "\nImporting files..."
+  # Import all the data files.
+  files = " ".join([assignment + "/" + f for f in files])
+  subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
+    " -p" + PASS + " --delete --local " + DATABASE + " " + files)
 
 
 def get_schema(cursor):
@@ -105,7 +102,7 @@ def run_query(setup, query, cursor):
 
   # Query setup.
   if "setup" in setup:
-    cursor.execute(setup["setup"])
+    cursor.execute(setup["setup"], multi=True)
   cursor.execute(query)
 
   # Get the query results and schema.
@@ -130,5 +127,5 @@ def run_query(setup, query, cursor):
 
   # Query teardown.
   if "teardown" in setup:
-    cursor.execute(setup["teardown"])
+    cursor.execute(setup["teardown"], multi=True)
   return result

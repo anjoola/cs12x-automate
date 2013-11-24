@@ -34,16 +34,18 @@ def grade(filename, student, graded_student):
   filename: The name of the file to grade.
   student: The student to grade.
   graded_student: The graded output for that student.
+
+  returns: The total points the student got for this file.
   """
   graded_file = {"filename": filename, "problems": [], "errors": []}
   graded_student["files"].append(graded_file)
-
-  responses = {}
   got_points = 0
+
   try:
     f = open(assignment + "/" + student + "-" + assignment + \
       "/" + filename, "r")
-    # TODO run their file through the stylechecker?
+    # TODO run their file through the stylechecker
+    # stylechecker.check(f, specs)
     responses = iotools.parse_file(f)
     f.close()
 
@@ -60,11 +62,11 @@ def grade(filename, student, graded_student):
   except IOError:
     graded_file["errors"].append("File does not exist.")
 
-  except Exception as e:
-    print "RUN-TIME EXCEPTION: ", e
+  #except Exception as e:
+  #  print "RUN-TIME EXCEPTION: ", e
 
   graded_file["got_points"] = got_points
-  DB.cursor().close()
+  return got_points
 
 
 if __name__ == "__main__":
@@ -100,21 +102,26 @@ if __name__ == "__main__":
   o = GradedOutput(specs)
   g = Grade(specs)
 
-  # Source dependencies needed prior to grading.
+  # Source files needed prior to grading.
   if "dependencies" in specs and len(specs["dependencies"]) > 0:
-    dbtools.source_files(specs["dependencies"], DB.cursor())
+    dbtools.source_files(assignment, specs["dependencies"], DB.cursor())
+  if "import" in specs and len(specs["import"]) > 0:
+    dbtools.import_files(assignment, specs["import"])
 
   # Grade each student, and grade each file for each student.
   for student in students:
-    graded_student = {"name": student, "files": []}
+    got_points = 0
+    graded_student = {"name": student, "files": [], "got_points": 0}
     o.fields["students"].append(graded_student)
+
     # Output stuff to the command-line so we know the progress.
     print "\n\n" + student + ":"
     for f in files:
       print "- " + f + ":" ,
-      grade(f, student, graded_student)
+      got_points += grade(f, student, graded_student)
 
-  # TODO total up all of stduent's points
+    graded_student["got_points"] = got_points
+
   # Output the graded output.
   f = iotools.output(o.jsonify(), assignment)
   print "\n\n==== RESULTS: " + f.name
@@ -122,4 +129,5 @@ if __name__ == "__main__":
   print "\n\n=========================END GRADING=========================\n\n"
 
   # Close connection with the database.
+  DB.cursor().close()
   DB.close()

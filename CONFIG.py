@@ -1,4 +1,8 @@
-import mysql.connector
+"""
+File: CONFIG.py
+---------------
+Contains configuration parameters for the grading tool.
+"""
 
 # Database username.
 USER = "angela"
