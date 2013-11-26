@@ -16,8 +16,8 @@ def html(output, specs):
   """
   output = json.loads(output)
   o = StringIO()
-  o.write("<link rel='stylesheet' type='text/css' href='css.css'>")
-  o.write("<script type='text/javascript' src='javascript.js'></script>")
+  o.write("<link rel='stylesheet' type='text/css' href='css.css'>\n")
+  o.write("<script type='text/javascript' src='javascript.js'></script>\n")
   o.write("<input type='hidden' id='assignment' value='" + \
     specs["assignment"] + "'>")
 
@@ -86,6 +86,7 @@ def html_student(student, specs):
   for f in student["files"]:
     o = StringIO()
     o.write("<link rel='stylesheet' type='text/css' href='css.css'>\n")
+    o.write("<script type='text/javascript' src='javascript.js'></script>\n")
     o.write("<html class='student-page'>")
     # Print out all errors that have occurred with the file.
     if f.get("errors"):
@@ -96,10 +97,11 @@ def html_student(student, specs):
 
     # Loop through all the problems.
     for problem in f["problems"]: # TODO get num_points from specs
-      o.write("<h3><b>Problem " + problem["num"] + "</b> (" + \
-        str(problem["got_points"]) + "/" + str(problem["num_points"]) + \
-        " Points)</h3>")
+      o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " + \
+        problem["num"] + " (" + str(problem["got_points"]) + "/" + \
+        str(problem["num_points"]) + " Points)</h3></a>\n")
 
+      o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
       # Print out comments and submitted results. TODO get from specs
       if problem.get("comments"):
         o.write("<b>Comments</b>")
@@ -122,15 +124,13 @@ def html_student(student, specs):
           " Points)</div><br>\n")
           
           
-          
-          
-          
-          
         o.write("</li>\n")
       o.write("</ul>")
+      
+      o.write("</div>")
 
     # TODO don't make it out of 100 yet get the number of points for this file
-    o.write("<h3>Total: " + str(f["got_points"]) + " / 100 Points</h3>")
+    o.write("<h2>Total: " + str(f["got_points"]) + " / 100 Points</h2>")
     o.write("<br><br></html>")
 
     filename = student["name"] + "-" + f["filename"] + ".html"

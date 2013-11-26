@@ -52,7 +52,8 @@ def output(json, specs):
   if not os.path.exists(path):
     os.mkdir(path, 0644)
     # TODO .html or .md
-  f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".html", "w")
+  f = open(path + "index.html", "w")
+  #f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".html", "w")
 
   # Format the output nicely before writing it.
   f.write(formatter.html(json, specs)) # TODO let user be able to specify md or html
