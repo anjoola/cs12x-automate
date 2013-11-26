@@ -7,47 +7,72 @@ Formats the output.
 from cStringIO import StringIO
 import json
 
-def format(output):
+def html(output, specs):
   """
   Function: html
   --------------
   Formats the JSON output into HTML.
+  TODO
   """
   output = json.loads(output)
   o = StringIO()
   o.write("<link rel='stylesheet' type='text/css' href='css.css'>")
+  o.write("<script type='text/javascript' src='javascript.js'></script>")
+  o.write("<input type='hidden' id='assignment' value='" + \
+    specs["assignment"] + "'>")
 
   # Print out the list of students to the list.
   o.write("<div id='left'>\n<div id='students'>Students</div><br>")
   for student in output["students"]:
     name = student["name"]
-    o.write("<a onclick='change(\"" + name + "\")'>" + name + "</a><br>")
+    o.write("<a onclick='changeStudent(\"" + name + "\")'>" + name + "</a><br>")
+
+    # Actually write out those student's files. TODO html needs to be able
+    # to get this itself.
+    html_student(student, specs)
   o.write("</div>")
 
   # Graded output and actual files.
+  # TODO the files to output should only be files that exist for a student..
   first_student = output["students"][0]["name"]
+  first_file = output["files"][0]
   o.write("<div draggable='true' class='resizable' id='middle'>\n" + \
-    "<div class='name' id='name'>" + first_student + "</div>\n")
-  o.write("<iframe src='" + first_student + ".html' name='middle' " + \
-    "id='iframe-middle'></iframe></div>\n\n")
+    "<div class='title' id='name'>" + first_student + "</div>\n")
+
+  # Graded files.
+  o.write("<div class='links'>\n")
+  for i in range(len(output["files"])):
+    name = output["files"][i]
+    if i == 0:
+      o.write("<div class='label-active label' ")
+    else:
+      o.write("<div class='label' ")
+    o.write("onclick='changeGradedFile(this, \"" + name + "\")'>" + name + \
+      "</div>\n")
+  o.write("</div>\n<iframe src='" + first_student + "-" + first_file + \
+    ".html' name='middle' id='iframe-middle'></iframe></div>\n\n")
 
   # Raw files.
   o.write("<div id='right' draggable='true' class='resizable'>\n")
+  o.write("<div class='title'>Raw Files</div>\n")
+  o.write("<div class='links'>\n")
   for i in range(len(output["files"])):
     name = output["files"][i]
-    if i == 1:
-      o.write("<div class='label' id='label-active' " + \
-        "onclick='changeFile(\"" + name + "\")'>" + name + "</div>\n")
+    if i == 0:
+      o.write("<div class='label-active label' ")
     else:
-      o.write("<div class='label' onclick='changeFile(\"" + name + "\")'>" + \
-        name + "</div>\n")
-  o.write("<iframe src='" + output["files"][0] + "' name='right' " + \
+      o.write("<div class='label' ")
+    o.write("onclick='changeRawFile(this, \"" + name + "\")'>" + name + \
+      "</div>\n")
+  # Get the first file for the first student.
+  f = "../" + first_student + "-" + specs["assignment"] + "/" + first_file
+  o.write("</div>\n<iframe src='" + f + "' name='right' " + \
     "id='iframe-right'></iframe></div>")
 
   return o.getvalue()
 
 
-def html_student(student):
+def html_student(student, specs):
   """
   Function: html_student
   ----------------------
@@ -55,20 +80,73 @@ def html_student(student):
   gets written to its own file.
 
   student: The student's JSON output.
+  TODO
   """
-  o = StringIO()
+  # Create output per student, per file. Files are named student-file.html.
   for f in student["files"]:
-    o.write("<h2>" + f["filename"] + "</h2>")
+    o = StringIO()
+    o.write("<link rel='stylesheet' type='text/css' href='css.css'>\n")
+    o.write("<html class='student-page'>")
+    # Print out all errors that have occurred with the file.
+    if f.get("errors"):
+      o.write("<h2>File Errors</h2><ul>")
+      for error in f["errors"]:
+        o.write("<li>" + error + "</li>")
+      o.write("</ul>")
 
-  pass
-  
+    # Loop through all the problems.
+    for problem in f["problems"]: # TODO get num_points from specs
+      o.write("<h3><b>Problem " + problem["num"] + "</b> (" + \
+        str(problem["got_points"]) + "/" + str(problem["num_points"]) + \
+        " Points)</h3>")
+
+      # Print out comments and submitted results. TODO get from specs
+      if problem.get("comments"):
+        o.write("<b>Comments</b>")
+        o.write("<pre>" + problem["comments"] + "</pre>")
+      if problem.get("submitted-results"):
+        o.write("<b>Submitted Results</b>")
+        o.write("<pre>" + problem["submitted-results"] + "</pre>")
+      o.write("<b>SQL</b>")
+      o.write("<pre>" + problem["sql"] + "</pre>")
+
+      # Go through the tests and print out the results.
+      o.write("<b>Tests</b>\n<ul>\n")
+      for test in problem["tests"]:
+        if test["success"]:
+          o.write("<li><div class='passed'>PASSED")
+        else:
+          o.write("<li><div class='failed'>FAILED")
+        # TODO use specs
+        o.write(" (" + str(test["got_points"]) + "/" + str(test["points"]) + \
+          " Points)</div><br>\n")
+          
+          
+          
+          
+          
+          
+        o.write("</li>\n")
+      o.write("</ul>")
+
+    # TODO don't make it out of 100 yet get the number of points for this file
+    o.write("<h3>Total: " + str(f["got_points"]) + " / 100 Points</h3>")
+    o.write("<br><br></html>")
+
+    filename = student["name"] + "-" + f["filename"] + ".html"
+    output = open(specs["assignment"] + "/_results/" + filename, "w")
+    output.write(o.getvalue())
+    output.close()
 
 
-def markdown(output):
+def markdown(output, specs):
   """
   Function: markdown
   ------------------
   Formats the JSON output into markdown.
+
+  output: The graded JSON output.
+  specs: The specs for the assignment.
   """
   output = json.loads(output)
   o = StringIO()
@@ -105,7 +183,7 @@ def markdown(output):
       write("### " + f["filename"])
 
       # Print out all errors that have occurred with the file.
-      if "errors" in f and len(f["errors"]) > 0:
+      if f.get("errors"):
         write("#### File Errors")
         for error in f["errors"]:
           write("* " + error)
@@ -114,15 +192,15 @@ def markdown(output):
       for problem in f["problems"]:
         write("---")
         errors = problem["errors"]
-        num_points = str(problem["num_points"])
+        num_points = str(problem["num_points"]) # TODO this should be taken from specs
         write("#### Problem " + problem["num"] + " (" + num_points + " points)")
 
         # TODO always show these? only show if requested?
-        if "comments" in problem and len(problem["comments"]) > 0:
+        # get the if statement from specs, not from graded output
+        if problem.get("comments"):
           write("**Comments**\n")
           write(problem["comments"])
-        if "submitted-results" in problem and \
-          len(problem["submitted-results"]) > 0:
+        if problem.get("submitted-results"):
           write("**Submitted Results**\n")
           write(format_lines("   ", problem["submitted-results"]))
         write("**SQL**")

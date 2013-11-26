@@ -1,3 +1,4 @@
+from CONFIG import SQL_DEDUCTIONS
 import dbtools
 import iotools
 import mysql.connector
@@ -30,18 +31,23 @@ class Grade:
       return self.select
     elif test_type == "create":
       return self.create
+    elif test_type == "stored-procedure":
+      return self.sp
     # TODO
 
 
-  #def write(self, string):
+  def deduct(points, error):
     """
-    Function: write
-    ---------------
-    Writes a string out to the output file.
+    Function: deduct
+    ----------------
+    Deduct from points depending on the error.
+
+    points: The points to deduct from.
+    error: The error.
+    returns: The new amount to deduct.
     """
-    #write(self.o, string)
-
-
+    
+    
   def grade(self, problem, response, graded, cursor):
     """
     Function: grade
@@ -59,7 +65,7 @@ class Grade:
     # Problem definitions.
     num = problem["number"]
     num_points = problem["points"]
-    graded["num_points"] = num_points
+    graded["num_points"] = num_points # TODO remove this
 
     # Print out some things before running tests.
     self.pretest(problem, response, graded)
@@ -70,13 +76,25 @@ class Grade:
     # Run each test for the problem.
     for test in problem["tests"]:
       points = test["points"]
-      graded_test = {"points": points, "errors": [], "success": False}
+      lost_points = 0
+      graded_test = {"points": points, "errors": [], "deductions": [], \
+        "success": False}
+      # TODO don't want to store point value of question.
       graded["tests"].append(graded_test)
 
       try:
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
-        got_points -= (0 if f(test, response, graded_test, cursor) else points)
+        got_points -= f(test, response, graded_test, cursor)
+
+        # Apply any other deductions.
+        if graded_test.get("deductions"):
+          for deduction in graded_test["deductions"]:
+            (lost, desc) = SQL_DEDUCTIONS[deduction]
+            graded["errors"].append(desc)
+            lost_points += lost
+          lost_points = (lost_points if lost_point > 0 else 0)
+        got_points -= lost_points
 
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
@@ -84,6 +102,7 @@ class Grade:
         graded["errors"].append("MYSQL ERROR " + str(e))
         got_points -= points
 
+      graded_test["got_points"] = points - lost_points
       #except Exception as e:
       #  print "TODO", str(e)
         # TODO handle
@@ -110,19 +129,20 @@ class Grade:
     graded: The graded problem output.
     """
     # Print out the comments for this problem if they are required.
-    if "comments" in problem and problem["comments"]:
+    # TODO maybe should always include it and when outputting check for this
+    if problem.get("comments"):
       graded["comments"] = response.comments
 
     # Print out the query results if required.
     # TODO have this anyway? don't need an if condition.
     # Then when generating the output can check if show results is true
-    if "show-results" in problem and problem["show-results"]:
+    if problem.get("show-results"):
       graded["submitted-results"] = response.results
 
     graded["sql"] = response.sql
 
     # Check for keywords.
-    if "keywords" in problem:
+    if problem.get("keywords"):
       missing = False
       missing_keywords = []
       for keyword in problem["keywords"]:
@@ -150,26 +170,28 @@ class Grade:
     graded: The graded test output.
     cursor: The database cursor.
 
-    returns: True if the test passed, False otherwise.
+    returns: The number of points to deduct.
     """
-    # TODO
-    boolean = True
-    
+    success = True
+    deductions = 0
+    test_points = test["points"]
+
+    # TODO this should not be in the graded output, but in the specs
     graded["query"] = test["query"]
     
-    
+    # TODO make sure they aren't doing SQL injection
     expected = dbtools.run_query(test, test["query"], cursor)
     actual = dbtools.run_query(test, response.sql, cursor)
 
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
-    if "ordered" not in test or not test["ordered"]:
+    if not test.get("ordered"):
       expected.results = sorted(expected.results)
       actual.results = sorted(actual.results)
 
     # If we don't need to check that the columns are ordered in the same way,
     # then sort each tuple for easier checking.
-    if "column-order" not in test or not test["column-order"]:
+    if not test.get("column-order"):
       expected.results = [tuple(sorted(x)) for x in expected.results]
       actual.results = [tuple(sorted(x)) for x in actual.results]
 
@@ -177,38 +199,39 @@ class Grade:
     if expected.results != actual.results:
       graded["expected"] = expected.output
       graded["actual"] = actual.output
+      deductions = test_points
 
       # Check to see if they forgot to ORDER BY.
-      if "ordered" in test and test["ordered"]:
+      if test.get("ordered"):
         eresults = sorted(expected.results)
         aresults = sorted(actual.results)
         if aresults == eresults:
-          graded["errors"].append("MISSING ORDER BY")
-        # TODO poitns off? add points back and only take points off for order by?
+          deductions = 0
+          graded["deductions"].append("orderby")
 
       # See if they chose the wrong column order.
-      if "column-order" in test and test["column-order"]:
+      if test.get("column-order"):
         eresults = [tuple(sorted(x)) for x in expected.results]
         aresults = [tuple(sorted(x)) for x in actual.results]
         if eresults == aresults:
-          graded["errors"].append("WRONG COLUMN ORDERING")
-          # TODO add points back?
+          deductions = 0
+          graded["deductions"].append("columnorder")
 
-      boolean = False
+      success = False
 
     # Check to see if they named aggregates.
     # TODO check for other things? must contain a certain word in col name?
-    if "rename" in test and test["rename"]:
+    if test.get("rename"):
       for col in actual.col_names:
         if col.find("(") + col.find(")") != -2:
-          graded["errors"].append("DID NOT RENAME AGGREGATES")
-          # TODO take points off
-          boolean = False
+          graded["deductions"].append("renamecolumns")
+          success = False
           break
 
-    # TODO don't return true or false, return how many points to take off
-    graded["success"] = boolean
-    return boolean
+    # TODO more or fewer columns?
+
+    graded["success"] = success
+    return deductions
 
 
   def create(self, test, response, graded, cursor):
@@ -225,6 +248,8 @@ class Grade:
     """
     graded["success"] = True
     # TODO create table statements are just printed.
-    return True
+    return 0
 
 
+  def sp(self, test, response, graded, cursor):
+    pass

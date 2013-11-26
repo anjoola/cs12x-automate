@@ -132,7 +132,7 @@ if __name__ == "__main__":
     graded_student = stylechecker.deduct(graded_student)
 
   # Output the graded output.
-  f = iotools.output(o.jsonify(), assignment)
+  f = iotools.output(o.jsonify(), specs)
   print "\n\n==== RESULTS: " + f.name
 
   print "\n\n=========================END GRADING=========================\n\n"

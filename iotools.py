@@ -38,24 +38,24 @@ def get_students(assignment, after=None):
   return [f.replace("-" + assignment, "") for f in files]
 
 
-def output(json, assignment):
+def output(json, specs):
   """
   Function: output
   ----------------
   Outputs the graded output to a file.
 
   json: The graded output.
-  assignment: The assignment name.
+  specs: The assignment specs.
   returns: The file where the output was written to.
   """
-  path = assignment + "/_results/"
+  path = specs["assignment"] + "/_results/"
   if not os.path.exists(path):
     os.mkdir(path, 0644)
     # TODO .html or .md
-  f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
+  f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".html", "w")
 
   # Format the output nicely before writing it.
-  f.write(formatter.markdown(json)) # TODO let user be able to specify md or html
+  f.write(formatter.html(json, specs)) # TODO let user be able to specify md or html
   f.close()
   return f
 
