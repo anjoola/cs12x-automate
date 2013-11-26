@@ -8,17 +8,24 @@ for assignment `cs121hw3`, the directory structure is:
 
     main.py
     style.py
-    |-- cs121hw3
-        |-- cs121hw3.spec
+    |-- cs121hw3/
+        |-- _results/
+            |-- _files/
+                |-- agong-queries.sql.html
+                |-- agong-other.sql.html
+            |-- _index.html
+            |-- javascript.js
+            |-- css.css
+        |-- agong-cs121hw3/
+            |-- queries.sql
+            |-- make-auto.sql
+        |-- mqian-cs121hw3/
+            |-- queries.sql
+            |-- make-auto.sql
+         |-- cs121hw3.spec
         |-- make-banking.sql
         |-- make-grades.sql
         |-- test-dates.sql
-        |-- agong-cs121hw3
-            |-- queries.sql
-            |-- make-auto.sql
-        |-- mqian-cs121hw3
-            |-- queries.sql
-            |-- make-auto.sql
 
 The specifications for the assignment must be in a file called `<assignment name>.spec`.
 Each student's submission should be in a separate folder of the form `<username>-<assignment name>`.
@@ -40,6 +47,12 @@ Or:
 
     python main.py --assignment cs121hw7 --after agong
     
+
+Output
+------
+TODO
+md or HTML format
+
 
 Tools
 -----
