@@ -65,7 +65,6 @@ class Grade:
     # Problem definitions.
     num = problem["number"]
     num_points = problem["points"]
-    graded["num_points"] = num_points # TODO remove this
 
     # Print out some things before running tests.
     self.pretest(problem, response, graded)
@@ -75,17 +74,14 @@ class Grade:
 
     # Run each test for the problem.
     for test in problem["tests"]:
-      points = test["points"]
       lost_points = 0
-      graded_test = {"points": points, "errors": [], "deductions": [], \
-        "success": False}
-      # TODO don't want to store point value of question.
+      graded_test = {"errors": [], "deductions": [], "success": False}
       graded["tests"].append(graded_test)
 
       try:
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
-        got_points -= f(test, response, graded_test, cursor)
+        lost_points += f(test, response, graded_test, cursor)
 
         # Apply any other deductions.
         if graded_test.get("deductions"):
@@ -93,16 +89,15 @@ class Grade:
             (lost, desc) = SQL_DEDUCTIONS[deduction]
             graded["errors"].append(desc)
             lost_points += lost
-          lost_points = (lost_points if lost_point > 0 else 0)
-        got_points -= lost_points
 
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
         graded["errors"].append("MYSQL ERROR " + str(e))
-        got_points -= points
+        lost_points += test["points"]
 
-      graded_test["got_points"] = points - lost_points
+      got_points -= lost_points
+      graded_test["got_points"] = test["points"] - lost_points
       #except Exception as e:
       #  print "TODO", str(e)
         # TODO handle
@@ -128,17 +123,9 @@ class Grade:
     response: The student's response.
     graded: The graded problem output.
     """
-    # Print out the comments for this problem if they are required.
-    # TODO maybe should always include it and when outputting check for this
-    if problem.get("comments"):
-      graded["comments"] = response.comments
-
-    # Print out the query results if required.
-    # TODO have this anyway? don't need an if condition.
-    # Then when generating the output can check if show results is true
-    if problem.get("show-results"):
-      graded["submitted-results"] = response.results
-
+    # Comments, query results, and SQL.
+    graded["comments"] = response.comments
+    graded["submitted-results"] = response.results
     graded["sql"] = response.sql
 
     # Check for keywords.
@@ -176,9 +163,6 @@ class Grade:
     deductions = 0
     test_points = test["points"]
 
-    # TODO this should not be in the graded output, but in the specs
-    graded["query"] = test["query"]
-    
     # TODO make sure they aren't doing SQL injection
     expected = dbtools.run_query(test, test["query"], cursor)
     actual = dbtools.run_query(test, response.sql, cursor)
@@ -214,6 +198,7 @@ class Grade:
         eresults = [tuple(sorted(x)) for x in expected.results]
         aresults = [tuple(sorted(x)) for x in actual.results]
         if eresults == aresults:
+          print "here"
           deductions = 0
           graded["deductions"].append("columnorder")
 
@@ -229,7 +214,6 @@ class Grade:
           break
 
     # TODO more or fewer columns?
-
     graded["success"] = success
     return deductions
 

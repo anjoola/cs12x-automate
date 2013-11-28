@@ -113,10 +113,11 @@ def run_query(setup, query, cursor):
 
   # Truncate the output if it is too long.
   output_results = result.results
-  if len(output_results) > 15:
-    output_results = result.results[0:7]
-    filler = ("   ...  ", ) * len(output_results[0])
-    output_results += [filler] + result.results[-7:]
+  # TODO no longer truncate
+  #if len(output_results) > 15:
+  #  output_results = result.results[0:7]
+  #  filler = ("   ...  ", ) * len(output_results[0])
+  #  output_results += [filler] + result.results[-7:]
 
   # Pretty-print output.
   output = prettytable.PrettyTable(get_column_names(cursor))

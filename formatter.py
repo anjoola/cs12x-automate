@@ -5,7 +5,69 @@ Formats the output.
 """
 
 from cStringIO import StringIO
+import difflib
 import json
+
+
+def get_diffs(lst1, lst2):
+  """
+  Function: get_diffs
+  -------------------
+  Gets the diffs of two lists.
+
+  lst1: The first list.
+  lst2: The second list.
+  returns: A tuple containing two lists (one for lst1, one for lst2). The list
+           contains tuples of the form (type, value) where type can either be
+           "add", "remove", or "".
+  """
+
+  def is_line_junk(string):
+    """
+    Function: is_line_junk
+    ----------------------
+    Returns whether or not a line is junk and should be ignored when doing
+    a diff.
+    """
+    return string == " " or string == "-" or string == "+"
+
+  # Get the diffs.
+  (one, two) = ([], [])
+  diff = difflib.ndiff(lst1, lst2, is_line_junk)
+
+  # True if last added to "one".
+  last_added = True
+  # True if we've just seen a close match and need to modify the NEXT
+  # row coming in.
+  close_match = False
+  for item in diff:
+    # If the previous thing was a close match.
+    if close_match and item.startswith("+"):
+      close_match = False
+      two.append(("", item.replace("+ ", "")))
+    # A subtraction; goes in the "one" list.
+    elif item.startswith("-"):
+      last_added = True
+      one.append(("remove", item.replace("- ", "")))
+    # An addition, goes in the "two" list.
+    elif item.startswith("+"):
+      last_added = False
+      two.append(("add", item.replace("+ ", "")))
+    # Similar lines, but not the same. Don't count them as the same line.
+    elif item.find("?") != -1 and item.find("^") != -1:
+      continue
+    # Close match for the previous two elements. Don't mark them as being
+    # added or removed.
+    elif item.find("?") != -1:
+      if not last_added:
+        one[len(one)-1] = ("", one[len(one)-1][1])
+        two[len(two)-1] = ("", two[len(two)-1][1])
+      else:
+        one[len(one)-1] = ("", one[len(one)-1][1])
+        close_match = True
+
+  return (one, two)
+
 
 def html(output, specs):
   """
@@ -88,6 +150,7 @@ def html_student(student, specs):
     o.write("<link rel='stylesheet' type='text/css' href='css.css'>\n")
     o.write("<script type='text/javascript' src='javascript.js'></script>\n")
     o.write("<html class='student-page'>")
+
     # Print out all errors that have occurred with the file.
     if f.get("errors"):
       o.write("<h2>File Errors</h2><ul>")
@@ -96,17 +159,18 @@ def html_student(student, specs):
       o.write("</ul>")
 
     # Loop through all the problems.
-    for problem in f["problems"]: # TODO get num_points from specs
+    for (i, problem) in enumerate(f["problems"]):
+      problem_specs = specs[f["filename"]][i]
       o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " + \
         problem["num"] + " (" + str(problem["got_points"]) + "/" + \
-        str(problem["num_points"]) + " Points)</h3></a>\n")
+        str(problem_specs["points"]) + " Points)</h3></a>\n")
 
       o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
-      # Print out comments and submitted results. TODO get from specs
-      if problem.get("comments"):
+      # Print out comments and submitted results if the specs ask for it.
+      if problem_specs.get("comments"):
         o.write("<b>Comments</b>")
         o.write("<pre>" + problem["comments"] + "</pre>")
-      if problem.get("submitted-results"):
+      if problem_specs.get("submitted-results"):
         o.write("<b>Submitted Results</b>")
         o.write("<pre>" + problem["submitted-results"] + "</pre>")
       o.write("<b>SQL</b>")
@@ -114,23 +178,47 @@ def html_student(student, specs):
 
       # Go through the tests and print out the results.
       o.write("<b>Tests</b>\n<ul>\n")
-      for test in problem["tests"]:
+      for (j, test) in enumerate(problem["tests"]):
+        test_specs = problem_specs["tests"][j]
         if test["success"]:
           o.write("<li><div class='passed'>PASSED")
         else:
           o.write("<li><div class='failed'>FAILED")
-        # TODO use specs
-        o.write(" (" + str(test["got_points"]) + "/" + str(test["points"]) + \
-          " Points)</div><br>\n")
+        o.write(" (" + str(test["got_points"]) + "/" + \
+          str(test_specs["points"]) + " Points)</div><br>\n")
+
+        # Test details.
+        if test_specs.get("desc"):
+          o.write("<i>" + test_specs["desc"] + "</i><br>")
+        o.write("<div class='test-specs'>" + test_specs["query"] + "</div>")
+
+        # Expected and actual output.
+        if not test["success"] and "expected" in test:
+          o.write("<table class='borderless'><tr><th>Expected</th>" +\
+            "<th>Actual</th></tr><tr><td>\n<pre class='results'>")
           
+          (ediff, adiff) = get_diffs(test["expected"].split("\n"), \
+            test["actual"].split("\n"))
+          for line in ediff:
+            if line[0] == "remove":
+              o.write("<font color='red'>" + line[1] + "</font>\n")
+            else:
+              o.write(line[1] + "\n")
+
+          o.write("</pre></td><td>\n<pre class='results'>")
+          for line in adiff:
+            if line[0] == "add":
+              o.write("<font color='red'>" + line[1] + "</font>\n")
+            else:
+              o.write(line[1] + "\n")
+          o.write("</pre></td></tr></table>")
           
         o.write("</li>\n")
       o.write("</ul>")
       
       o.write("</div>")
 
-    # TODO don't make it out of 100 yet get the number of points for this file
-    o.write("<h2>Total: " + str(f["got_points"]) + " / 100 Points</h2>")
+    o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
     o.write("<br><br></html>")
 
     filename = student["name"] + "-" + f["filename"] + ".html"
@@ -189,28 +277,30 @@ def markdown(output, specs):
           write("* " + error)
 
       # Loop through all the problems.
-      for problem in f["problems"]:
+      for (i, problem) in enumerate(f["problems"]):
         write("---")
+        problem_specs = specs[f["filename"]][i]
         errors = problem["errors"]
-        num_points = str(problem["num_points"]) # TODO this should be taken from specs
+        num_points = str(problem_specs["points"])
         write("#### Problem " + problem["num"] + " (" + num_points + " points)")
 
-        # TODO always show these? only show if requested?
-        # get the if statement from specs, not from graded output
-        if problem.get("comments"):
+        # Print out the comments and submitted results if the specs ask for it.
+        if problem_specs.get("comments"):
           write("**Comments**\n")
           write(problem["comments"])
-        if problem.get("submitted-results"):
+        if problem_specs.get("submitted-results"):
           write("**Submitted Results**\n")
           write(format_lines("   ", problem["submitted-results"]))
         write("**SQL**")
         write(format_lines("   ", problem["sql"]))
 
         # Go through the tests and print the failures.
-        for test in problem["tests"]:
+        for (j, test) in enumerate(problem["tests"]):
+          test_specs = problem_specs["tests"][j]
           if not test["success"] and "expected" in test:
-            write("**`TEST FAILED`** (Lost " + str(test["points"]) + " points)")
-            write(format_lines("   ", test["query"]))
+            write("**`TEST FAILED`** (Lost " + str(test_specs["points"]) + \
+              " points)")
+            write(format_lines("   ", test_specs["query"]))
             write("_Expected Results_")
             write(format_lines("   ", test["expected"]))
             write("_Actual Results_")

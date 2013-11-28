@@ -81,7 +81,7 @@ def parse_file(f):
   # True if in the middle of parsing results.
   started_results = False
   # True if in the middle of parsing SQL.
-  started_sql = True
+  started_sql = False
 
   def add_line(line):
     """
@@ -121,6 +121,7 @@ def parse_file(f):
     # Indicator denoting the start of an response.
     elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
       started_results = False
+      started_sql = False
       curr = line.replace("-- [Problem ", "").replace("]", "")
       curr = curr.strip()
       # This is a new problem, so create an empty response to with no comments.
