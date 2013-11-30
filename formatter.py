@@ -40,6 +40,7 @@ def get_diffs(lst1, lst2):
   # True if we've just seen a close match and need to modify the NEXT
   # row coming in.
   close_match = False
+
   for item in diff:
     # If the previous thing was a close match.
     if close_match and item.startswith("+"):
@@ -194,25 +195,34 @@ def html_student(student, specs):
 
         # Expected and actual output.
         if not test["success"] and "expected" in test:
-          o.write("<table class='borderless'><tr><th>Expected</th>" +\
-            "<th>Actual</th></tr><tr><td>\n<pre class='results'>")
-          
+          o.write("<pre class='results'>")
           (ediff, adiff) = get_diffs(test["expected"].split("\n"), \
             test["actual"].split("\n"))
-          for line in ediff:
-            if line[0] == "remove":
-              o.write("<font color='red'>" + line[1] + "</font>\n")
-            else:
-              o.write(line[1] + "\n")
 
-          o.write("</pre></td><td>\n<pre class='results'>")
-          for line in adiff:
-            if line[0] == "add":
-              o.write("<font color='red'>" + line[1] + "</font>\n")
-            else:
-              o.write(line[1] + "\n")
-          o.write("</pre></td></tr></table>")
-          
+          (eindex, aindex) = (0, 0)
+          space = " " * (len(ediff[eindex][1]) + 6)
+          while eindex < len(ediff):
+            (diff_type, evalue) = ediff[eindex]
+            if diff_type == "remove":
+              o.write("<font color='red'>" + evalue + "</font>\n")
+              eindex += 1
+              continue
+
+            (diff_type, avalue) = adiff[aindex]
+            if diff_type == "":
+              o.write(evalue + "      " + avalue + "\n")
+              aindex += 1
+              eindex += 1
+            elif diff_type == "add":
+              o.write(space + "<font color='red'>" + avalue + "</font>\n")
+              aindex += 1
+ 
+          while aindex < len(adiff):
+            (_, avalue) = adiff[aindex]
+            o.write(space + "<font color='red'>" + avalue + "</font>\n")
+            aindex += 1
+
+          o.write("</pre>")
         o.write("</li>\n")
       o.write("</ul>")
       
