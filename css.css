@@ -23,6 +23,19 @@ h3:visited {
 ul {
   margin-top: 0px;
 }
+.borderless, td, tr {
+  vertical-align: top;
+}
+.results {
+  background: #fefefe;
+  border: 1px solid #cccccc;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 15px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
 pre {
   background: #efefef;
   border: 1px solid #aaaaaa;
@@ -30,6 +43,16 @@ pre {
   font-size: 12px;
   padding: 10px;
   margin-bottom: 15px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
+.test-specs {
+  background: #efefef;
+  border: 1px solid #aaaaaa;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 7px;
   margin-top: 5px;
   overflow-x: auto;
 }
@@ -94,7 +117,7 @@ pre {
   height: 100%;
   line-height: 175%;
   overflow-y: hidden;
-  width: 600px;
+  width: 640px;
 }
 #right {
   background: #96D2FA;

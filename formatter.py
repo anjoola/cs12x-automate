@@ -203,20 +203,24 @@ def html_student(student, specs):
           space = " " * (len(ediff[eindex][1]) + 6)
           while eindex < len(ediff):
             (diff_type, evalue) = ediff[eindex]
+            # An expected result not found in the actual results.
             if diff_type == "remove":
               o.write("<font color='red'>" + evalue + "</font>\n")
               eindex += 1
               continue
 
             (diff_type, avalue) = adiff[aindex]
+            # Matching actual and expected results.
             if diff_type == "":
               o.write(evalue + "      " + avalue + "\n")
               aindex += 1
               eindex += 1
+            # An actual result not found in the expected results.
             elif diff_type == "add":
               o.write(space + "<font color='red'>" + avalue + "</font>\n")
               aindex += 1
  
+          # Any remaining actual results.
           while aindex < len(adiff):
             (_, avalue) = adiff[aindex]
             o.write(space + "<font color='red'>" + avalue + "</font>\n")
@@ -225,7 +229,16 @@ def html_student(student, specs):
           o.write("</pre>")
         o.write("</li>\n")
       o.write("</ul>")
+
+      # Any errors that have occurred.
+      errors = problem["errors"]
+      if len(errors) > 0:
+        o.write("\n<b>Errors</b>\n<br><ul>")
+        for error in errors:
+          o.write("<li>" + error + "</li>\n")
+        o.write("</ul>")
       
+      # TODO other things
       o.write("</div>")
 
     o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
@@ -254,7 +267,7 @@ def markdown(output, specs):
     Function: format_lines
     ----------------------
     Format lines in a nice way. Gets rid of extra spacing.
-  
+
     lines: The lines to print and format.
     """
     return "\n" + sep + " " + ("\n" + sep + " ").join( \
@@ -318,8 +331,8 @@ def markdown(output, specs):
 
         # Any errors with the problem.
         if len(errors) > 0:
+          write("**Errors**")
           for error in errors:
-            write("**Errors**")
             write("* "+ error)
 
         # Points received on this problem.
