@@ -42,4 +42,4 @@ SQL_DEDUCTIONS = {
 
 # Type of tests to output for. This should not be modified unless the code
 # is also modified.
-TYPE_OUTPUTS = ["select", "stored-procedure"]
+TYPE_OUTPUTS = ["select", "stored-procedure", "function"]

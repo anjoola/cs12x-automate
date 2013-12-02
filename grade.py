@@ -271,16 +271,13 @@ class Grade:
     before = dbtools.run_query(None, table_sql, None, cursor)
     if test.get("run-query"):
       dbtools.run_query(None, response.sql, None, cursor)
-    after = dbtools.run_query(test["query"], table_sql, None, cursor)
+    after = dbtools.run_query(test["query"], table_sql, test.get("teardown"), \
+      cursor)
 
     subs = list(set(before.results) - set(after.results))
     graded["subs"] = ("" if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
     adds = list(set(after.results) - set(before.results))
     graded["adds"] = ("" if len(adds) == 0 else dbtools.prettyprint(cursor, adds))
-
-    # Execute teardown query if needed.
-    if test.get("teardown"):
-      dbtools.run_query(None, test["teardown"], None, cursor)
 
     graded["success"] = True
     # TODO how to handle deductions?
@@ -288,5 +285,30 @@ class Grade:
 
 
   def function(self, test, response, graded, cursor):
-    return 0
-    
+    """
+    Function: function
+    ------------------
+    Tests a function by calling it and comparing it with the expected output.
+
+    test: The test to run.
+    response: The student's response.
+    graded: The graded test output.
+    cursor: The database cursor.
+
+    returns: The number of points to deduct.
+    """
+    if test.get("run-query"):
+      dbtools.run_query(None, response.sql, None, cursor)
+    result = dbtools.run_query(None, test["query"], test.get("teardown"), cursor)
+    result = str(result.results[0][0])
+
+    graded["actual"] = result
+    graded["expected"] = test["expected"]
+
+    # Should be all or nothing.
+    if test["expected"] != result:
+      graded["success"] = False
+      return test["points"]
+    else:
+      graded["success"] = True
+      return 0

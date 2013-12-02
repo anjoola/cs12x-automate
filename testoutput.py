@@ -31,6 +31,8 @@ class TestOutput:
       return self.create
     elif test_type == "stored-procedure":
       return self.sp
+    elif test_type == "function":
+      return self.function
 
 
   def output(self, tests, specs):
@@ -177,6 +179,23 @@ class TestOutput:
       aindex += 1
 
     o.write("</pre>")
+
+
+  def function(self, test, specs):
+    """
+    Function: function
+    ------------------
+    Outputs the result of a function test. This includes the following:
+      - Comparison of the actual results versus the expected results.
+    """
+    o = self.o
+    # If the test failed, print out the differences.
+    if not test["success"]:
+      o.write("<b>Expected</b>\n")
+      o.write("<pre>" + e(test["expected"]) + "</pre>\n")
+      o.write("<b>Actual</b>\n")
+      o.write("<pre>" + e(test["actual"]) + "</pre>\n")
+
 
 # ---------------------------- Utility Functions ---------------------------- #
 
