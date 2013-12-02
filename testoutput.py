@@ -80,7 +80,6 @@ class TestOutput:
     Outputs the results of a SELECT test. This includes the following:
       - Expected results
       - Actual results
-      TODO
     """
     o = self.o
     if test["success"] or "expected" not in test:
@@ -136,16 +135,47 @@ class TestOutput:
     Function: sp
     ------------
     Outputs the result of a stored procedure test. This includes the following:
-    TODO
+      - Changes to the table affected by the stored procedure call.
     """
     o = self.o
-    # Before and after the call on the stored procedure.
-    if test.get("adds"):
-      o.write("<b>Additions to " + specs["table"] + "</b><br>\n")
-      o.write("<pre class='results'>\n" + test["adds"] + "\n</pre>\n")
-    if test.get("subs"):
-      o.write("<b>Subtractions from " + specs["table"] + "</b><br>\n")
-      o.write("<pre class='results'>\n" + test["subs"] + "\n</pre>\n")
+    # If there are no changes in the table, don't print anything out.
+    if not test.get("adds") and not test.get("subs"):
+      return
+
+    # Get table differences before and after the call on the stored procedure.
+    o.write("<b>Changes to " + specs["table"] + "</b><br>\n")
+    o.write("<pre class='results'>")
+    (subs, adds) = get_diffs(test["subs"].split("\n"), \
+      test["adds"].split("\n"))
+
+    (sindex, aindex) = (0, 0)
+    while sindex < len(subs):
+      (diff_type, svalue) = subs[sindex]
+      # A value that was removed.
+      if diff_type == "remove":
+        o.write("<font color='red'>- " + svalue + "</font>\n")
+        sindex += 1
+
+      if aindex >= len(adds):
+        continue
+      (diff_type, avalue) = adds[aindex]
+      # Matching values. Only print it out once.
+      if diff_type == "":
+        o.write("  " + svalue + "\n")
+        aindex += 1
+        sindex += 1
+      # A value that was added.
+      elif diff_type == "add":
+        o.write("<font color='green'>+ " + avalue + "</font>\n")
+        aindex += 1
+
+    # Any remaining additions.
+    while aindex < len(adds):
+      (_, avalue) = adds[aindex]
+      o.write("<font color='green'>+ " + avalue + "</font>\n")
+      aindex += 1
+
+    o.write("</pre>")
 
 # ---------------------------- Utility Functions ---------------------------- #
 
@@ -182,6 +212,10 @@ def get_diffs(lst1, lst2):
   close_match = False
 
   for item in diff:
+    # If just a whitespace change, ignore.
+    if len(item[2: ].strip()) == 0:
+      continue
+
     # If the previous thing was a close match.
     if close_match and item.startswith("+"):
       close_match = False
@@ -206,5 +240,9 @@ def get_diffs(lst1, lst2):
       else:
         one[len(one)-1] = ("", one[len(one)-1][1])
         close_match = True
+    # If the lines match completely.
+    else:
+      one.append(("", item[2:]))
+      two.append(("", item[2:]))
 
   return (one, two)

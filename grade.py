@@ -273,8 +273,9 @@ class Grade:
     after = dbtools.run_query(test["query"], table_sql, None, cursor)
 
     subs = list(set(before.results) - set(after.results))
-    graded["subs"] = ([] if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
+    graded["subs"] = ("" if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
     adds = list(set(after.results) - set(before.results))
-    graded["adds"] = ([] if len(adds) == 0 else dbtools.prettyprint(cursor, adds))
+    graded["adds"] = ("" if len(adds) == 0 else dbtools.prettyprint(cursor, adds))
     graded["success"] = True
+    # TODO how to handle deductions?
     return 0
