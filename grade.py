@@ -164,8 +164,8 @@ class Grade:
     test_points = test["points"]
 
     # TODO make sure they aren't doing SQL injection
-    expected = dbtools.run_query(test, test["query"], cursor)
-    actual = dbtools.run_query(test, response.sql, cursor)
+    expected = dbtools.run_query(test.get("setup"), test["query"], cursor)
+    actual = dbtools.run_query(test.get("setup"), response.sql, cursor)
 
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
@@ -230,10 +230,32 @@ class Grade:
 
     returns: True if the test passed, False otherwise.
     """
+    # TODO check for drop tables?
+    # TODO check for comments?
+
     graded["success"] = True
     # TODO create table statements are just printed.
     return 0
 
 
   def sp(self, test, response, graded, cursor):
-    pass
+    """
+    Function: sp
+    ------------
+    Tests a stored procedure by calling the procedure and checking the contents
+    of the table before and after.
+
+    test: The test to run.
+    response: The student's response.
+    graded: The graded test output.
+    cursor: The database cursor.
+
+    returns: The number of points to deduct.
+    """
+    
+    
+    return 0
+    
+    
+    
+    

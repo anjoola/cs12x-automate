@@ -13,6 +13,28 @@ import subprocess
 import prettytable
 from models import Result
 
+# ------------------------------ File Utilities ------------------------------ #
+
+def import_files(assignment, files):
+  """
+  Function: import_files
+  ----------------------
+  Imports raw data files into the database. This uses the "mysqlimport"
+  command on the terminal. We will have to invoke the command via python.
+
+  assignment: The assignment name. Is prepended to all the files.
+  files: The files to import.
+  """
+  if len(files) == 0:
+    return
+
+  print "\nImporting files..."
+  # Import all the data files.
+  files = " ".join([assignment + "/" + f for f in files])
+  subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
+    " -p" + PASS + " --delete --local " + DATABASE + " " + files)
+
+
 def preprocess_sql(sql_file):
   """
   Function: preprocess_sql
@@ -65,25 +87,15 @@ def source_files(assignment, files, cursor):
         for _ in cursor.execute(sql, multi=True): pass
       f.close()
 
+# ---------------------------- Database Utilities ---------------------------- #
 
-def import_files(assignment, files):
+def get_column_names(cursor):
   """
-  Function: import_files
-  ----------------------
-  Imports raw data files into the database. This uses the "mysqlimport"
-  command on the terminal. We will have to invoke the command via python.
-
-  assignment: The assignment name. Is prepended to all the files.
-  files: The files to import.
+  Function: get_column_names
+  --------------------------
+  Gets the column names of the results.
   """
-  if len(files) == 0:
-    return
-
-  print "\nImporting files..."
-  # Import all the data files.
-  files = " ".join([assignment + "/" + f for f in files])
-  subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
-    " -p" + PASS + " --delete --local " + DATABASE + " " + files)
+  return [col[0] for col in cursor.description]
 
 
 def get_schema(cursor):
@@ -97,15 +109,6 @@ def get_schema(cursor):
   returns: A list of tuples representing the schema.
   """
   return cursor.description
-
-
-def get_column_names(cursor):
-  """
-  Function: get_column_names
-  --------------------------
-  Gets the column names of the results.
-  """
-  return [col[0] for col in cursor.description]
 
 
 def run_query(setup, query, cursor):

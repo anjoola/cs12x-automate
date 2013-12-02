@@ -5,9 +5,10 @@ Formats the output.
 """
 
 from cStringIO import StringIO
+from CONFIG import TYPE_OUTPUTS
 import difflib
 import json
-
+from testoutput import TestOutput
 
 def get_diffs(lst1, lst2):
   """
@@ -75,7 +76,10 @@ def html(output, specs):
   Function: html
   --------------
   Formats the JSON output into HTML.
-  TODO
+
+  output: The graded JSON output.
+  specs: The specs for the assignment.
+  returns: A string containing the HTML.
   """
   output = json.loads(output)
   o = StringIO()
@@ -143,7 +147,7 @@ def html_student(student, specs):
   gets written to its own file.
 
   student: The student's JSON output.
-  TODO
+  specs: The specs for the assignment.
   """
   # Create output per student, per file. Files are named student-file.html.
   for f in student["files"]:
@@ -177,58 +181,9 @@ def html_student(student, specs):
       o.write("<b>SQL</b>")
       o.write("<pre>" + problem["sql"] + "</pre>")
 
-      # Go through the tests and print out the results.
-      o.write("<b>Tests</b>\n<ul>\n")
-      for (j, test) in enumerate(problem["tests"]):
-        test_specs = problem_specs["tests"][j]
-        if test["success"]:
-          o.write("<li><div class='passed'>PASSED")
-        else:
-          o.write("<li><div class='failed'>FAILED")
-        o.write(" (" + str(test["got_points"]) + "/" + \
-          str(test_specs["points"]) + " Points)</div><br>\n")
-
-        # Test details.
-        if test_specs.get("desc"):
-          o.write("<i>" + test_specs["desc"] + "</i><br>")
-        o.write("<div class='test-specs'>" + test_specs["query"] + "</div>")
-
-        # Expected and actual output.
-        if not test["success"] and "expected" in test:
-          o.write("<pre class='results'>")
-          (ediff, adiff) = get_diffs(test["expected"].split("\n"), \
-            test["actual"].split("\n"))
-
-          (eindex, aindex) = (0, 0)
-          space = " " * (len(ediff[eindex][1]) + 6)
-          while eindex < len(ediff):
-            (diff_type, evalue) = ediff[eindex]
-            # An expected result not found in the actual results.
-            if diff_type == "remove":
-              o.write("<font color='red'>" + evalue + "</font>\n")
-              eindex += 1
-              continue
-
-            (diff_type, avalue) = adiff[aindex]
-            # Matching actual and expected results.
-            if diff_type == "":
-              o.write(evalue + "      " + avalue + "\n")
-              aindex += 1
-              eindex += 1
-            # An actual result not found in the expected results.
-            elif diff_type == "add":
-              o.write(space + "<font color='red'>" + avalue + "</font>\n")
-              aindex += 1
- 
-          # Any remaining actual results.
-          while aindex < len(adiff):
-            (_, avalue) = adiff[aindex]
-            o.write(space + "<font color='red'>" + avalue + "</font>\n")
-            aindex += 1
-
-          o.write("</pre>")
-        o.write("</li>\n")
-      o.write("</ul>")
+      # Test output.
+      test_output = TestOutput(o)
+      test_output.output(problem["tests"], problem_specs["tests"])
 
       # Any errors that have occurred.
       errors = problem["errors"]
@@ -258,6 +213,7 @@ def markdown(output, specs):
 
   output: The graded JSON output.
   specs: The specs for the assignment.
+  returns: The string containing the markdown.
   """
   output = json.loads(output)
   o = StringIO()
@@ -317,10 +273,12 @@ def markdown(output, specs):
         write("**SQL**")
         write(format_lines("   ", problem["sql"]))
 
-        # Go through the tests and print the failures.
+        # Go through the tests and print the failures. Only print out the test
+        # if it is one to output for (see TYPE_OUTPUTS in the CONFIG file).
         for (j, test) in enumerate(problem["tests"]):
           test_specs = problem_specs["tests"][j]
-          if not test["success"] and "expected" in test:
+          if test["type"] in TYPE_OUTPUTS and not test["success"] and \
+            "expected" in test:
             write("**`TEST FAILED`** (Lost " + str(test_specs["points"]) + \
               " points)")
             write(format_lines("   ", test_specs["query"]))

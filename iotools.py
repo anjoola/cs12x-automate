@@ -104,7 +104,7 @@ def parse_file(f):
       # See if they are now ending the block comment.
       if line.strip().endswith("*/"):
         started_block_comment = False
-        line = line.replace(" */", "").replace("*/", "")
+        line = line.replace(" */", "").replace("*/", "").strip()
       # Strip out leading *'s if they have any.
       if line.strip().startswith("*"):
         line = (line[line.find("*") + 1:]).strip()
@@ -135,11 +135,11 @@ def parse_file(f):
     # Block comments of the form /* */.
     elif line.strip().startswith("/*"):
       started_block_comment = True
-      line = line.replace("/* ", "").replace("/*", "")
+      line = line.replace("/* ", "").replace("/*", "").strip()
        # See if they are now ending the block comment.
       if line.strip().endswith("*/"):
         started_block_comment = False
-        line = line.replace(" */", "").replace("*/", "")
+        line = line.replace(" */", "").replace("*/", "").strip()
       add_line(line + "\n")
 
     # Continuation of a response from a previous line, or the start of a SQL
