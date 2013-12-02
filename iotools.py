@@ -6,6 +6,7 @@ functions.
 """
 
 from datetime import datetime
+import dbtools
 import formatter
 import json
 import os
@@ -92,13 +93,16 @@ def parse_file(f):
     # If these are comments at the top of the file, ignore them.
     if curr == "":
       return
+    if len(line.strip()) > 0:
+      line = line + "\n"
     if started_results:
       responses[curr].results += line
     else:
       responses[curr].comments += line
 
-
-  for line in f:
+  # Preprocess the file for DELIMITER statements.
+  f = dbtools.preprocess_sql(f)
+  for line in f.split("\n"):
     # If in the middle of a block comment.
     if started_block_comment:
       # See if they are now ending the block comment.
@@ -108,7 +112,7 @@ def parse_file(f):
       # Strip out leading *'s if they have any.
       if line.strip().startswith("*"):
         line = (line[line.find("*") + 1:]).strip()
-      add_line(line + "\n")
+      add_line(line)
 
     # If this is a blank line, just skip it.
     elif len(line.strip()) == 0:
@@ -140,13 +144,13 @@ def parse_file(f):
       if line.strip().endswith("*/"):
         started_block_comment = False
         line = line.replace(" */", "").replace("*/", "").strip()
-      add_line(line + "\n")
+      add_line(line)
 
     # Continuation of a response from a previous line, or the start of a SQL
     # statement. This could also contain comments.
     elif curr != "":
       started_sql = True
-      responses[curr].sql += line
+      responses[curr].sql += line + "\n"
 
   return responses
 

@@ -6,70 +6,8 @@ Formats the output.
 
 from cStringIO import StringIO
 from CONFIG import TYPE_OUTPUTS
-import difflib
 import json
 from testoutput import TestOutput
-
-def get_diffs(lst1, lst2):
-  """
-  Function: get_diffs
-  -------------------
-  Gets the diffs of two lists.
-
-  lst1: The first list.
-  lst2: The second list.
-  returns: A tuple containing two lists (one for lst1, one for lst2). The list
-           contains tuples of the form (type, value) where type can either be
-           "add", "remove", or "".
-  """
-
-  def is_line_junk(string):
-    """
-    Function: is_line_junk
-    ----------------------
-    Returns whether or not a line is junk and should be ignored when doing
-    a diff.
-    """
-    return string == " " or string == "-" or string == "+"
-
-  # Get the diffs.
-  (one, two) = ([], [])
-  diff = difflib.ndiff(lst1, lst2, is_line_junk)
-
-  # True if last added to "one".
-  last_added = True
-  # True if we've just seen a close match and need to modify the NEXT
-  # row coming in.
-  close_match = False
-
-  for item in diff:
-    # If the previous thing was a close match.
-    if close_match and item.startswith("+"):
-      close_match = False
-      two.append(("", item.replace("+ ", "")))
-    # A subtraction; goes in the "one" list.
-    elif item.startswith("-"):
-      last_added = True
-      one.append(("remove", item.replace("- ", "")))
-    # An addition, goes in the "two" list.
-    elif item.startswith("+"):
-      last_added = False
-      two.append(("add", item.replace("+ ", "")))
-    # Similar lines, but not the same. Don't count them as the same line.
-    elif item.find("?") != -1 and item.find("^") != -1:
-      continue
-    # Close match for the previous two elements. Don't mark them as being
-    # added or removed.
-    elif item.find("?") != -1:
-      if not last_added:
-        one[len(one)-1] = ("", one[len(one)-1][1])
-        two[len(two)-1] = ("", two[len(two)-1][1])
-      else:
-        one[len(one)-1] = ("", one[len(one)-1][1])
-        close_match = True
-
-  return (one, two)
-
 
 def html(output, specs):
   """

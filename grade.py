@@ -164,8 +164,10 @@ class Grade:
     test_points = test["points"]
 
     # TODO make sure they aren't doing SQL injection
-    expected = dbtools.run_query(test.get("setup"), test["query"], cursor)
-    actual = dbtools.run_query(test.get("setup"), response.sql, cursor)
+    expected = dbtools.run_query(test.get("setup"), test["query"], \
+      test.get("teardown"), cursor)
+    actual = dbtools.run_query(test.get("setup"), response.sql, \
+      test.get("teardown"), cursor)
 
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
@@ -252,7 +254,22 @@ class Grade:
 
     returns: The number of points to deduct.
     """
+    # Run any setup queries first. These might be CREATE TABLE statements. We
+    # must use the student's reponses since their column names might be
+    # different.
+    setup = ""
+    if test.get("setup-queries"):
+      for problem_num in test["setup-queries"]:
+        setup += response.sql + "\n"
+
+    # Get the table before and after the stored procedure is called.
+    table_sql = "SELECT * FROM " + test["table"]
+    before = dbtools.run_query(setup, table_sql, None, cursor)
+    dbtools.run_query(None, test["query"], None, cursor)
+    after = dbtools.run_query(None, table_sql, None, cursor)
     
+    print str(before)
+    print str(after)
     
     return 0
     

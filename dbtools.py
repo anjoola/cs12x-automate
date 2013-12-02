@@ -49,11 +49,10 @@ def preprocess_sql(sql_file):
       delimiter = line.strip()[-1:]
       continue
 
-    line = line.strip()
     # If we've reached the end of a statement.
-    if line.endswith(delimiter):
-      line = line[0:len(line) - 1] + ";"
-    lines.write("\n" + line)
+    if line.strip().endswith(delimiter):
+      line = line.replace(delimiter, ";")
+    lines.write(line)
 
   return lines.getvalue()
 
@@ -111,7 +110,7 @@ def get_schema(cursor):
   return cursor.description
 
 
-def run_query(setup, query, cursor):
+def run_query(setup, query, teardown, cursor):
   """
   Function: run_query
   -------------------
@@ -119,6 +118,7 @@ def run_query(setup, query, cursor):
 
   setup: The setup query to run before executing the actual query.
   query: The query to run.
+  teardown: The teardown query to run after executing the actual query.
   cursor: The database cursor.
 
   returns: A Result object containing the result, the schema of the results and
@@ -126,6 +126,7 @@ def run_query(setup, query, cursor):
   """
   # Query setup.
   if setup is not None:
+    print "A: ", str(setup)
     for _ in cursor.execute(setup, multi=True): pass
   cursor.execute(query)
 
@@ -143,6 +144,6 @@ def run_query(setup, query, cursor):
   result.output = output.get_string()
 
   # Query teardown.
-  if "teardown" in setup:
-    for _ in cursor.execute(setup["teardown"], multi=True): pass
+  if teardown is not None:
+    for _ in cursor.execute(teardown, multi=True): pass
   return result
