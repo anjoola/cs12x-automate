@@ -5,12 +5,36 @@ Contains helper methods involving the database and queries.
 """
 
 import codecs
+from cStringIO import StringIO
 from CONFIG import *
 import mysql.connector
 import sqlparse
 import subprocess
 import prettytable
 from models import Result
+
+def preprocess_sql(sql_file):
+  """
+  Function: preprocess_sql
+  ------------------------
+  Preprocess the SQL in order to handle the DELIMITER statements.
+  """
+  lines = StringIO()
+  delimiter = ';'
+  for line in sql_file:
+    # See if there is a new delimiter.
+    if line.find("DELIMITER") != -1:
+      delimiter = line.strip()[-1:]
+      continue
+
+    line = line.strip()
+    # If we've reached the end of a statement.
+    if line.endswith(delimiter):
+      line = line[0:len(line) - 1] + ";"
+    lines.write("\n" + line)
+
+  return lines.getvalue()
+
 
 def source_files(assignment, files, cursor):
   """
@@ -33,11 +57,12 @@ def source_files(assignment, files, cursor):
     # If the source is a SQL file, run it.
     if source.find(".sql") != -1:
       f = codecs.open(assignment + "/" + source, "r", "utf-8")
-      sql_list = sqlparse.split(f.read())
+      sql_list = sqlparse.split(preprocess_sql(f))
       for sql in sql_list:
+        # Skip this line if there is nothing in it.
         if len(sql.strip()) == 0:
           continue
-        cursor.execute(sql)
+        for _ in cursor.execute(sql, multi=True): pass
       f.close()
 
 
@@ -89,20 +114,16 @@ def run_query(setup, query, cursor):
   -------------------
   Runs a query and does all the setup and teardown required for the query.
 
-  setup: A JSON object containing the setup for the query.
+  setup: The setup query to run before executing the actual query.
   query: The query to run.
   cursor: The database cursor.
 
   returns: A Result object containing the result, the schema of the results and
            pretty-printed output.
   """
-  # Source files to insert data needed for the query.
-  if "source" in setup:
-    source_files(setup["source"], cursor)
-
   # Query setup.
-  if "setup" in setup:
-    cursor.execute(setup["setup"], multi=True)
+  if setup is not None:
+    for _ in cursor.execute(setup, multi=True): pass
   cursor.execute(query)
 
   # Get the query results and schema.
@@ -111,22 +132,14 @@ def run_query(setup, query, cursor):
   result.schema = get_schema(cursor)
   result.col_names = get_column_names(cursor)
 
-  # Truncate the output if it is too long.
-  output_results = result.results
-  # TODO no longer truncate
-  #if len(output_results) > 15:
-  #  output_results = result.results[0:7]
-  #  filler = ("   ...  ", ) * len(output_results[0])
-  #  output_results += [filler] + result.results[-7:]
-
   # Pretty-print output.
   output = prettytable.PrettyTable(get_column_names(cursor))
   output.align = "l"
-  for row in output_results:
+  for row in result.results:
     output.add_row(row)
   result.output = output.get_string()
 
   # Query teardown.
   if "teardown" in setup:
-    cursor.execute(setup["teardown"], multi=True)
+    for _ in cursor.execute(setup["teardown"], multi=True): pass
   return result

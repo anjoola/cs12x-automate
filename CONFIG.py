@@ -39,3 +39,7 @@ SQL_DEDUCTIONS = {
   "missingcols": (1, "More or fewer columns than the question asked for."),
   "groupingselect": (2, "Can only SELECT on things that are being grouped by.")
 }
+
+# Type of tests to output for. This should not be modified unless the code
+# is also modified.
+TYPE_OUTPUTS = ["select"]

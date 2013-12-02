@@ -108,7 +108,7 @@ def parse_file(f):
       # Strip out leading *'s if they have any.
       if line.strip().startswith("*"):
         line = (line[line.find("*") + 1:]).strip()
-      add_line(line)
+      add_line(line + "\n")
 
     # If this is a blank line, just skip it.
     elif len(line.strip()) == 0:
@@ -140,7 +140,7 @@ def parse_file(f):
       if line.strip().endswith("*/"):
         started_block_comment = False
         line = line.replace(" */", "").replace("*/", "")
-      add_line(line)
+      add_line(line + "\n")
 
     # Continuation of a response from a previous line, or the start of a SQL
     # statement. This could also contain comments.
