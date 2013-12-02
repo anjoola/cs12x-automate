@@ -138,7 +138,14 @@ class TestOutput:
     Outputs the result of a stored procedure test. This includes the following:
     TODO
     """
-    pass
+    o = self.o
+    # Before and after the call on the stored procedure.
+    if test.get("adds"):
+      o.write("<b>Additions to " + specs["table"] + "</b><br>\n")
+      o.write("<pre class='results'>\n" + test["adds"] + "\n</pre>\n")
+    if test.get("subs"):
+      o.write("<b>Subtractions from " + specs["table"] + "</b><br>\n")
+      o.write("<pre class='results'>\n" + test["subs"] + "\n</pre>\n")
 
 # ---------------------------- Utility Functions ---------------------------- #
 

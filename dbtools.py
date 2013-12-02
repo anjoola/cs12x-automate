@@ -94,6 +94,8 @@ def get_column_names(cursor):
   --------------------------
   Gets the column names of the results.
   """
+  if cursor.description is None:
+    return []
   return [col[0] for col in cursor.description]
 
 
@@ -126,7 +128,6 @@ def run_query(setup, query, teardown, cursor):
   """
   # Query setup.
   if setup is not None:
-    print "A: ", str(setup)
     for _ in cursor.execute(setup, multi=True): pass
   cursor.execute(query)
 
@@ -137,13 +138,22 @@ def run_query(setup, query, teardown, cursor):
   result.col_names = get_column_names(cursor)
 
   # Pretty-print output.
-  output = prettytable.PrettyTable(get_column_names(cursor))
-  output.align = "l"
-  for row in result.results:
-    output.add_row(row)
-  result.output = output.get_string()
+  result.output = prettyprint(cursor, result.results)
 
   # Query teardown.
   if teardown is not None:
     for _ in cursor.execute(teardown, multi=True): pass
   return result
+
+
+def prettyprint(cursor, results):
+  """
+  Function: prettyprint
+  ---------------------
+  TODO
+  """
+  output = prettytable.PrettyTable(get_column_names(cursor))
+  output.align = "l"
+  for row in results:
+    output.add_row(row)
+  return output.get_string()

@@ -48,7 +48,7 @@ class Grade:
     """
     
     
-  def grade(self, problem, response, graded, cursor):
+  def grade(self, problem, response, graded, cursor, responses):
     """
     Function: grade
     ---------------
@@ -59,6 +59,8 @@ class Grade:
     response: The student's response.
     graded: The graded problem output.
     cursor: The database cursor.
+    responses: The entire list of responses (used for certain tests like
+               stored procedure tests.
 
     returns: The number of points received for this problem.
     """
@@ -72,6 +74,16 @@ class Grade:
     # The number of points this student has received so far on this problem.
     got_points = num_points
 
+    # Run any setup queries first. These might be CREATE TABLE statements. We
+    # must use the student's reponses since their column names might be
+    # different.
+    setup = None
+    if problem.get("setup-queries"):
+      setup = ""
+      for problem_num in problem["setup-queries"]:
+        setup += responses[problem_num].sql + "\n"
+    dbtools.run_query(setup, None, None, cursor)
+
     # Run each test for the problem.
     for test in problem["tests"]:
       lost_points = 0
@@ -81,7 +93,7 @@ class Grade:
       try:
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
-        lost_points += f(test, response, graded_test, cursor)
+        lost_points += f(test, response, graded_test, cursor, responses)
 
         # Apply any other deductions.
         if graded_test.get("deductions"):
@@ -142,7 +154,7 @@ class Grade:
     # TODO take points off for missing keywords?
 
 
-  def select(self, test, response, graded, cursor):
+  def select(self, test, response, graded, cursor, _):
     """
     Function: select
     ----------------
@@ -200,7 +212,6 @@ class Grade:
         eresults = [tuple(sorted(x)) for x in expected.results]
         aresults = [tuple(sorted(x)) for x in actual.results]
         if eresults == aresults:
-          print "here"
           deductions = 0
           graded["deductions"].append("columnorder")
 
@@ -220,7 +231,7 @@ class Grade:
     return deductions
 
 
-  def create(self, test, response, graded, cursor):
+  def create(self, test, response, graded, cursor, _):
     """
     Function: create
     ----------------
@@ -240,7 +251,7 @@ class Grade:
     return 0
 
 
-  def sp(self, test, response, graded, cursor):
+  def sp(self, test, response, graded, cursor, responses):
     """
     Function: sp
     ------------
@@ -254,25 +265,16 @@ class Grade:
 
     returns: The number of points to deduct.
     """
-    # Run any setup queries first. These might be CREATE TABLE statements. We
-    # must use the student's reponses since their column names might be
-    # different.
-    setup = ""
-    if test.get("setup-queries"):
-      for problem_num in test["setup-queries"]:
-        setup += response.sql + "\n"
-
     # Get the table before and after the stored procedure is called.
     table_sql = "SELECT * FROM " + test["table"]
-    before = dbtools.run_query(setup, table_sql, None, cursor)
-    dbtools.run_query(None, test["query"], None, cursor)
-    after = dbtools.run_query(None, table_sql, None, cursor)
-    
-    print str(before)
-    print str(after)
-    
+    before = dbtools.run_query(None, table_sql, None, cursor)
+    if test.get("run-user-query"):
+      dbtools.run_query(None, response.sql, None, cursor)
+    after = dbtools.run_query(test["query"], table_sql, None, cursor)
+
+    subs = list(set(before.results) - set(after.results))
+    graded["subs"] = ([] if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
+    adds = list(set(after.results) - set(before.results))
+    graded["adds"] = ([] if len(adds) == 0 else dbtools.prettyprint(cursor, adds))
+    graded["success"] = True
     return 0
-    
-    
-    
-    

@@ -58,7 +58,7 @@ def grade(filename, student, graded_student):
       graded_problem = {"num": problem["number"], "tests": [], "errors": []}
       graded_file["problems"].append(graded_problem)
       got_points += g.grade(problem, responses[problem["number"]], \
-        graded_problem, DB.cursor())
+        graded_problem, DB.cursor(), responses)
       print ".",
 
   # If the file has a style error (and cannot be parsed), they get 0 points.
