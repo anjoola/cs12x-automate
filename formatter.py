@@ -1,13 +1,23 @@
 """
-Module: output.py
------------------
+Module: formatter.py
+--------------------
 Formats the output.
 """
 
+import cgi
 from cStringIO import StringIO
 from CONFIG import TYPE_OUTPUTS
 import json
 from testoutput import TestOutput
+
+def e(text):
+  """
+  Function: esc
+  -------------
+  Escapes text so it can be outputted as HTML.
+  """
+  return cgi.escape(text)
+
 
 def html(output, specs):
   """

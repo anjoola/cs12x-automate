@@ -126,6 +126,7 @@ if __name__ == "__main__":
     for f in files:
       print "- " + f + ":" ,
       got_points += grade(f, student, graded_student)
+      print "\n"
 
     graded_student["got_points"] = got_points
     # Apply style deductions.

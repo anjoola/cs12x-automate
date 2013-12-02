@@ -1,3 +1,4 @@
+import cgi
 from cStringIO import StringIO
 from CONFIG import TYPE_OUTPUTS
 import difflib
@@ -96,25 +97,25 @@ class TestOutput:
       (diff_type, evalue) = ediff[eindex]
       # An expected result not found in the actual results.
       if diff_type == "remove":
-        o.write("<font color='red'>" + evalue + "</font>\n")
+        o.write("<font color='red'>" + e(evalue) + "</font>\n")
         eindex += 1
         continue
 
       (diff_type, avalue) = adiff[aindex]
       # Matching actual and expected results.
       if diff_type == "":
-        o.write(evalue + "      " + avalue + "\n")
+        o.write(e(evalue + "      " + avalue) + "\n")
         aindex += 1
         eindex += 1
       # An actual result not found in the expected results.
       elif diff_type == "add":
-        o.write(space + "<font color='red'>" + avalue + "</font>\n")
+        o.write(space + "<font color='red'>" + e(avalue) + "</font>\n")
         aindex += 1
 
     # Any remaining actual results.
     while aindex < len(adiff):
       (_, avalue) = adiff[aindex]
-      o.write(space + "<font color='red'>" + avalue + "</font>\n")
+      o.write(space + "<font color='red'>" + e(avalue) + "</font>\n")
       aindex += 1
 
     o.write("</pre>")
@@ -153,7 +154,7 @@ class TestOutput:
       (diff_type, svalue) = subs[sindex]
       # A value that was removed.
       if diff_type == "remove":
-        o.write("<font color='red'>- " + svalue + "</font>\n")
+        o.write("<font color='red'>- " + e(svalue) + "</font>\n")
         sindex += 1
 
       if aindex >= len(adds):
@@ -161,23 +162,32 @@ class TestOutput:
       (diff_type, avalue) = adds[aindex]
       # Matching values. Only print it out once.
       if diff_type == "":
-        o.write("  " + svalue + "\n")
+        o.write("  " + e(svalue) + "\n")
         aindex += 1
         sindex += 1
       # A value that was added.
       elif diff_type == "add":
-        o.write("<font color='green'>+ " + avalue + "</font>\n")
+        o.write("<font color='green'>+ " + e(avalue) + "</font>\n")
         aindex += 1
 
     # Any remaining additions.
     while aindex < len(adds):
       (_, avalue) = adds[aindex]
-      o.write("<font color='green'>+ " + avalue + "</font>\n")
+      o.write("<font color='green'>+ " + e(avalue) + "</font>\n")
       aindex += 1
 
     o.write("</pre>")
 
 # ---------------------------- Utility Functions ---------------------------- #
+
+def e(text):
+  """
+  Function: e
+  -----------
+  Escapes text so it can be outputted as HTML.
+  """
+  return cgi.escape(text)
+
 
 def get_diffs(lst1, lst2):
   """

@@ -33,6 +33,8 @@ class Grade:
       return self.create
     elif test_type == "stored-procedure":
       return self.sp
+    elif test_type == "function":
+      return self.function
     # TODO
 
 
@@ -77,12 +79,11 @@ class Grade:
     # Run any setup queries first. These might be CREATE TABLE statements. We
     # must use the student's reponses since their column names might be
     # different.
-    setup = None
     if problem.get("setup-queries"):
       setup = ""
       for problem_num in problem["setup-queries"]:
         setup += responses[problem_num].sql + "\n"
-    dbtools.run_query(setup, None, None, cursor)
+      dbtools.run_query(None, setup, None, cursor)
 
     # Run each test for the problem.
     for test in problem["tests"]:
@@ -93,7 +94,7 @@ class Grade:
       try:
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
-        lost_points += f(test, response, graded_test, cursor, responses)
+        lost_points += f(test, response, graded_test, cursor)
 
         # Apply any other deductions.
         if graded_test.get("deductions"):
@@ -154,7 +155,7 @@ class Grade:
     # TODO take points off for missing keywords?
 
 
-  def select(self, test, response, graded, cursor, _):
+  def select(self, test, response, graded, cursor):
     """
     Function: select
     ----------------
@@ -231,7 +232,7 @@ class Grade:
     return deductions
 
 
-  def create(self, test, response, graded, cursor, _):
+  def create(self, test, response, graded, cursor):
     """
     Function: create
     ----------------
@@ -251,7 +252,7 @@ class Grade:
     return 0
 
 
-  def sp(self, test, response, graded, cursor, responses):
+  def sp(self, test, response, graded, cursor):
     """
     Function: sp
     ------------
@@ -268,7 +269,7 @@ class Grade:
     # Get the table before and after the stored procedure is called.
     table_sql = "SELECT * FROM " + test["table"]
     before = dbtools.run_query(None, table_sql, None, cursor)
-    if test.get("run-user-query"):
+    if test.get("run-query"):
       dbtools.run_query(None, response.sql, None, cursor)
     after = dbtools.run_query(test["query"], table_sql, None, cursor)
 
@@ -276,6 +277,16 @@ class Grade:
     graded["subs"] = ("" if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
     adds = list(set(after.results) - set(before.results))
     graded["adds"] = ("" if len(adds) == 0 else dbtools.prettyprint(cursor, adds))
+
+    # Execute teardown query if needed.
+    if test.get("teardown"):
+      dbtools.run_query(None, test["teardown"], None, cursor)
+
     graded["success"] = True
     # TODO how to handle deductions?
     return 0
+
+
+  def function(self, test, response, graded, cursor):
+    return 0
+    

@@ -129,7 +129,7 @@ def run_query(setup, query, teardown, cursor):
   # Query setup.
   if setup is not None:
     for _ in cursor.execute(setup, multi=True): pass
-  cursor.execute(query)
+  for _ in cursor.execute(query, multi=True): pass
 
   # Get the query results and schema.
   result = Result()
