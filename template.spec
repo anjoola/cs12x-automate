@@ -2,6 +2,8 @@
   "files": ["file.sql"],            # [string] -> Files to grade
   "dependencies": [],               # [string] -> Source files needed for grading
   "import": [],                     # [string] -> A list of raw files to import.
+  "setup": [],                      # [string] -> List of queries to run prior to grading.
+  "teardown": [],                   # [string] -> List of queries to run after grading.
 
   "file.sql": [
     {
@@ -9,8 +11,10 @@
       "comments": false,            # bool -> true if need to check for comments
       "points": 0,                  # int -> Number of points
       "show-results": false,        # bool -> true if they have to attach their results
-      "setup-queries": [],          # [string] -> Runs the student's responses to these problem numbers.
-                                    #             Usually are CREATE TABLE statements.
+      "dependencies": [],           # [string] -> A list of problem numbers this is dependent on.
+                                    #             Runs the student's responses to those problems first.
+      "setup": [],                  # [string] -> List of queries to run prior to grading this problem.
+      "teardown": [],               # [string] -> List of queries to run after grading this problem.
       "keywords": [],               # [string] -> List of keywords to check for
       "tests": [                    # List of tests to run on this problem
         {
@@ -47,7 +51,7 @@
         {
           "table": "",              # string -> The table the stored procedure is being run on.
           "query": "",              # string -> Query to run and compare the before and after results with.
-          "run-user-query": false,  # bool -> Whether or not to run the student's response for this question
+          "run-query": false,       # bool -> Whether or not to run the student's response for this question
           "teardown": ""            # string -> Query to run after the test
         },
 

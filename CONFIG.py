@@ -23,6 +23,9 @@ DATABASE = secret.DATABASE
 # Default database connection timeout (in seconds).
 CONNECTION_TIMEOUT = 1
 
+# Maximum timeout for any query.
+MAX_TIMEOUT = 600
+
 # Deductions for overall style problems. Values are tuples of the form
 # (points, message) where points is the number of points taken off overall, and
 # desc is the description of the style error.

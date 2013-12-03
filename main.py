@@ -1,4 +1,5 @@
 import argparse
+from CONFIG import MAX_TIMEOUT
 from dbtools import DBTools
 from grade import Grade
 import iotools
@@ -96,13 +97,15 @@ if __name__ == "__main__":
   o = GradedOutput(specs)
   # Start up the connection with the database.
   db = DBTools()
-  db.get_db_connection()
+  db.get_db_connection(MAX_TIMEOUT)
 
-  # Source files needed prior to grading.
-  if "dependencies" in specs and len(specs["dependencies"]) > 0:
+  # Source files needed prior to grading and run setup queries.
+  if specs.get("dependencies"):
     db.source_files(assignment, specs["dependencies"])
-  if "import" in specs and len(specs["import"]) > 0:
+  if specs.get("import"):
     dbtools.import_files(assignment, specs["import"])
+  if specs.get("setup"):
+    for q in specs["setup"]: db.run_query(q)
 
   # Grade each student, and grade each file for each student.
   for student in students:
@@ -126,6 +129,10 @@ if __name__ == "__main__":
   print "\n\n==== RESULTS: " + f.name
 
   print "\n\n=========================END GRADING=========================\n\n"
+
+  # Run teardown queries.
+  if specs.get("teardown"):
+    for q in specs["teardown"]: db.run_query(q)
 
   # Close connection with the database
   db.close_db_connection()

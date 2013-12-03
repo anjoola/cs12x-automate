@@ -63,18 +63,19 @@ class DBTools:
     timeout: The connection timeout.
     returns: A database connection object.
     """
-    # Create a new connection if haven't connected yet.
-    if self.db is None or not self.db.is_connected():
-      self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-        database=DATABASE, port=PORT, connection_timeout=CONNECTION_TIMEOUT)
-      self.cursor = self.db.cursor()
-
     # If a timeout is specified, close the old connection and make a new one
     # with the new timeout settings.
-    elif timeout is not None:
+    if self.db and timeout is not None:
       self.close_db_connection()
-      self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-        database=DATABASE, port=PORT, connection_timeout=timeout)
+    # If already connected, just return the current connection.
+    elif self.db and self.db.is_connected():
+      return self.db
+
+    # Create a new connection if haven't connected yet or disconnected.
+    timeout = timeout = timeout or CONNECTION_TIMEOUT
+    self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
+      database=DATABASE, port=PORT, connection_timeout=timeout)
+    self.cursor = self.db.cursor()
     return self.db
 
   # ----------------------------- Query Utilities ---------------------------- #

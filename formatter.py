@@ -48,7 +48,6 @@ def html(output, specs):
   o.write("</div>")
 
   # Graded output and actual files.
-  # TODO the files to output should only be files that exist for a student..
   first_student = output["students"][0]["name"]
   first_file = output["files"][0]
   o.write("<div draggable='true' class='resizable' id='middle'>\n" + \
@@ -120,9 +119,12 @@ def html_student(student, specs):
 
       o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
       # Print out comments and submitted results if the specs ask for it.
-      if problem_specs.get("comments"):
+      if problem_specs.get("comments") and problem:
         o.write("<b>Comments</b>")
-        o.write("<pre>" + problem["comments"] + "</pre>")
+        if not problem["comments"]:
+          o.write("<br><i>No comments provided...</i><br>\n")
+        else:
+          o.write("<pre>" + problem["comments"] + "</pre>")
       if problem_specs.get("submitted-results"):
         o.write("<b>Submitted Results</b>")
         o.write("<pre>" + problem["submitted-results"] + "</pre>")

@@ -15,6 +15,7 @@ class Grade:
   def __init__(self, specs, db):
     # The specifications for this assignment.
     self.specs = specs
+
     # The database tool object used to interact with the database.
     self.db = db
 
@@ -66,16 +67,16 @@ class Grade:
     # The number of points this student has received so far on this problem.
     got_points = num_points
 
-    # Run any setup queries first. These might be CREATE TABLE statements. We
-    # must use the student's reponses since their column names might be
-    # different. This could cause an error so the problem could possibly not
-    # be graded.
     try:
-      if problem.get("setup-queries"):
-        setup = ""
-        for problem_num in problem["setup-queries"]:
-          setup += responses[problem_num].sql + "\n"
-        self.db.run_query(setup)
+      # Run dependent queries (which is the student's response from another
+      # question).
+      if problem.get("dependencies"):
+        for problem_num in problem["dependencies"]:
+          self.db.run_query(responses[problem_num].sql)
+      # Run setup queries.
+      if problem.get("setup"):
+        for q in problem["setup"]: self.db.run_query(q)
+
     except mysql.connector.errors.ProgrammingError as e:
       graded["errors"].append("Dependent query had an exception. Most  " + \
         "likely all tests after this one will fail | MYSQL ERROR " + \
@@ -91,7 +92,7 @@ class Grade:
       try:
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
-        lost_points += f(test, response, graded_test, cursor)
+        lost_points += f(test, response, graded_test)
 
         # Apply any other deductions.
         if graded_test.get("deductions"):
@@ -100,24 +101,30 @@ class Grade:
             graded["errors"].append(desc)
             lost_points += lost
 
-      # If there was a MySQL error, print out the error that occurred and the
-      # code that caused the error.
-      except mysql.connector.errors.ProgrammingError as e:
-        graded["errors"].append("MYSQL ERROR " + str(e))
-        lost_points += test["points"]
-
       # TODO database disconnected or their query timedout
       except mysql.connector.errors.InterfaceError as e:
         cursor = self.db.get_db_connection().cursor()
         graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
-          "the query is invalid and failed)")
+          "the query is invalid and failed or query timed out)")
         lost_points += test["points"]
+        if test.get("teardown"): self.db.run_query(test["teardown"])
+
+      # If there was a MySQL error, print out the error that occurred and the
+      # code that caused the error.
+      except mysql.connector.errors.Error as e:
+        graded["errors"].append("MYSQL ERROR " + str(e))
+        lost_points += test["points"]
+        if test.get("teardown"): self.db.run_query(test["teardown"])
 
       got_points -= lost_points
       graded_test["got_points"] = test["points"] - lost_points
       #except Exception as e:
       #  print "TODO", str(e)
         # TODO handle
+
+    # Run problem teardown queries.
+    if problem.get("teardown"):
+      for q in problem["teardown"]: self.db.run_query(q)
 
     # Get the total number of points received.
     got_points = (got_points if got_points > 0 else 0)
@@ -158,7 +165,7 @@ class Grade:
     # TODO take points off for missing keywords?
 
 
-  def select(self, test, response, graded, cursor):
+  def select(self, test, response, graded):
     """
     Function: select
     ----------------
@@ -171,7 +178,6 @@ class Grade:
     test: The test to run.
     response: The student's response.
     graded: The graded test output.
-    cursor: The database cursor.
 
     returns: The number of points to deduct.
     """
@@ -187,10 +193,11 @@ class Grade:
         teardown=test.get("teardown"))
     except mysql.connector.errors.ProgrammingError as e:
       raise
+    """
     # Run the teardown no matter what.
     finally:
       self.db.run_query(test.get("teardown"))
-
+    """
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
     if not test.get("ordered"):
@@ -241,7 +248,7 @@ class Grade:
     return deductions
 
 
-  def create(self, test, response, graded, cursor):
+  def create(self, test, response, graded):
     """
     Function: create
     ----------------
@@ -249,7 +256,6 @@ class Grade:
 
     test: The test to run.
     response: The student's response.
-    cursor: The database cursor.
 
     returns: True if the test passed, False otherwise.
     """
@@ -261,7 +267,7 @@ class Grade:
     return 0
 
 
-  def sp(self, test, response, graded, cursor):
+  def sp(self, test, response, graded):
     """
     Function: sp
     ------------
@@ -271,7 +277,6 @@ class Grade:
     test: The test to run.
     response: The student's response.
     graded: The graded test output.
-    cursor: The database cursor.
 
     returns: The number of points to deduct.
     """
@@ -293,7 +298,7 @@ class Grade:
     return 0
 
 
-  def function(self, test, response, graded, cursor):
+  def function(self, test, response, graded):
     """
     Function: function
     ------------------  
@@ -302,7 +307,6 @@ class Grade:
     test: The test to run.
     response: The student's response.
     graded: The graded test output.
-    cursor: The database cursor.
 
     returns: The number of points to deduct.
     """
