@@ -38,18 +38,6 @@ class Grade:
     # TODO
 
 
-  def deduct(points, error):
-    """
-    Function: deduct
-    ----------------
-    Deduct from points depending on the error.
-
-    points: The points to deduct from.
-    error: The error.
-    returns: The new amount to deduct.
-    """
-    
-    
   def grade(self, problem, response, graded, cursor, responses):
     """
     Function: grade
@@ -78,12 +66,19 @@ class Grade:
 
     # Run any setup queries first. These might be CREATE TABLE statements. We
     # must use the student's reponses since their column names might be
-    # different.
-    if problem.get("setup-queries"):
-      setup = ""
-      for problem_num in problem["setup-queries"]:
-        setup += responses[problem_num].sql + "\n"
-      dbtools.run_query(None, setup, None, cursor)
+    # different. This could cause an error so the problem could possibly not
+    # be graded.
+    try:
+      if problem.get("setup-queries"):
+        setup = ""
+        for problem_num in problem["setup-queries"]:
+          setup += responses[problem_num].sql + "\n"
+        dbtools.run_query(None, setup, None, cursor)
+    except mysql.connector.errors.ProgrammingError as e:
+      graded["errors"].append("Dependent query had an exception. Most  " + \
+        "likely all tests after this one will fail | MYSQL ERROR " + \
+        str(e))
+      return 0
 
     # Run each test for the problem.
     for test in problem["tests"]:
@@ -107,6 +102,13 @@ class Grade:
       # code that caused the error.
       except mysql.connector.errors.ProgrammingError as e:
         graded["errors"].append("MYSQL ERROR " + str(e))
+        lost_points += test["points"]
+
+      # TODO database disconnected or their query timedout
+      except mysql.connector.errors.InterfaceError as e:
+        cursor = dbtools.get_db_connection().cursor()
+        graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
+          "the query is invalid and failed)")
         lost_points += test["points"]
 
       got_points -= lost_points
@@ -151,7 +153,6 @@ class Grade:
           missing_keywords.append(keyword)
       if missing:
         graded["errors"].append("MISSING KEYWORDS " + ", ".join(missing_keywords))
-
     # TODO take points off for missing keywords?
 
 
@@ -179,8 +180,14 @@ class Grade:
     # TODO make sure they aren't doing SQL injection
     expected = dbtools.run_query(test.get("setup"), test["query"], \
       test.get("teardown"), cursor)
-    actual = dbtools.run_query(test.get("setup"), response.sql, \
-      test.get("teardown"), cursor)
+    try:
+      actual = dbtools.run_query(test.get("setup"), response.sql, \
+        test.get("teardown"), cursor)
+    except mysql.connector.errors.ProgrammingError as e:
+      raise
+    # Run the teardown no matter what.
+    finally:
+      dbtools.run_query(None, test.get("teardown"), None, cursor)
 
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
@@ -269,11 +276,16 @@ class Grade:
     # Get the table before and after the stored procedure is called.
     table_sql = "SELECT * FROM " + test["table"]
     before = dbtools.run_query(None, table_sql, None, cursor)
-    if test.get("run-query"):
-      dbtools.run_query(None, response.sql, None, cursor)
-    after = dbtools.run_query(test["query"], table_sql, test.get("teardown"), \
-      cursor)
-
+    after = None
+    try:
+      if test.get("run-query"):
+        dbtools.run_query(None, response.sql, None, cursor)
+    except mysql.connector.errors.ProgrammingError as e:
+      raise
+    # Run the teardown no matter what.
+    finally:
+      after = dbtools.run_query(test["query"], table_sql, test.get("teardown"), \
+        cursor)
     subs = list(set(before.results) - set(after.results))
     graded["subs"] = ("" if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
     adds = list(set(after.results) - set(before.results))
@@ -287,7 +299,7 @@ class Grade:
   def function(self, test, response, graded, cursor):
     """
     Function: function
-    ------------------
+    ------------------  
     Tests a function by calling it and comparing it with the expected output.
 
     test: The test to run.

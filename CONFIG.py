@@ -19,6 +19,9 @@ PORT = "4306"
 # Database name.
 DATABASE = "angela_db"
 
+# Default database connection timeout (in seconds).
+CONNECTION_TIMEOUT = 1
+
 # Deductions for overall style problems. Values are tuples of the form
 # (points, message) where points is the number of points taken off overall, and
 # desc is the description of the style error.

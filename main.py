@@ -1,5 +1,4 @@
 import argparse
-from CONFIG import *
 import dbtools
 from grade import Grade
 import iotools
@@ -10,21 +9,11 @@ from stylechecker import StyleError
 import stylechecker
 import sys
 
-# The database connection. Parameters are specified in the CONFIG.py file.
-DB = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-  database=DATABASE, port=PORT)
-
 # The assignment to grade.
 assignment = None
 
 # The specifications for the assignment.
 specs = None
-
-# The graded output.
-o = None
-
-# Grading tool.
-g = None
 
 def grade(filename, student, graded_student):
   """
@@ -55,10 +44,11 @@ def grade(filename, student, graded_student):
     # Grade each problem in the assignment.
     problems = specs[filename]
     for problem in problems:
-      graded_problem = {"num": problem["number"], "tests": [], "errors": []}
+      graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
+        "got_points": 0}
       graded_file["problems"].append(graded_problem)
       got_points += g.grade(problem, responses[problem["number"]], \
-        graded_problem, DB.cursor(), responses)
+        graded_problem, dbtools.get_db_connection().cursor(), responses)
       print ".",
 
   # If the file has a style error (and cannot be parsed), they get 0 points.
@@ -106,12 +96,16 @@ if __name__ == "__main__":
 
   print "\n\n========================START GRADING========================" ,
 
+  # The graded output.
   o = GradedOutput(specs)
+  # The grading tool.
   g = Grade(specs)
+  # Database connection.
+  dbtools.get_db_connection()
 
   # Source files needed prior to grading.
   if "dependencies" in specs and len(specs["dependencies"]) > 0:
-    dbtools.source_files(assignment, specs["dependencies"], DB.cursor())
+    dbtools.source_files(assignment, specs["dependencies"])
   if "import" in specs and len(specs["import"]) > 0:
     dbtools.import_files(assignment, specs["import"])
 
@@ -138,6 +132,5 @@ if __name__ == "__main__":
 
   print "\n\n=========================END GRADING=========================\n\n"
 
-  # Close connection with the database.
-  DB.cursor().close()
-  DB.close()
+  # Close connection with the database
+  dbtools.close_db_connection()

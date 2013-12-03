@@ -13,6 +13,9 @@ import subprocess
 import prettytable
 from models import Result
 
+# The database connection. Parameters are specified in the CONFIG.py file.
+DB = None
+
 # ------------------------------ File Utilities ------------------------------ #
 
 def import_files(assignment, files):
@@ -40,6 +43,9 @@ def preprocess_sql(sql_file):
   Function: preprocess_sql
   ------------------------
   Preprocess the SQL in order to handle the DELIMITER statements.
+
+  sql_file: The SQL file to preprocess.
+  returns: The newly-processed string containing SQL.
   """
   lines = StringIO()
   delimiter = ';'
@@ -57,7 +63,7 @@ def preprocess_sql(sql_file):
   return lines.getvalue()
 
 
-def source_files(assignment, files, cursor):
+def source_files(assignment, files):
   """
   Function: source_files
   ----------------------
@@ -69,7 +75,6 @@ def source_files(assignment, files, cursor):
   files: The source files to source.
   cursor: The database cursor.
   """
-
   if len(files) == 0:
     return
 
@@ -83,10 +88,39 @@ def source_files(assignment, files, cursor):
         # Skip this line if there is nothing in it.
         if len(sql.strip()) == 0:
           continue
-        for _ in cursor.execute(sql, multi=True): pass
+        for _ in DB.cursor().execute(sql, multi=True): pass
       f.close()
 
 # ---------------------------- Database Utilities ---------------------------- #
+
+def close_db_connection():
+  """
+  Function: close_db_connection
+  -----------------------------
+  Close the database connection.
+  """
+  if DB.is_connected():
+    DB.cursor().close()
+    DB.close()
+
+
+def get_db_connection(timeout=CONNECTION_TIMEOUT):
+  """
+  Function: get_db_connection
+  ---------------------------
+  Get a new database connection with a specified timeout (defaults to
+  CONNECTION_TIMEOUT specified in the CONFIG file). Closes the old connection
+  if there was one.
+
+  timeout: The connection timeout.
+  returns: A database connection object.
+  """
+  global DB
+  if DB is None or not DB.is_connected():
+    DB = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
+      database=DATABASE, port=PORT, connection_timeout=timeout)
+  return DB
+
 
 def get_column_names(cursor):
   """
@@ -112,6 +146,13 @@ def get_schema(cursor):
   return cursor.description
 
 
+def run_multi(query, cursor):
+  sql_list = sqlparse.split(query)
+  for sql in sql_list:
+    if len(sql.strip()) > 0:
+      cursor.execute(sql)
+
+
 def run_query(setup, query, teardown, cursor):
   """
   Function: run_query
@@ -128,8 +169,8 @@ def run_query(setup, query, teardown, cursor):
   """
   # Query setup.
   if setup is not None:
-    for _ in cursor.execute(setup, multi=True): pass
-  for _ in cursor.execute(query, multi=True): pass
+    run_multi(setup, cursor)
+  run_multi(query, cursor)
 
   # Get the query results and schema.
   result = Result()

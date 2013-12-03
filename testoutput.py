@@ -190,7 +190,7 @@ class TestOutput:
     """
     o = self.o
     # If the test failed, print out the differences.
-    if not test["success"]:
+    if not test["success"] and test.get("expected"):
       o.write("<b>Expected</b>\n")
       o.write("<pre>" + e(test["expected"]) + "</pre>\n")
       o.write("<b>Actual</b>\n")

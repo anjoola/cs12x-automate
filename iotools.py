@@ -93,8 +93,8 @@ def parse_file(f):
     # If these are comments at the top of the file, ignore them.
     if curr == "":
       return
-    if len(line.strip()) > 0:
-      line = line + "\n"
+    #if len(line.strip()) > 0:
+    line = line + "\n"
     if started_results:
       responses[curr].results += line
     else:
