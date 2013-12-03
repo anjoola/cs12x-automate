@@ -27,8 +27,12 @@ class DBTools:
   def __init__(self):
     # The database connection parameters are specified in the CONFIG.py file.
     self.db = None
+
     # The database cursor.
     self.cursor = None
+
+    # The current connection timeout.
+    self.timeout = CONNECTION_TIMEOUT
 
   # --------------------------- Database Utilities --------------------------- #
 
@@ -63,6 +67,10 @@ class DBTools:
     timeout: The connection timeout.
     returns: A database connection object.
     """
+    # If the timeout is the same as before, then don't change anything.
+    if timeout == self.timeout:
+      return self.db
+
     # If a timeout is specified, close the old connection and make a new one
     # with the new timeout settings.
     if self.db and timeout is not None:
@@ -76,6 +84,7 @@ class DBTools:
     self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
       database=DATABASE, port=PORT, connection_timeout=timeout)
     self.cursor = self.db.cursor()
+    self.timeout = timeout
     return self.db
 
   # ----------------------------- Query Utilities ---------------------------- #

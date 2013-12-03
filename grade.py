@@ -90,6 +90,9 @@ class Grade:
       graded["tests"].append(graded_test)
 
       try:
+        # Change the connection timeout.
+        self.db.get_db_connection(test.get("timeout"))
+
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
         lost_points += f(test, response, graded_test)

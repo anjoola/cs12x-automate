@@ -20,7 +20,8 @@
         {
           "points": 0,              # int -> Number of points to subtract if this test fails
           "type": "",               # string -> Type of test (select, create, etc.)
-          "desc": ""                # string -> Description of the test
+          "desc": "",               # string -> Description of the test
+          "timeout": 0,             # int -> The timeout in seconds for the test/student's query.
         },
 
         ###
