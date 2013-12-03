@@ -1,5 +1,5 @@
 import argparse
-import dbtools
+from dbtools import DBTools
 from grade import Grade
 import iotools
 import mysql.connector
@@ -8,12 +8,6 @@ from models import *
 from stylechecker import StyleError
 import stylechecker
 import sys
-
-# The assignment to grade.
-assignment = None
-
-# The specifications for the assignment.
-specs = None
 
 def grade(filename, student, graded_student):
   """
@@ -28,6 +22,8 @@ def grade(filename, student, graded_student):
 
   returns: The total points the student got for this file.
   """
+  # The grading tool.
+  g = Grade(specs, db)
   graded_file = {"filename": filename, "problems": [], "errors": []}
   graded_student["files"].append(graded_file)
   got_points = 0
@@ -48,7 +44,7 @@ def grade(filename, student, graded_student):
         "got_points": 0}
       graded_file["problems"].append(graded_problem)
       got_points += g.grade(problem, responses[problem["number"]], \
-        graded_problem, dbtools.get_db_connection().cursor(), responses)
+        graded_problem, db.get_cursor(), responses)
       print ".",
 
   # If the file has a style error (and cannot be parsed), they get 0 points.
@@ -98,14 +94,13 @@ if __name__ == "__main__":
 
   # The graded output.
   o = GradedOutput(specs)
-  # The grading tool.
-  g = Grade(specs)
-  # Database connection.
-  dbtools.get_db_connection()
+  # Start up the connection with the database.
+  db = DBTools()
+  db.get_db_connection()
 
   # Source files needed prior to grading.
   if "dependencies" in specs and len(specs["dependencies"]) > 0:
-    dbtools.source_files(assignment, specs["dependencies"])
+    db.source_files(assignment, specs["dependencies"])
   if "import" in specs and len(specs["import"]) > 0:
     dbtools.import_files(assignment, specs["import"])
 
@@ -133,4 +128,4 @@ if __name__ == "__main__":
   print "\n\n=========================END GRADING=========================\n\n"
 
   # Close connection with the database
-  dbtools.close_db_connection()
+  db.close_db_connection()
