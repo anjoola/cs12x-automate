@@ -73,7 +73,7 @@ class Grade:
         setup = ""
         for problem_num in problem["setup-queries"]:
           setup += responses[problem_num].sql + "\n"
-        dbtools.run_query(None, setup, None, cursor)
+        dbtools.run_query(cursor, setup)
     except mysql.connector.errors.ProgrammingError as e:
       graded["errors"].append("Dependent query had an exception. Most  " + \
         "likely all tests after this one will fail | MYSQL ERROR " + \
@@ -178,16 +178,16 @@ class Grade:
     test_points = test["points"]
 
     # TODO make sure they aren't doing SQL injection
-    expected = dbtools.run_query(test.get("setup"), test["query"], \
-      test.get("teardown"), cursor)
+    expected = dbtools.run_query(cursor, test["query"], \
+      setup=test.get("setup"), teardown=test.get("teardown"))
     try:
-      actual = dbtools.run_query(test.get("setup"), response.sql, \
-        test.get("teardown"), cursor)
+      actual = dbtools.run_query(cursor, response.sql, \
+        setup=test.get("setup"), teardown=test.get("teardown"))
     except mysql.connector.errors.ProgrammingError as e:
       raise
     # Run the teardown no matter what.
     finally:
-      dbtools.run_query(None, test.get("teardown"), None, cursor)
+      dbtools.run_query(cursor, test.get("teardown"))
 
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
@@ -275,17 +275,17 @@ class Grade:
     """
     # Get the table before and after the stored procedure is called.
     table_sql = "SELECT * FROM " + test["table"]
-    before = dbtools.run_query(None, table_sql, None, cursor)
+    before = dbtools.run_query(cursor, table_sql)
     after = None
     try:
       if test.get("run-query"):
-        dbtools.run_query(None, response.sql, None, cursor)
+        dbtools.run_query(cursor, response.sql)
     except mysql.connector.errors.ProgrammingError as e:
       raise
     # Run the teardown no matter what.
     finally:
-      after = dbtools.run_query(test["query"], table_sql, test.get("teardown"), \
-        cursor)
+      after = dbtools.run_query(cursor, table_sql, setup=test["query"], \
+        teardown=test.get("teardown"))
     subs = list(set(before.results) - set(after.results))
     graded["subs"] = ("" if len(subs) == 0 else dbtools.prettyprint(cursor, subs))
     adds = list(set(after.results) - set(before.results))
@@ -310,8 +310,9 @@ class Grade:
     returns: The number of points to deduct.
     """
     if test.get("run-query"):
-      dbtools.run_query(None, response.sql, None, cursor)
-    result = dbtools.run_query(None, test["query"], test.get("teardown"), cursor)
+      dbtools.run_query(cursor, response.sql)
+    result = dbtools.run_query(cursor, test["query"], \
+      teardown=test.get("teardown"))
     result = str(result.results[0][0])
 
     graded["actual"] = result
