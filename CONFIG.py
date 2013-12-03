@@ -3,21 +3,22 @@ File: CONFIG.py
 ---------------
 Contains configuration parameters for the grading tool.
 """
+import secret
 
 # Database username.
-USER = "angela"
+USER = secret.USER
 
 # Database password.
-PASS = "cs121"
+PASS = secret.PASS
 
 # Database host.
-HOST = "sloppy.cs.caltech.edu"
+HOST = secret.HOST
 
 # Database port.
-PORT = "4306"
+PORT = secret.PORT
 
 # Database name.
-DATABASE = "angela_db"
+DATABASE = secret.DATABASE
 
 # Default database connection timeout (in seconds).
 CONNECTION_TIMEOUT = 1
