@@ -69,10 +69,11 @@ if __name__ == "__main__":
   parser.add_argument("--assignment")
   parser.add_argument("--files", nargs="+")
   parser.add_argument("--students", nargs="+")
+  parser.add_argument("--output")
   parser.add_argument("--after")
   args = parser.parse_args()
-  (assignment, files, students, after) = \
-    (args.assignment, args.files, args.students, args.after)
+  (assignment, files, students, output_type, after) = \
+    (args.assignment, args.files, args.students, args.output, args.after)
 
   # If the assignment argument isn't specified, print usage statement.
   if assignment is None:
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     graded_student = stylechecker.deduct(graded_student)
 
   # Output the graded output.
-  f = iotools.output(o.jsonify(), specs)
+  f = iotools.output(o.jsonify(), specs, output_type)
   print "\n\n==== RESULTS: " + f.name
 
   print "\n\n=========================END GRADING=========================\n\n"

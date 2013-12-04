@@ -39,7 +39,7 @@ def get_students(assignment, after=None):
   return [f.replace("-" + assignment, "") for f in files]
 
 
-def output(json, specs):
+def output(json, specs, output_type):
   """
   Function: output
   ----------------
@@ -47,17 +47,26 @@ def output(json, specs):
 
   json: The graded output.
   specs: The assignment specs.
+  output_type: The output type. Can be "html", "md", or "json". If nothing is
+               specified, outputs as a HTML file.
   returns: The file where the output was written to.
   """
   path = specs["assignment"] + "/_results/"
   if not os.path.exists(path):
     os.mkdir(path, 0644)
-    # TODO .html or .md
-  f = open(path + "index.html", "w")
-  #f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".html", "w")
 
-  # Format the output nicely before writing it.
-  f.write(formatter.html(json, specs)) # TODO let user be able to specify md or html
+  # Formats the output nicely before writing it to file, if specified.
+  f = None
+  if output_type == "md":
+    f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
+    f.write(formatter.markdown(json, specs))
+  elif output_type == "json":
+    f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".json", "w")
+    f.write(json)
+  else:
+    f = open(path + "index.html", "w")
+    f.write(formatter.html(json, specs))
+
   f.close()
   return f
 

@@ -142,8 +142,7 @@ def html_student(student, specs):
         for error in errors:
           o.write("<li>" + error + "</li>\n")
         o.write("</ul>")
-      
-      # TODO other things
+
       o.write("</div>")
 
     o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
@@ -227,7 +226,7 @@ def markdown(output, specs):
         # if it is one to output for (see TYPE_OUTPUTS in the CONFIG file).
         for (j, test) in enumerate(problem["tests"]):
           test_specs = problem_specs["tests"][j]
-          if test["type"] in TYPE_OUTPUTS and not test["success"] and \
+          if test.get("type") in TYPE_OUTPUTS and not test["success"] and \
             "expected" in test:
             write("**`TEST FAILED`** (Lost " + str(test_specs["points"]) + \
               " points)")
