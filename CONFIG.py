@@ -21,7 +21,7 @@ PORT = secret.PORT
 DATABASE = secret.DATABASE
 
 # Default database connection timeout (in seconds).
-CONNECTION_TIMEOUT = 1
+CONNECTION_TIMEOUT = 5
 
 # Maximum timeout for any query.
 MAX_TIMEOUT = 600

@@ -1,4 +1,4 @@
-from CONFIG import SQL_DEDUCTIONS
+from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
 import dbtools
 import iotools
 import mysql.connector
@@ -38,6 +38,8 @@ class Grade:
       return self.sp
     elif test_type == "function":
       return self.function
+    elif test_type == "insert":
+      return self.insert
     # TODO
 
 
@@ -106,10 +108,10 @@ class Grade:
 
       # TODO database disconnected or their query timedout
       except mysql.connector.errors.InterfaceError as e:
-        cursor = self.db.get_db_connection().cursor()
         graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
           "the query is invalid and failed or query timed out)")
         lost_points += test["points"]
+        cursor = self.db.get_db_connection(MAX_TIMEOUT).cursor()
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       # If there was a MySQL error, print out the error that occurred and the
@@ -117,6 +119,7 @@ class Grade:
       except mysql.connector.errors.Error as e:
         graded["errors"].append("MYSQL ERROR " + str(e))
         lost_points += test["points"]
+        self.db.get_db_connection(MAX_TIMEOUT)
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       got_points -= lost_points
@@ -127,6 +130,7 @@ class Grade:
 
     # Run problem teardown queries.
     if problem.get("teardown"):
+      self.db.get_db_connection(MAX_TIMEOUT)
       for q in problem["teardown"]: self.db.run_query(q)
 
     # Get the total number of points received.
@@ -214,7 +218,7 @@ class Grade:
       actual.results = [tuple(sorted(x)) for x in actual.results]
 
     # Compare the student's code to the results.
-    if expected.results != actual.results:
+    if not equals(expected.results, actual.results):
       graded["expected"] = expected.output
       graded["actual"] = actual.output
       deductions = test_points
@@ -231,7 +235,7 @@ class Grade:
       if test.get("column-order"):
         eresults = [tuple(sorted(x)) for x in expected.results]
         aresults = [tuple(sorted(x)) for x in actual.results]
-        if eresults == aresults:
+        if equals(eresults, aresults):
           deductions = 0
           graded["deductions"].append("columnorder")
 
@@ -259,8 +263,9 @@ class Grade:
 
     test: The test to run.
     response: The student's response.
+    graded: The graded test output.
 
-    returns: True if the test passed, False otherwise.
+    returns: The number of points to deduct.
     """
     # TODO check for drop tables?
     # TODO check for comments?
@@ -268,6 +273,22 @@ class Grade:
     graded["success"] = True
     # TODO create table statements are just printed.
     return 0
+
+
+  def insert(self, test, response, graded):
+    """
+    Function: insert
+    ----------------
+    Tests an insert statement and sees if the student's query produces the
+    same diff as the solution query.
+
+    test: The test to run.
+    response: The student's response.
+    graded: The graded test output.
+
+    returns: The number of points to deduct.
+    """
+    pass
 
 
   def sp(self, test, response, graded):
@@ -328,3 +349,13 @@ class Grade:
     else:
       graded["success"] = True
       return 0
+
+
+def equals(lst1, lst2):
+  """
+  Function: equals
+  ----------------
+  Compares two lists of tuples to see if their contents are equal.
+  """
+  return [tuple(str(x).lower() for x in y) for y in lst1] == \
+    [tuple(str(x).lower() for x in y) for y in lst2]

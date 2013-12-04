@@ -232,7 +232,8 @@ def get_diffs(lst1, lst2):
 
   # Get the diffs.
   (one, two) = ([], [])
-  diff = difflib.ndiff(lst1, lst2, is_line_junk)
+  diff = difflib.ndiff([x.lower() for x in lst1], \
+    [x.lower() for x in lst2], is_line_junk)
 
   # True if last added to "one".
   last_added = True
