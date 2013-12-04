@@ -42,7 +42,7 @@ class DBTools:
     -----------------------------
     Close the database connection (only if it is already open).
     """
-    if self.db.is_connected():
+    if self.db and self.db.is_connected():
       self.cursor.close()
       self.db.close()
 
@@ -67,24 +67,25 @@ class DBTools:
     timeout: The connection timeout.
     returns: A database connection object.
     """
-    # If the timeout is the same as before, then don't change anything.
-    if timeout == self.timeout:
-      return self.db
+    print "current timeout:", self.timeout
+    print "desired timeout:", timeout
+    if self.db and self.db.is_connected():
+      # If timeout isn't specified, check if we're already at the default.
+      if timeout is None and self.timeout == CONNECTION_TIMEOUT:
+        print "no change", CONNECTION_TIMEOUT
+        return self.db
+      # If the timeout is the same as before, then don't change anything.
+      if timeout is not None and timeout == self.timeout:
+        print "no change"
+        return self.db
 
-    # If a timeout is specified, close the old connection and make a new one
-    # with the new timeout settings.
-    if self.db and timeout is not None:
-      self.close_db_connection()
-    # If already connected, just return the current connection.
-    elif self.db and self.db.is_connected():
-      return self.db
-
-    # Create a new connection if haven't connected yet or disconnected.
-    timeout = timeout = timeout or CONNECTION_TIMEOUT
+    # Close any old connections and make another one with the new setting.
+    self.close_db_connection()
+    self.timeout = timeout or CONNECTION_TIMEOUT
+    print "changed timeout:", self.timeout
     self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-      database=DATABASE, port=PORT, connection_timeout=timeout)
+      database=DATABASE, port=PORT, connection_timeout=self.timeout)
     self.cursor = self.db.cursor()
-    self.timeout = timeout
     return self.db
 
   # ----------------------------- Query Utilities ---------------------------- #
@@ -137,6 +138,7 @@ class DBTools:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
+      print "execut5ing: ", sql
       self.cursor.execute(sql)
 
 

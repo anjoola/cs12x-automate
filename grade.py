@@ -1,4 +1,5 @@
 from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
+from cache import Cache
 import dbtools
 import iotools
 import mysql.connector
@@ -18,6 +19,9 @@ class Grade:
 
     # The database tool object used to interact with the database.
     self.db = db
+
+    # TODO
+    self.cache = Cache()
 
 
   def get_function(self, test):
@@ -193,8 +197,8 @@ class Grade:
     test_points = test["points"]
 
     # TODO make sure they aren't doing SQL injection
-    expected = self.db.run_query(test["query"], setup=test.get("setup"), \
-      teardown=test.get("teardown"))
+    expected = self.cache.get(self.db.run_query, test["query"], \
+      setup=test.get("setup"), teardown=test.get("teardown"))
     try:
       actual = self.db.run_query(response.sql, setup=test.get("setup"), \
         teardown=test.get("teardown"))
@@ -307,8 +311,11 @@ class Grade:
     # Get the table before and after the stored procedure is called.
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.run_query(table_sql)
-    if test.get("run-query"):
-      self.db.run_query(response.sql)
+
+    # Setup queries.
+    if test.get("run-query"): self.db.run_query(response.sql)
+    if test.get("setup"): self.db.run_query(test["setup"])
+
     after = self.db.run_query(table_sql, setup=test["query"], 
       teardown=test.get("teardown"))
 
