@@ -34,9 +34,15 @@ class DBTools:
     """
     Function: close_db_connection
     -----------------------------
-    Close the database connection (only if it is already open).
+    Close the database connection (only if it is already open) and any running
+    queries.
     """
     if self.db and self.db.is_connected():
+      try:
+        thread_id = self.db.connection_id
+        self.db.cmd_process_kill(thread_id)
+      except mysql.connector.errors.DatabaseError:
+        pass
       self.cursor.close()
       self.db.close()
 
@@ -133,6 +139,7 @@ class DBTools:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
+      [row for row in self.cursor]
       print "execut5ing: ", sql
       self.cursor.execute(sql)
 

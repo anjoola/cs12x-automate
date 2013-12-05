@@ -2,6 +2,7 @@ import argparse
 from CONFIG import MAX_TIMEOUT
 import dbtools
 from dbtools import DBTools
+import formatter
 from grade import Grade
 import iotools
 import mysql.connector
@@ -42,6 +43,9 @@ def grade():
     graded_student["got_points"] = grade_student(db, student, graded_student)
     # Apply style deductions.
     graded_student = stylechecker.deduct(graded_student)
+
+    # Output the results for this student.
+    formatter.html_student(graded_student, specs)
 
   # Output the results to file.
   f = iotools.output(o.jsonify(), specs, output_type)

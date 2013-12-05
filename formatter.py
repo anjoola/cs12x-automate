@@ -9,6 +9,7 @@ from cStringIO import StringIO
 from CONFIG import TYPE_OUTPUTS
 import json
 from testoutput import TestOutput
+import os
 
 def e(text):
   """
@@ -16,7 +17,7 @@ def e(text):
   -------------
   Escapes text so it can be outputted as HTML.
   """
-  return cgi.escape(text)
+  return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
 def html(output, specs):
@@ -36,15 +37,17 @@ def html(output, specs):
   o.write("\n<input type='hidden' id='assignment' value='" + \
     specs["assignment"] + "'>")
 
-  # Print out the list of students to the list.
+  # Print out the list of students to the list. Finds this by searching the
+  # directory (since we may run the automation tool mutliple times on different
+  # sets of students).
   o.write("<div id='left'>\n<div id='students'>Students</div><br>")
-  for student in output["students"]:
-    name = student["name"]
-    o.write("<a onclick='changeStudent(\"" + name + "\")'>" + name + "</a><br>")
-
-    # Actually write out those student's files. TODO html needs to be able
-    # to get this itself.
-    html_student(student, specs)
+  found_students = []
+  for f in os.listdir(specs["assignment"] + "/_results/files/"):
+    student = f.split("-")[0]
+    if student not in found_students:
+      found_students.append(student)
+      o.write("<a onclick='changeStudent(\"" + student + "\")'>" + student + \
+        "</a><br>")
   o.write("</div>")
 
   # Graded output and actual files.

@@ -218,7 +218,7 @@ def e(text):
   -----------
   Escapes text so it can be outputted as HTML.
   """
-  return cgi.escape(text)
+  return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
 def get_diffs(lst1, lst2):
