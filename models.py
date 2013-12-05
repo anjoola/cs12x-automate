@@ -9,13 +9,13 @@ class Response:
   Represents a student's response to a particular homework problem.
   """
   def __init__(self):
-    # Their comments (if required).
+    # Their comments.
     self.comments = ""
 
     # The SQL for that problem.
     self.sql = ""
 
-    # The results of the query (if required).
+    # The results of the query that they attached.
     self.results = ""
 
   def __repr__(self):

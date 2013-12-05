@@ -20,7 +20,8 @@ class Grade:
     # The database tool object used to interact with the database.
     self.db = db
 
-    # TODO
+    # Cache to store results of query runs to avoid having to run the same
+    # query multiple times.
     self.cache = Cache()
 
 
@@ -44,10 +45,10 @@ class Grade:
       return self.function
     elif test_type == "insert":
       return self.insert
-    # TODO
+    # TODO add other functions?
 
 
-  def grade(self, problem, response, graded, cursor, responses):
+  def grade(self, problem, response, graded, file_responses):
     """
     Function: grade
     ---------------
@@ -57,9 +58,8 @@ class Grade:
     problem: The problem specification.
     response: The student's response.
     graded: The graded problem output.
-    cursor: The database cursor.
-    responses: The entire list of responses (used for certain tests like
-               stored procedure tests.
+    file_responses: The entire list of responses (used for certain tests like
+                    stored procedure tests).
 
     returns: The number of points received for this problem.
     """
@@ -77,14 +77,15 @@ class Grade:
       # Run dependent queries (which is the student's response from another
       # question).
       if problem.get("dependencies"):
-        for problem_num in problem["dependencies"]:
-          self.db.run_query(responses[problem_num].sql)
+        for dep in problem["dependencies"]:
+          [f, problem_num] = dep.split("|")
+          self.db.run_query(file_responses[f][0][problem_num].sql)
       # Run setup queries.
       if problem.get("setup"):
         for q in problem["setup"]: self.db.run_query(q)
 
     except mysql.connector.errors.ProgrammingError as e:
-      graded["errors"].append("Dependent query had an exception. Most  " + \
+      graded["errors"].append("Dependent query had an exception. Most " + \
         "likely all tests after this one will fail | MYSQL ERROR " + \
         str(e))
       return 0
@@ -112,10 +113,11 @@ class Grade:
 
       # TODO database disconnected or their query timedout
       except mysql.connector.errors.InterfaceError as e:
+        print "error: ", e
         graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
           "the query is invalid and failed or query timed out)")
         lost_points += test["points"]
-        cursor = self.db.get_db_connection(MAX_TIMEOUT).cursor()
+        self.db.get_db_connection(MAX_TIMEOUT)
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       # If there was a MySQL error, print out the error that occurred and the
@@ -205,6 +207,7 @@ class Grade:
     except mysql.connector.errors.ProgrammingError as e:
       raise
     """
+    # TODO
     # Run the teardown no matter what.
     finally:
       self.db.run_query(test.get("teardown"))
@@ -274,7 +277,7 @@ class Grade:
     # TODO check for drop tables?
     # TODO check for comments?
 
-    graded["success"] = True
+    graded["success"] = "UNDETERMINED"
     # TODO create table statements are just printed.
     return 0
 
@@ -292,7 +295,26 @@ class Grade:
 
     returns: The number of points to deduct.
     """
-    pass
+    table_sql = "SELECT * FROM " + test["table"]
+
+    # Compare the expected rows inserted versus the actual.
+    self.cache.get(self.db.run_query, test["query"], \
+      setup=test.get("setup"), teardown=test.get("teardown"))
+    expected = self.db.run_query(table_sql)
+
+    self.db.run_query("DELETE FROM " + test["table"])
+    self.db.run_query(response.sql, setup=test.get("setup"), \
+      teardown=test.get("teardown"))
+    actual = self.db.run_query(table_sql)
+
+    # If the results are equal, then then the test passed.
+    if equals(sorted(expected.results), sorted(actual.results)):
+      graded["success"] = True
+      return 0
+
+    else:
+      print "\n\n\n\n\nNOT EQUAL"
+      return test["points"]
 
 
   def sp(self, test, response, graded):
@@ -324,7 +346,7 @@ class Grade:
     adds = list(set(after.results) - set(before.results))
     graded["adds"] = ("" if len(adds) == 0 else self.db.prettyprint(adds))
 
-    graded["success"] = True
+    graded["success"] = "UNDETERMINED"
     # TODO how to handle deductions?
     return 0
 
@@ -358,11 +380,13 @@ class Grade:
       return 0
 
 
+# ----------------------------- Utility Functions ---------------------------- #
+
 def equals(lst1, lst2):
   """
   Function: equals
   ----------------
   Compares two lists of tuples to see if their contents are equal.
   """
-  return [tuple(str(x).lower() for x in y) for y in lst1] == \
-    [tuple(str(x).lower() for x in y) for y in lst2]
+  return [tuple(unicode(x).lower() for x in y) for y in lst1] == \
+    [tuple(unicode(x).lower() for x in y) for y in lst2]

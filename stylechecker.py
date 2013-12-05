@@ -22,7 +22,7 @@ def check(f, specs):
   raises: StyleError if the file is not in the right format and cannot be
           parsed.
   returns: A list of style violations (possible violations are the keys of the
-           STYLE_DEDUCTIONS dictionary.
+           STYLE_DEDUCTIONS dictionary).
   """
   
   # raise StyleError

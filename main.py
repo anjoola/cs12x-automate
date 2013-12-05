@@ -1,5 +1,6 @@
 import argparse
 from CONFIG import MAX_TIMEOUT
+import dbtools
 from dbtools import DBTools
 from grade import Grade
 import iotools
@@ -10,57 +11,122 @@ from stylechecker import StyleError
 import stylechecker
 import sys
 
-def grade(filename, student, graded_student):
+def grade():
   """
   Function: grade
   ---------------
-  Grades a student's submission for a particular file in the assignment.
+  Grades all the students and files.
+  """
+  print "\n\n========================START GRADING========================" ,
 
-  specs: The specifications for the assignment.
-  filename: The name of the file to grade.
-  student: The student to grade.
-  graded_student: The graded output for that student.
+  # The graded output.
+  o = GradedOutput(specs)
+  # Start up the connection with the database.
+  db = DBTools()
+  db.get_db_connection(MAX_TIMEOUT)
 
-  returns: The total points the student got for this file.
+  # Source files needed prior to grading and run setup queries.
+  if specs.get("dependencies"):
+    db.source_files(assignment, specs["dependencies"])
+  if specs.get("import"):
+    dbtools.import_files(assignment, specs["import"])
+  if specs.get("setup"):
+    for q in specs["setup"]: db.run_query(q)
+
+  # Grade each student, and grade each file for each student.
+  for student in students:
+    got_points = 0
+    graded_student = {"name": student, "files": [], "got_points": 0}
+    o.fields["students"].append(graded_student)
+
+    graded_student["got_points"] = grade_student(db, student, graded_student)
+    # Apply style deductions.
+    graded_student = stylechecker.deduct(graded_student)
+
+  # Output the results to file.
+  f = iotools.output(o.jsonify(), specs, output_type)
+  print "\n\n==== RESULTS: " + f.name
+
+  print "\n\n=========================END GRADING=========================\n\n"
+
+  # Run teardown queries.
+  if specs.get("teardown"):
+    for q in specs["teardown"]: db.run_query(q)
+
+  # Close connection with the database
+  db.close_db_connection()
+
+
+def grade_student(db, student, graded_student):
+  """
+  Function: grade_student
+  -----------------------
+  Grades a particular student.
+
+  dh: The database.
+  student: The student's name.
+  graded_student: A dictionary containing the graded results for that student.
+
+  returns: The number of points this student got.
   """
   # The grading tool.
   g = Grade(specs, db)
-  graded_file = {"filename": filename, "problems": [], "errors": []}
-  graded_student["files"].append(graded_file)
-  got_points = 0
+  # Dictionary containing files and a tuple containing the student's responses
+  # for each file and the graded file.
+  file_responses = {}
 
-  try:
-    f = open(assignment + "/" + student + "-" + assignment + \
-      "/" + filename, "r")
-    # Run their files through the style-checker to make sure it is valid and
-    # take points off for violations.
-    graded_student["style-deductions"] = stylechecker.check(f, specs)
-    responses = iotools.parse_file(f)
-    f.close()
+  # Parse all of the responses first before grading.
+  print "\n\n" + student + ":"
+  for filename in files:
+    graded_file = {"filename": filename, "problems": [], "errors": []}
+    graded_student["files"].append(graded_file)
+
+    try:
+      f = open(assignment + "/students/" + student + "-" + assignment + \
+        "/" + filename, "r")
+      # Run their files through the style-checker to make sure it is valid and
+      # take points off for violations.
+      graded_student["style-deductions"] = stylechecker.check(f, specs)
+      responses = iotools.parse_file(f)
+      f.close()
+
+      # Add to the dictionary to process later.
+      file_responses[filename] = (responses, graded_file)
+
+    # If the file has a style error (and cannot be parsed), they get 0 points.
+    except StyleError:
+      graded_file["errors"].append("File does not follow the style guide.")
+
+    # If the file does not exist, then they get 0 points.
+    except IOError:
+      graded_file["errors"].append("File does not exist.")
+
+  # Grade the files (that exist) for this student.
+  total_points = 0
+  for f in files:
+    # Skip this file if it doesn't exist.
+    if f not in file_responses.keys():
+      continue
+
+    print "- " + f + ":" ,
+    (responses, graded_file) = file_responses[f]
+    got_points = 0
 
     # Grade each problem in the assignment.
-    problems = specs[filename]
+    problems = specs[f]
     for problem in problems:
       graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
         "got_points": 0}
       graded_file["problems"].append(graded_problem)
       got_points += g.grade(problem, responses[problem["number"]], \
-        graded_problem, db.get_cursor(), responses)
+        graded_problem, file_responses)
       print ".",
 
-  # If the file has a style error (and cannot be parsed), they get 0 points.
-  except StyleError:
-    graded_File["errors"].append("File does not follow the style guide.")
+    graded_file["got_points"] = got_points
+    total_points += 0
+    print "\n"
 
-  # If the file does not exist, then they get 0 points.
-  except IOError:
-    graded_file["errors"].append("File does not exist.")
-
-  #except Exception as e:
-  #  print "RUN-TIME EXCEPTION: ", e
-
-  graded_file["got_points"] = got_points
-  return got_points
+  return total_points
 
 
 if __name__ == "__main__":
@@ -92,48 +158,4 @@ if __name__ == "__main__":
   if students is None or students[0] == "*":
     students = iotools.get_students(assignment, after)
 
-  print "\n\n========================START GRADING========================" ,
-
-  # The graded output.
-  o = GradedOutput(specs)
-  # Start up the connection with the database.
-  db = DBTools()
-  db.get_db_connection(MAX_TIMEOUT)
-
-  # Source files needed prior to grading and run setup queries.
-  if specs.get("dependencies"):
-    db.source_files(assignment, specs["dependencies"])
-  if specs.get("import"):
-    dbtools.import_files(assignment, specs["import"])
-  if specs.get("setup"):
-    for q in specs["setup"]: db.run_query(q)
-
-  # Grade each student, and grade each file for each student.
-  for student in students:
-    got_points = 0
-    graded_student = {"name": student, "files": [], "got_points": 0}
-    o.fields["students"].append(graded_student)
-
-    # Output stuff to the command-line so we know the progress.
-    print "\n\n" + student + ":"
-    for f in files:
-      print "- " + f + ":" ,
-      got_points += grade(f, student, graded_student)
-      print "\n"
-
-    graded_student["got_points"] = got_points
-    # Apply style deductions.
-    graded_student = stylechecker.deduct(graded_student)
-
-  # Output the graded output.
-  f = iotools.output(o.jsonify(), specs, output_type)
-  print "\n\n==== RESULTS: " + f.name
-
-  print "\n\n=========================END GRADING=========================\n\n"
-
-  # Run teardown queries.
-  if specs.get("teardown"):
-    for q in specs["teardown"]: db.run_query(q)
-
-  # Close connection with the database
-  db.close_db_connection()
+  grade()

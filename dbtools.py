@@ -1,9 +1,3 @@
-"""
-Module: dbtools
----------------
-Contains helper methods involving the database and queries.
-"""
-
 import codecs
 from cStringIO import StringIO
 from CONFIG import *
@@ -84,7 +78,8 @@ class DBTools:
     self.timeout = timeout or CONNECTION_TIMEOUT
     print "changed timeout:", self.timeout
     self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-      database=DATABASE, port=PORT, connection_timeout=self.timeout)
+      database=DATABASE, port=PORT, connection_timeout=self.timeout, \
+      autocommit=True)
     self.cursor = self.db.cursor()
     return self.db
 
