@@ -12,7 +12,8 @@
       "points": 0,                  # int -> Number of points
       "show-results": false,        # bool -> true if they have to attach their results
       "dependencies": [],           # [string] -> A list of problem numbers this is dependent on.
-                                    #             Runs the student's responses to those problems first.
+                                    #             Runs the student's responses to those problems first. Format is
+                                                  [filename]|[problem number].
       "setup": [],                  # [string] -> List of queries to run prior to grading this problem.
       "teardown": [],               # [string] -> List of queries to run after grading this problem.
       "keywords": [],               # [string] -> List of keywords to check for

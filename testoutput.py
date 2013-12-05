@@ -29,6 +29,8 @@ class TestOutput:
       return self.select
     elif test_type == "create":
       return self.create
+    elif test_type == "insert":
+      return self.insert
     elif test_type == "stored-procedure":
       return self.sp
     elif test_type == "function":
@@ -58,7 +60,9 @@ class TestOutput:
         o.write("<b>Tests</b>\n<ul>\n")
 
       # General test details.
-      if test["success"]:
+      if test["success"] == "UNDETERMINED":
+        o.write("<li><div class='uncertain'>UNDETERMINED")
+      elif test["success"]:
         o.write("<li><div class='passed'>PASSED")
       else:
         o.write("<li><div class='failed'>FAILED")
@@ -131,6 +135,15 @@ class TestOutput:
      TODO
      """
      pass
+
+
+  def insert(self, test, specs):
+    """
+    Function: insert
+    ----------------
+    Outputs the result of an INSERT test. TODO
+    """
+    pass
 
 
   def sp(self, test, specs):

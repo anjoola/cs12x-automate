@@ -1,0 +1,164 @@
+/*************************** Standard HTML Elements ***************************/
+a {
+  color: #009ADB;
+}
+a:hover {
+  color: #000000;
+  cursor: pointer;
+}
+h3 {
+  color: #1B449E;
+  margin-bottom: 10px;
+}
+h3:visited {
+  color: #eeeeee;
+}
+html {
+  background: #efefef;
+  font-family: Trebuchet MS, Arial, sans-serif;
+}
+pre {
+  background: #efefef;
+  border: 1px solid #aaaaaa;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 15px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
+td, tr {
+  vertical-align: top;
+}
+ul {
+  margin-top: 0px;
+}
+
+/***************************** Main HTML Elements *****************************/
+
+#iframe-middle {
+  background: white;
+  border: 0px;
+  height: 100%;
+  overflow: auto;
+  width: 100%;
+}
+#iframe-right {
+  background: white;
+  border: 0px;
+  height: 100%;
+  width: 100%;
+}
+#left {
+  float: left;
+  height: 100%;
+  width: 100px;
+}
+#middle {
+  background: #96D2FA;
+  border: 1px solid black;
+  float: left;
+  height: 100%;
+  line-height: 175%;
+  overflow-y: hidden;
+  width: 640px;
+}
+#right {
+  background: #96D2FA;
+  border: 1px solid black;
+  float: left;
+  height: 100%;
+  line-height: 175%;
+  margin-left: -1px;
+  overflow-y: hidden;
+  width: 500px;
+}
+#students {
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/*********************************** Others ***********************************/
+
+.borderless {
+  vertical-align: top;
+}
+.failed {
+  color: red;
+  display: inline;
+  font-weight: bold;
+}
+.label {
+  background: #FFFFFF;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px;
+  padding-top: 2px;
+}
+.label-active {
+  background: #FFD675;
+}
+.label:hover {
+  background: #FFD675;
+}
+.links {
+  margin: 3px;
+  margin-top: 0px;
+}
+.name {
+  display: inline;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 5px;
+}
+.passed {
+  color: green;
+  display: inline;
+  font-weight: bold;
+}
+.resizable {
+  overflow: scroll;
+  resize: horizontal;
+}
+.results {
+  background: #fefefe;
+  border: 1px solid #cccccc;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 15px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
+.student-page {
+  background: white;
+  padding: 8px;
+}
+.test-specs {
+  background: #efefef;
+  border: 1px solid #aaaaaa;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 7px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
+.title {
+  background: #297CC4;
+  border-bottom: 1px solid black;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+}
+.uncertain {
+  color: orange;
+  display: inline;
+  font-weight: bold;
+}

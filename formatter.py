@@ -31,9 +31,9 @@ def html(output, specs):
   """
   output = json.loads(output)
   o = StringIO()
-  o.write("<link rel='stylesheet' type='text/css' href='css.css'>\n")
-  o.write("<script type='text/javascript' src='javascript.js'></script>\n")
-  o.write("<input type='hidden' id='assignment' value='" + \
+  o.write("<link rel='stylesheet' type='text/css' href='style/css.css'>\n")
+  o.write("<script type='text/javascript' src='style/javascript.js'></script>")
+  o.write("\n<input type='hidden' id='assignment' value='" + \
     specs["assignment"] + "'>")
 
   # Print out the list of students to the list.
@@ -63,7 +63,7 @@ def html(output, specs):
       o.write("<div class='label' ")
     o.write("onclick='changeGradedFile(this, \"" + name + "\")'>" + name + \
       "</div>\n")
-  o.write("</div>\n<iframe src='" + first_student + "-" + first_file + \
+  o.write("</div>\n<iframe src='files/" + first_student + "-" + first_file + \
     ".html' name='middle' id='iframe-middle'></iframe></div>\n\n")
 
   # Raw files.
@@ -79,7 +79,8 @@ def html(output, specs):
     o.write("onclick='changeRawFile(this, \"" + name + "\")'>" + name + \
       "</div>\n")
   # Get the first file for the first student.
-  f = "../" + first_student + "-" + specs["assignment"] + "/" + first_file
+  f = "../students/" + first_student + "-" + specs["assignment"] + "/" + \
+    first_file
   o.write("</div>\n<iframe src='" + f + "' name='right' " + \
     "id='iframe-right'></iframe></div>")
 
@@ -99,8 +100,9 @@ def html_student(student, specs):
   # Create output per student, per file. Files are named student-file.html.
   for f in student["files"]:
     o = StringIO()
-    o.write("<link rel='stylesheet' type='text/css' href='css.css'>\n")
-    o.write("<script type='text/javascript' src='javascript.js'></script>\n")
+    o.write("<link rel='stylesheet' type='text/css' href='../style/css.css'>\n")
+    o.write("<script type='text/javascript' src='../style/javascript.js'>" + \
+      "</script>\n")
     o.write("<html class='student-page'>")
 
     # Print out all errors that have occurred with the file.
@@ -149,7 +151,7 @@ def html_student(student, specs):
     o.write("<br><br></html>")
 
     filename = student["name"] + "-" + f["filename"] + ".html"
-    output = open(specs["assignment"] + "/_results/" + filename, "w")
+    output = open(specs["assignment"] + "/_results/files/" + filename, "w")
     output.write(o.getvalue())
     output.close()
 

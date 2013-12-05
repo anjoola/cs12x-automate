@@ -55,6 +55,9 @@ def output(json, specs, output_type):
   if not os.path.exists(path):
     os.mkdir(path, 0644)
 
+  if not os.path.exists(specs["assignment"] + "/_results/files/"):
+    os.mkdir(specs["assignment"] + "/_results/files/", 0644)
+
   # Formats the output nicely before writing it to file, if specified.
   f = None
   if output_type == "md":
