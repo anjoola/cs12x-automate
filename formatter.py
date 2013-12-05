@@ -120,6 +120,12 @@ def html_student(student, specs):
         str(problem_specs["points"]) + " Points)</h3></a>\n")
 
       o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
+      # If the student did not submit an answer for this problem.
+      if problem.get("notexist"):
+        o.write("<i>Did not submit a response for this question!</i>")
+        o.write("</div>")
+        continue
+
       # Print out comments and submitted results if the specs ask for it.
       if problem_specs.get("comments") and problem:
         o.write("<b>Comments</b>")

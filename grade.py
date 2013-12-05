@@ -215,14 +215,14 @@ class Grade:
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
     if not test.get("ordered"):
-      expected.results = sorted(expected.results)
-      actual.results = sorted(actual.results)
+      expected.results = set(expected.results)
+      actual.results = set(actual.results)
 
     # If we don't need to check that the columns are ordered in the same way,
     # then sort each tuple for easier checking.
     if not test.get("column-order"):
-      expected.results = [tuple(sorted(x)) for x in expected.results]
-      actual.results = [tuple(sorted(x)) for x in actual.results]
+      expected.results = [set(x) for x in expected.results]
+      actual.results = [set(x) for x in actual.results]
 
     # Compare the student's code to the results.
     if not equals(expected.results, actual.results):
@@ -232,16 +232,16 @@ class Grade:
 
       # Check to see if they forgot to ORDER BY.
       if test.get("ordered"):
-        eresults = sorted(expected.results)
-        aresults = sorted(actual.results)
+        eresults = set(expected.results)
+        aresults = set(actual.results)
         if aresults == eresults:
           deductions = 0
           graded["deductions"].append("orderby")
 
       # See if they chose the wrong column order.
       if test.get("column-order"):
-        eresults = [tuple(sorted(x)) for x in expected.results]
-        aresults = [tuple(sorted(x)) for x in actual.results]
+        eresults = [set(x) for x in expected.results]
+        aresults = [set(x) for x in actual.results]
         if equals(eresults, aresults):
           deductions = 0
           graded["deductions"].append("columnorder")
@@ -308,7 +308,7 @@ class Grade:
     actual = self.db.run_query(table_sql)
 
     # If the results are equal, then then the test passed.
-    if equals(sorted(expected.results), sorted(actual.results)):
+    if equals(set(expected.results), set(actual.results)):
       graded["success"] = True
       return 0
 

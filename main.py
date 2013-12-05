@@ -118,8 +118,12 @@ def grade_student(db, student, graded_student):
       graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
         "got_points": 0}
       graded_file["problems"].append(graded_problem)
-      got_points += g.grade(problem, responses[problem["number"]], \
-        graded_problem, file_responses)
+      try:
+        got_points += g.grade(problem, responses[problem["number"]], \
+          graded_problem, file_responses)
+      # If they didn't do a problem.
+      except KeyError:
+        graded_problem["notexist"] = True
       print ".",
 
     graded_file["got_points"] = got_points
