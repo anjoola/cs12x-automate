@@ -5,6 +5,8 @@ import mysql.connector
 import re
 import sqlparse
 import subprocess
+import multiprocessing
+from time import sleep
 import prettytable
 from models import Result
 
@@ -27,7 +29,9 @@ class DBTools:
 
     # The current connection timeout.
     self.timeout = CONNECTION_TIMEOUT
-
+    
+    self.stop_timer = False
+    self.stop_query = False
   # --------------------------- Database Utilities --------------------------- #
 
   def close_db_connection(self):
@@ -37,14 +41,24 @@ class DBTools:
     Close the database connection (only if it is already open) and any running
     queries.
     """
+    if not self.db:
+      return
+
+    try:
+      self.kill_query()
+      self.cursor.close()
+      self.db.close()
+    except Exception:
+      pass
+
+
+  def kill_query(self):
     if self.db and self.db.is_connected():
       try:
         thread_id = self.db.connection_id
         self.db.cmd_process_kill(thread_id)
       except mysql.connector.errors.DatabaseError:
         pass
-      self.cursor.close()
-      self.db.close()
 
 
   def get_cursor(self):
@@ -56,7 +70,7 @@ class DBTools:
     return self.cursor
 
 
-  def get_db_connection(self, timeout=None):
+  def get_db_connection(self):
     """
     Function: get_db_connection
     ---------------------------
@@ -64,25 +78,11 @@ class DBTools:
     CONNECTION_TIMEOUT specified in the CONFIG file). Closes the old connection
     if there was one.
 
-    timeout: The connection timeout.
     returns: A database connection object.
     """
-    print "current timeout:", self.timeout
-    print "desired timeout:", timeout
     if self.db and self.db.is_connected():
-      # If timeout isn't specified, check if we're already at the default.
-      if timeout is None and self.timeout == CONNECTION_TIMEOUT:
-        print "no change", CONNECTION_TIMEOUT
-        return self.db
-      # If the timeout is the same as before, then don't change anything.
-      if timeout is not None and timeout == self.timeout:
-        print "no change"
-        return self.db
+      return self.db
 
-    # Close any old connections and make another one with the new setting.
-    self.close_db_connection()
-    self.timeout = timeout or CONNECTION_TIMEOUT
-    print "changed timeout:", self.timeout
     self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
       database=DATABASE, port=PORT, connection_timeout=self.timeout, \
       autocommit=True)
@@ -110,8 +110,8 @@ class DBTools:
     of the form (column_name, type, None, None, None, None, null_ok, flags).
     """
     return self.cursor.description
-  
-  
+
+
   def prettyprint(self, results):
     """
     Function: prettyprint
@@ -128,23 +128,76 @@ class DBTools:
     return output.get_string()
 
 
+  def results(self):
+    """
+    Function: results
+    -----------------
+    Get the results of a query.
+
+    returns: A Result object containing the results of the query.
+    """
+    result = Result()
+
+    # Get the query results and schema.
+    rows = [row for row in self.cursor]
+    if len(rows) > 0:
+      result.results = rows
+      result.schema = self.get_schema()
+      result.col_names = self.get_column_names()
+
+      # Pretty-print output.
+      result.output = self.prettyprint(result.results)
+
+    return result
+
+
   def run_multi(self, queries):
     """
     Function: run_multi
     -------------------
     Runs multiple SQL statements at once.
     """
+    sql_list = queries.split("CALL")
     sql_list = sqlparse.split(queries)
+    result = Result()
     for sql in sql_list:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
-      [row for row in self.cursor]
-      print "execut5ing: ", sql
-      self.cursor.execute(sql)
 
+      try:
+        query_thread = multiprocessing.Process(target=self.do_query, args=(sql,))
+        #query_thread = multiprocessing.Process(target=do_query, args=(self.cursor, sql,))
+        query_thread.start()
+        
+        query_thread.join(self.timeout)
+        finished_query = not query_thread.is_alive()
+        if not finished_query:
+          query_thread.terminate()
+          query_thread.join()
+          
+        if not finished_query:
+          raise mysql.connector.errors.ProgrammingError
+        print "terminated thread"
+        
+        # get results of query
+        result.append(self.results())
+      except IOError as e: # TODO rename this
+        # kill the running query
+        print str(e)
+        self.kill_query()
+        print "query killed"
+        raise mysql.connector.errors.ProgrammingError
+                                              
+    return result
 
-  def run_query(self, query, setup=None, teardown=None):
+  def set_timeout(self, timeout):
+    if timeout is None:
+      self.timeout = CONNECTION_TIMEOUT
+    else:
+      self.timeout = timeout
+
+  def run_query(self, query, setup=None, teardown=None, timeout=None):
     """
     Function: run_query
     -------------------
@@ -158,29 +211,27 @@ class DBTools:
     returns: A Result object containing the result, the schema of the results and
              pretty-printed output.
     """
+    if timeout:
+      self.set_timeout(timeout)
+
     # Query setup.
     if setup is not None:
       self.run_multi(setup)
     try:
-      self.run_multi(query)
-
-      # Get the query results and schema.
-      result = Result()
-      result.results = [row for row in self.cursor]
-      result.schema = self.get_schema()
-      result.col_names = self.get_column_names()
-
-      # Pretty-print output.
-      result.output = self.prettyprint(result.results)
-
+      result = self.run_multi(query)
     except mysql.connector.errors.ProgrammingError:
       raise
     # Always run the query teardown.
     finally:
       if teardown is not None:
-        [row for row in self.cursor]
         self.run_multi(teardown)
     return result
+
+  def do_query(self, sql):
+  #def do_query(cursor, sql):
+    print "Executing:", sql
+    #cursor.execute(sql)
+
 
   # ----------------------------- File Utilities ----------------------------- #
 
@@ -254,3 +305,6 @@ def preprocess_sql(sql_file):
     lines.write(line)
 
   return lines.getvalue()
+
+
+

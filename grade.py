@@ -98,7 +98,7 @@ class Grade:
 
       try:
         # Change the connection timeout.
-        self.db.get_db_connection(test.get("timeout"))
+        self.db.set_timeout(test.get("timeout"))
 
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
@@ -117,7 +117,7 @@ class Grade:
         graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
           "the query is invalid and failed or query timed out)")
         lost_points += test["points"]
-        self.db.get_db_connection(MAX_TIMEOUT)
+        self.db.set_timeout(MAX_TIMEOUT)
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       # If there was a MySQL error, print out the error that occurred and the
@@ -125,7 +125,7 @@ class Grade:
       except mysql.connector.errors.Error as e:
         graded["errors"].append("MYSQL ERROR " + str(e))
         lost_points += test["points"]
-        self.db.get_db_connection(MAX_TIMEOUT)
+        self.db.set_timeout(MAX_TIMEOUT)
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       got_points -= lost_points
@@ -136,7 +136,7 @@ class Grade:
 
     # Run problem teardown queries.
     if problem.get("teardown"):
-      self.db.get_db_connection(MAX_TIMEOUT)
+      self.db.set_timeout(MAX_TIMEOUT)
       for q in problem["teardown"]: self.db.run_query(q)
 
     # Get the total number of points received.
@@ -366,8 +366,10 @@ class Grade:
     if test.get("run-query"):
       self.db.run_query(response.sql)
     result = self.db.run_query(test["query"], teardown=test.get("teardown"))
-    result = str(result.results[0][0])
-
+    if result.results and result.results[0]:
+      result = str(result.results[0][0])
+    else: result = ""
+    # TODO
     graded["actual"] = result
     graded["expected"] = test["expected"]
 
