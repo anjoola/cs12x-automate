@@ -24,8 +24,7 @@ def grade():
   o = GradedOutput(specs)
   # Start up the connection with the database.
   db = DBTools()
-  db.set_timeout(MAX_TIMEOUT)
-  db.get_db_connection()
+  db.get_db_connection(MAX_TIMEOUT)
 
   # Source files needed prior to grading and run setup queries.
   if specs.get("dependencies"):

@@ -40,7 +40,7 @@ class Result:
     self.col_names = []
 
     # The actual results.
-    self.results = []
+    self.results = None
 
     # Pretty-formatted output to print.
     self.output = ""
@@ -52,14 +52,6 @@ class Result:
     return "(" + str(self.schema) + ", " + str(self.results) + ", " + \
       self.output + ")"
 
-  def append(self, other):
-    """
-    Function: append
-    ----------------
-    Appends two results together. The schema and column names will be messed up.
-    """
-    self.results += other.results
-    self.output += other.output
 
 
 class GradedOutput:

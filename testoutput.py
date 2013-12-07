@@ -94,11 +94,6 @@ class TestOutput:
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    # Truncate the results if they are too long.
-    # TODO
-    #if len(test["actual"].split("\n")) > 30:
-    #  test["actual"] = "\n".join(test["actual"].split("\n")[0:15] + [u" ... "] + \
-    #    test["actual"].split("\n")[-15:])
     (ediff, adiff) = get_diffs(test["expected"].split("\n"), \
       test["actual"].split("\n"))
 
