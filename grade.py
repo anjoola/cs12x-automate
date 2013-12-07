@@ -366,7 +366,10 @@ class Grade:
     if test.get("run-query"):
       self.db.run_query(response.sql)
     result = self.db.run_query(test["query"], teardown=test.get("teardown"))
-    result = str(result.results[0][0])
+
+    if result.results and result.results[0]:
+      result = str(result.results[0][0])
+    else: result = ""
 
     graded["actual"] = result
     graded["expected"] = test["expected"]

@@ -128,6 +128,27 @@ class DBTools:
     return output.get_string()
 
 
+  def results(self):
+    """
+    Function: results
+    -----------------
+    Get the results of a query.
+    """
+    result = Result()
+
+    # Get the query results and schema.
+    rows = [row for row in self.cursor]
+    if len(rows) > 0:
+      result.results = rows
+      result.schema = self.get_schema()
+      result.col_names = self.get_column_names()
+
+      # Pretty-print output.
+      result.output = self.prettyprint(result.results)
+
+    return result
+
+
   def run_multi(self, queries):
     """
     Function: run_multi
@@ -135,13 +156,16 @@ class DBTools:
     Runs multiple SQL statements at once.
     """
     sql_list = sqlparse.split(queries)
+    result = Result()
     for sql in sql_list:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
-      [row for row in self.cursor]
       print "execut5ing: ", sql
       self.cursor.execute(sql)
+      result.append(self.results())
+
+    return result
 
 
   def run_query(self, query, setup=None, teardown=None):
