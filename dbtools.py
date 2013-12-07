@@ -37,14 +37,25 @@ class DBTools:
     Close the database connection (only if it is already open) and any running
     queries.
     """
+    if self.db:
+      self.kill_query()
+      self.cursor.close()
+      self.db.close()
+
+
+  def kill_query(self):
+    """
+    Function: kill_query
+    --------------------
+    Kills the running query.
+    """
     if self.db and self.db.is_connected():
       try:
         thread_id = self.db.connection_id
         self.db.cmd_process_kill(thread_id)
-      except mysql.connector.errors.DatabaseError:
+      except Exception as e:
+        "error:", str(e) # TODO
         pass
-      self.cursor.close()
-      self.db.close()
 
 
   def get_cursor(self):
@@ -67,22 +78,18 @@ class DBTools:
     timeout: The connection timeout.
     returns: A database connection object.
     """
-    print "current timeout:", self.timeout
-    print "desired timeout:", timeout
     if self.db and self.db.is_connected():
       # If timeout isn't specified, check if we're already at the default.
       if timeout is None and self.timeout == CONNECTION_TIMEOUT:
-        print "no change", CONNECTION_TIMEOUT
         return self.db
       # If the timeout is the same as before, then don't change anything.
       if timeout is not None and timeout == self.timeout:
-        print "no change"
         return self.db
 
+    print "Timeout:", timeout # TODO
     # Close any old connections and make another one with the new setting.
     self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
-    print "changed timeout:", self.timeout
     self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
       database=DATABASE, port=PORT, connection_timeout=self.timeout, \
       autocommit=True)
@@ -155,15 +162,28 @@ class DBTools:
     -------------------
     Runs multiple SQL statements at once.
     """
-    sql_list = sqlparse.split(queries)
+    # Separate the CALL procedure statements.
+    sql_list = queries.split("CALL")
+    if len(sql_list) > 0:
+      sql_list = sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
+    else:
+      sql_list = sqlparse.split(queries)
+
     result = Result()
     for sql in sql_list:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
-      print "execut5ing: ", sql
-      self.cursor.execute(sql)
-      result.append(self.results())
+      print "Executing: ", sql # TODO
+
+      # If it is a CALL procedure statement, execute it differently.
+      if "CALL" in sql:
+        proc = str(sql[sql.find("CALL") + 5:sql.find("(")])
+        args = tuple(sql[sql.find("(") + 1:sql.find(")")].split(","))
+        self.cursor.callproc(proc, args)
+      else:
+        self.cursor.execute(sql)
+        result.append(self.results())
 
     return result
 
@@ -183,26 +203,17 @@ class DBTools:
              pretty-printed output.
     """
     # Query setup.
+    result = Result()
     if setup is not None:
       self.run_multi(setup)
     try:
-      self.run_multi(query)
-
-      # Get the query results and schema.
-      result = Result()
-      result.results = [row for row in self.cursor]
-      result.schema = self.get_schema()
-      result.col_names = self.get_column_names()
-
-      # Pretty-print output.
-      result.output = self.prettyprint(result.results)
+      result = self.run_multi(query)
 
     except mysql.connector.errors.ProgrammingError:
       raise
     # Always run the query teardown.
     finally:
       if teardown is not None:
-        [row for row in self.cursor]
         self.run_multi(teardown)
     return result
 

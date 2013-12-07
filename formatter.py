@@ -46,8 +46,11 @@ def html(output, specs):
     student = f.split("-")[0]
     if student not in found_students:
       found_students.append(student)
-      o.write("<a onclick='changeStudent(\"" + student + "\")'>" + student + \
-        "</a><br>")
+
+  # List students out in alphabetical order.
+  for student in sorted(found_students):
+    o.write("<a onclick='changeStudent(\"" + student + "\")'>" + student + \
+      "</a><br>")
   o.write("</div>")
 
   # Graded output and actual files.

@@ -173,7 +173,7 @@ class TestOutput:
         sindex += 1
 
       if aindex >= len(adds):
-        continue
+        break
       (diff_type, avalue) = adds[aindex]
       # Matching values. Only print it out once.
       if diff_type == "":
@@ -184,6 +184,12 @@ class TestOutput:
       elif diff_type == "add":
         o.write("<font color='green'>+ " + e(avalue) + "</font>\n")
         aindex += 1
+
+    # Any remaning subtractions.
+    while sindex < len(subs):
+      (_, svalue) = subs[sindex]
+      o.write("<font color='red'>+ " + e(svalue) + "</font>\n")
+      sindex += 1
 
     # Any remaining additions.
     while aindex < len(adds):
