@@ -7,22 +7,22 @@ All files for a particular assignment should be in that assignments folder. For 
 for assignment `cs121hw3`, the directory structure is:
 
     main.py
-    style.py
+    *.py
+    style/
+
     |-- cs121hw3/
         |-- _results/
             |-- _files/
                 |-- agong-queries.sql.html
                 |-- agong-other.sql.html
-            |-- _index.html
-            |-- javascript.js
-            |-- css.css
-        |-- agong-cs121hw3/
-            |-- queries.sql
-            |-- make-auto.sql
-        |-- mqian-cs121hw3/
-            |-- queries.sql
-            |-- make-auto.sql
-         |-- cs121hw3.spec
+            |-- style/
+                |-- javascript.js
+                |-- css.css
+        |-- students/
+            |-- agong-cs121hw3
+            |-- mqian-cs121hw3
+
+        |-- cs121hw3.spec
         |-- make-banking.sql
         |-- make-grades.sql
         |-- test-dates.sql
