@@ -36,7 +36,7 @@ STYLE_DEDUCTIONS = {
 }
 
 # Deductions for SQL problems. Values are tuples of the form (points, desc)
-# where points it he number of points to take off for this problem, and
+# where points is the number of points to take off for this problem, and
 # desc is the description of the style error.
 SQL_DEDUCTIONS = {
   "orderby": (1, "Missing ORDER BY."),

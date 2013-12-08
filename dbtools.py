@@ -162,6 +162,10 @@ class DBTools:
       # Pretty-print output.
       result.output = self.prettyprint(result.results)
 
+      # If there are too many results.
+      if len(result.results) > MAX_NUM_RESULTS:
+        result.results = ["Too many results (" + str(len(rows)) + ") to print!"]
+
     return result
 
 
@@ -193,8 +197,6 @@ class DBTools:
         proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
         args = sql[sql.find("(") + 1:sql.find(")")].split(",")
         args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
-        print str(proc)
-        print str(args)
         self.cursor.callproc(proc, args)
       else:
         self.cursor.execute(sql)

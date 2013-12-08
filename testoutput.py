@@ -246,6 +246,9 @@ def get_diffs(lst1, lst2):
     ----------------------
     Returns whether or not a line is junk and should be ignored when doing
     a diff.
+    
+    
+         jkhhlhnj
     """
     return string == " " or string == "-" or string == "+"
 

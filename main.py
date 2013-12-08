@@ -40,12 +40,17 @@ def grade():
     graded_student = {"name": student, "files": [], "got_points": 0}
     o.fields["students"].append(graded_student)
 
-    graded_student["got_points"] = grade_student(db, student, graded_student)
-    # Apply style deductions.
-    graded_student = stylechecker.deduct(graded_student)
+    try:
+      graded_student["got_points"] = grade_student(db, student, graded_student)
+      # Apply style deductions.
+      graded_student = stylechecker.deduct(graded_student)
 
-    # Output the results for this student.
-    formatter.html_student(graded_student, specs)
+      # Output the results for this student.
+      formatter.html_student(graded_student, specs)
+
+    # The student might not exist.
+    except IOError:
+      print "Student " + student + " does not exist!"
 
   # Output the results to file.
   f = iotools.output(o.jsonify(), specs, output_type)
@@ -104,6 +109,7 @@ def grade_student(db, student, graded_student):
     # If the file does not exist, then they get 0 points.
     except IOError:
       graded_file["errors"].append("File does not exist.")
+      raise
 
   # Grade the files (that exist) for this student.
   total_points = 0
