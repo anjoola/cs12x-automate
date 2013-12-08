@@ -112,6 +112,7 @@ def parse_file(f):
     else:
       responses[curr].comments += line
 
+  inline_comment = ""
   # Preprocess the file for DELIMITER statements.
   f = dbtools.preprocess_sql(f)
   for line in f.split("\n"):
@@ -158,6 +159,15 @@ def parse_file(f):
         line = line.replace(" */", "").replace("*/", "").strip()
       add_line(line)
 
+    # Inline comment.
+    elif started_sql and line.strip().startswith("--"):
+      inline_comment += line + "\n"
+
+    elif started_sql:
+      responses[curr].sql += inline_comment
+      inline_comment = ""
+      responses[curr].sql += line + "\n"
+    
     # Continuation of a response from a previous line, or the start of a SQL
     # statement. This could also contain comments.
     elif curr != "":

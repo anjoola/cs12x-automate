@@ -11,7 +11,7 @@ class TestOutput:
   """
 
   def __init__(self, o):
-    # The output TODO
+    # The output string.
     self.o = o
 
 

@@ -35,7 +35,7 @@ def html(output, specs):
   o.write("<link rel='stylesheet' type='text/css' href='style/css.css'>\n")
   o.write("<script type='text/javascript' src='style/javascript.js'></script>")
   o.write("\n<input type='hidden' id='assignment' value='" + \
-    specs["assignment"] + "'>")
+    specs["assignment"] + "'>\n")
 
   # Print out the list of students to the list. Finds this by searching the
   # directory (since we may run the automation tool mutliple times on different
@@ -50,12 +50,13 @@ def html(output, specs):
   # List students out in alphabetical order.
   for student in sorted(found_students):
     o.write("<a onclick='changeStudent(\"" + student + "\")'>" + student + \
-      "</a><br>")
-  o.write("</div>")
+      "</a><br>\n")
+  o.write("</div>\n")
 
   # Graded output and actual files.
   first_student = output["students"][0]["name"]
   first_file = output["files"][0]
+  o.write("<div id='container'>\n")
   o.write("<div draggable='true' class='resizable' id='middle'>\n" + \
     "<div class='title' id='name'>" + first_student + "</div>\n")
 
@@ -90,6 +91,7 @@ def html(output, specs):
   o.write("</div>\n<iframe src='" + f + "' name='right' " + \
     "id='iframe-right'></iframe></div>")
 
+  o.write("</div>")
   return o.getvalue()
 
 

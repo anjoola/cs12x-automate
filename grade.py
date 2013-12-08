@@ -111,7 +111,7 @@ class Grade:
             graded["errors"].append(desc)
             lost_points += lost
 
-      # TODO database disconnected or their query timedout
+      # If their query times out or the database disconnected.
       except mysql.connector.errors.InterfaceError as e:
         print "error: ", e
         graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
@@ -130,9 +130,6 @@ class Grade:
 
       got_points -= lost_points
       graded_test["got_points"] = test["points"] - lost_points
-      #except Exception as e:
-      #  print "TODO", str(e)
-        # TODO handle
 
     # Run problem teardown queries.
     if problem.get("teardown"):
@@ -206,12 +203,14 @@ class Grade:
         teardown=test.get("teardown"))
     except mysql.connector.errors.ProgrammingError as e:
       raise
-    """
-    # TODO
-    # Run the teardown no matter what.
-    finally:
-      self.db.run_query(test.get("teardown"))
-    """
+
+    # If the results aren't equal in length, then they are automatically wrong.
+    if len(expected.results) != len(actual.results):
+      graded["expected"] = expected.output
+      graded["actual"] = actual.output
+      graded["success"] = False
+      return test_points
+
     # If we don't need to check that the results are ordered, then sort the
     # results for easier checking.
     if not test.get("ordered"):
@@ -266,7 +265,7 @@ class Grade:
     """
     Function: create
     ----------------
-    TODO
+    Tests a create statement. TODO
 
     test: The test to run.
     response: The student's response.
@@ -307,13 +306,16 @@ class Grade:
       teardown=test.get("teardown"))
     actual = self.db.run_query(table_sql)
 
+    # If the results are not equal in size, then they are wrong.
+    if len(expected.results) != len(actual.results):
+      return test["points"]
+
     # If the results are equal, then then the test passed.
     if equals(set(expected.results), set(actual.results)):
       graded["success"] = True
       return 0
 
     else:
-      print "\n\n\n\n\nNOT EQUAL"
       return test["points"]
 
 

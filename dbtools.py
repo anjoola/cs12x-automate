@@ -39,7 +39,12 @@ class DBTools:
     """
     if self.db:
       self.kill_query()
-      self.cursor.close()
+      
+      
+      # Consume remaining output.
+      #for _ in self.cursor: pass
+      
+      #self.cursor.close() TODO?
       self.db.close()
 
 
@@ -128,6 +133,10 @@ class DBTools:
     results: The results to pretty-print.
     returns: A string contained the pretty-printed results.
     """
+    # If the results are too long, don't print it.
+    if len(results) > MAX_NUM_RESULTS:
+      return "Too many results (" + str(len(results)) + ") to print!"
+
     output = prettytable.PrettyTable(self.get_column_names())
     output.align = "l"
     for row in results:
@@ -162,6 +171,9 @@ class DBTools:
     -------------------
     Runs multiple SQL statements at once.
     """
+    # Consume old results if needed.
+    [row for row in self.cursor]
+
     # Separate the CALL procedure statements.
     sql_list = queries.split("CALL")
     if len(sql_list) > 0:
@@ -177,9 +189,12 @@ class DBTools:
       print "Executing: ", sql # TODO
 
       # If it is a CALL procedure statement, execute it differently.
-      if "CALL" in sql:
-        proc = str(sql[sql.find("CALL") + 5:sql.find("(")])
-        args = tuple(sql[sql.find("(") + 1:sql.find(")")].split(","))
+      if sql.strip().startswith("CALL"):
+        proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
+        args = sql[sql.find("(") + 1:sql.find(")")].split(",")
+        args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
+        print str(proc)
+        print str(args)
         self.cursor.callproc(proc, args)
       else:
         self.cursor.execute(sql)
