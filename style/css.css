@@ -36,6 +36,13 @@ ul {
 
 /***************************** Main HTML Elements *****************************/
 
+#container {
+  bottom: 0px;
+  left: 100px;
+  margin: 10px;
+  position: fixed;
+  top: 0px;
+}
 #iframe-middle {
   background: white;
   border: 0px;
