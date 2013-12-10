@@ -1,12 +1,14 @@
 import codecs
 from cStringIO import StringIO
 from CONFIG import *
+from models import Result
 import mysql.connector
 import re
+import signal
 import sqlparse
 import subprocess
 import prettytable
-from models import Result
+import timeouts
 
 # Used to find delimiters in the file.
 DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
@@ -25,8 +27,8 @@ class DBTools:
     # The database cursor.
     self.cursor = None
 
-    # The current connection timeout.
-    self.timeout = CONNECTION_TIMEOUT
+    # Register the timeout handler.
+    signal.signal(signal.SIGALRM, timeouts.timeout_handler)
 
   # --------------------------- Database Utilities --------------------------- #
 
@@ -37,14 +39,9 @@ class DBTools:
     Close the database connection (only if it is already open) and any running
     queries.
     """
-    if self.db:
+    if self.db and self.db.is_connected():
       self.kill_query()
-      
-      
-      # Consume remaining output.
-      #for _ in self.cursor: pass
-      
-      #self.cursor.close() TODO?
+      # TODO self.cursor.close()
       self.db.close()
 
 
@@ -54,13 +51,20 @@ class DBTools:
     --------------------
     Kills the running query.
     """
-    if self.db and self.db.is_connected():
-      try:
-        thread_id = self.db.connection_id
-        self.db.cmd_process_kill(thread_id)
-      except Exception as e:
-        "error:", str(e) # TODO
-        pass
+    if not self.db:
+      return
+
+    if not self.db.is_connected():
+      self.get_db_connection()
+
+    try:
+      self.db.cmd_process_kill(self.thread_id)
+    except Exception:
+      pass
+
+    # Get a new connection no matter what.
+    finally:
+      self.get_db_connection()
 
 
   def get_cursor(self):
@@ -72,33 +76,21 @@ class DBTools:
     return self.cursor
 
 
-  def get_db_connection(self, timeout=None):
+  def get_db_connection(self):
     """
     Function: get_db_connection
     ---------------------------
-    Get a new database connection with a specified timeout (defaults to
-    CONNECTION_TIMEOUT specified in the CONFIG file). Closes the old connection
-    if there was one.
+    Gets the current database connection or creates a new one if it doesn't
+    exist or disconnected.
 
-    timeout: The connection timeout.
     returns: A database connection object.
     """
-    if self.db and self.db.is_connected():
-      # If timeout isn't specified, check if we're already at the default.
-      if timeout is None and self.timeout == CONNECTION_TIMEOUT:
-        return self.db
-      # If the timeout is the same as before, then don't change anything.
-      if timeout is not None and timeout == self.timeout:
-        return self.db
+    # Connect to the database.
+    if not self.db or not self.db.is_connected():
+      self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
+        database=DATABASE, port=PORT, autocommit=True)
+      self.cursor = self.db.cursor()
 
-    print "Timeout:", timeout # TODO
-    # Close any old connections and make another one with the new setting.
-    self.close_db_connection()
-    self.timeout = timeout or CONNECTION_TIMEOUT
-    self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-      database=DATABASE, port=PORT, connection_timeout=self.timeout, \
-      autocommit=True)
-    self.cursor = self.db.cursor()
     return self.db
 
   # ----------------------------- Query Utilities ---------------------------- #
@@ -144,17 +136,21 @@ class DBTools:
     return output.get_string()
 
 
-  def results(self):
+  def results(self, iterator):
     """
     Function: results
     -----------------
     Get the results of a query.
     """
-    result = Result()
+    results = Result()
 
-    # Get the query results and schema.
-    rows = [row for row in self.cursor]
-    if len(rows) > 0:
+    # Loop through all the query results (there could be many).
+    for query in iterator:
+      rows = [row for row in query]
+      if len(rows) == 0:
+        continue
+
+      result = Result()
       result.results = rows
       result.schema = self.get_schema()
       result.col_names = self.get_column_names()
@@ -166,7 +162,9 @@ class DBTools:
       if len(result.results) > MAX_NUM_RESULTS:
         result.results = ["Too many results (" + str(len(rows)) + ") to print!"]
 
-    return result
+      results.append(result)
+
+    return results
 
 
   def run_multi(self, queries):
@@ -175,37 +173,15 @@ class DBTools:
     -------------------
     Runs multiple SQL statements at once.
     """
-    # Consume old results if needed.
-    [row for row in self.cursor]
+    print "Executing: " + queries
 
-    # Separate the CALL procedure statements.
-    sql_list = queries.split("CALL")
-    if len(sql_list) > 0:
-      sql_list = sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
-    else:
-      sql_list = sqlparse.split(queries)
-
-    result = Result()
-    for sql in sql_list:
-      sql = sql.rstrip().rstrip(";")
-      if len(sql) == 0:
-        continue
-      print "Executing: ", sql # TODO
-
-      # If it is a CALL procedure statement, execute it differently.
-      if sql.strip().startswith("CALL"):
-        proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
-        args = sql[sql.find("(") + 1:sql.find(")")].split(",")
-        args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
-        self.cursor.callproc(proc, args)
-      else:
-        self.cursor.execute(sql)
-        result.append(self.results())
-
-    return result
+    # Get the thread ID of the query.
+    self.thread_id = self.db.connection_id
+    iterator = self.cursor.execute(queries, multi=True)
+    return self.results(iterator)
 
 
-  def run_query(self, query, setup=None, teardown=None):
+  def run_query(self, query, setup=None, teardown=None, timeout=None):
     """
     Function: run_query
     -------------------
@@ -223,13 +199,19 @@ class DBTools:
     result = Result()
     if setup is not None:
       self.run_multi(setup)
+
+    # Set to default timeout if none specified.
+    signal.alarm(timeout or CONNECTION_TIMEOUT)
     try:
       result = self.run_multi(query)
-
-    except mysql.connector.errors.ProgrammingError:
+    # Kill the query if it takes too long.
+    except timeouts.TimeoutError:
+      self.kill_query()
       raise
+
     # Always run the query teardown.
     finally:
+      signal.alarm(0)
       if teardown is not None:
         self.run_multi(teardown)
     return result

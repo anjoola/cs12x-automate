@@ -4,6 +4,7 @@ import dbtools
 import iotools
 import mysql.connector
 from response import Response
+import timeouts
 
 class Grade:
   """
@@ -84,10 +85,9 @@ class Grade:
       if problem.get("setup"):
         for q in problem["setup"]: self.db.run_query(q)
 
-    except mysql.connector.errors.ProgrammingError as e:
-      graded["errors"].append("Dependent query had an exception. Most " + \
-        "likely all tests after this one will fail | MYSQL ERROR " + \
-        str(e))
+    # Dependent query timed out.
+    except timeouts.TimeoutError:
+      graded["errors"].append("Dependent query could not run and timed out.")
       return 0
 
     # Run each test for the problem.
@@ -97,9 +97,6 @@ class Grade:
       graded["tests"].append(graded_test)
 
       try:
-        # Change the connection timeout.
-        self.db.get_db_connection(test.get("timeout"))
-
         # Figure out what kind of test it is and call the appropriate function.
         f = self.get_function(test)
         lost_points += f(test, response, graded_test)
@@ -111,13 +108,10 @@ class Grade:
             graded["errors"].append(desc)
             lost_points += lost
 
-      # If their query times out or the database disconnected.
-      except mysql.connector.errors.InterfaceError as e:
-        print "error: ", e
-        graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
-          "the query is invalid and failed or query timed out)")
+      # If their query times out.
+      except timeouts.TimeoutError:
+        graded["errors"].append("Query timed out.")
         lost_points += test["points"]
-        self.db.get_db_connection(MAX_TIMEOUT)
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       # If there was a MySQL error, print out the error that occurred and the
@@ -125,7 +119,6 @@ class Grade:
       except mysql.connector.errors.Error as e:
         graded["errors"].append("MYSQL ERROR " + str(e))
         lost_points += test["points"]
-        self.db.get_db_connection(MAX_TIMEOUT)
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
       got_points -= lost_points
@@ -133,7 +126,6 @@ class Grade:
 
     # Run problem teardown queries.
     if problem.get("teardown"):
-      self.db.get_db_connection(MAX_TIMEOUT)
       for q in problem["teardown"]: self.db.run_query(q)
 
     # Get the total number of points received.
@@ -198,11 +190,8 @@ class Grade:
     # TODO make sure they aren't doing SQL injection
     expected = self.cache.get(self.db.run_query, test["query"], \
       setup=test.get("setup"), teardown=test.get("teardown"))
-    try:
-      actual = self.db.run_query(response.sql, setup=test.get("setup"), \
-        teardown=test.get("teardown"))
-    except mysql.connector.errors.ProgrammingError as e:
-      raise
+    actual = self.db.run_query(response.sql, setup=test.get("setup"), \
+      teardown=test.get("teardown"), timeout=test.get("timeout"))
 
     # If the results aren't equal in length, then they are automatically wrong.
     if len(expected.results) != len(actual.results):
@@ -303,7 +292,7 @@ class Grade:
 
     self.db.run_query("DELETE FROM " + test["table"])
     self.db.run_query(response.sql, setup=test.get("setup"), \
-      teardown=test.get("teardown"))
+      teardown=test.get("teardown"), timeout=test.get("timeout"))
     actual = self.db.run_query(table_sql)
 
     # If the results are not equal in size, then they are wrong.
@@ -341,7 +330,7 @@ class Grade:
     if test.get("setup"): self.db.run_query(test["setup"])
 
     after = self.db.run_query(table_sql, setup=test["query"], 
-      teardown=test.get("teardown"))
+      teardown=test.get("teardown"), timeout=test.get("timeout"))
 
     subs = list(set(before.results) - set(after.results))
     graded["subs"] = ("" if len(subs) == 0 else self.db.prettyprint(subs))
@@ -367,7 +356,8 @@ class Grade:
     """
     if test.get("run-query"):
       self.db.run_query(response.sql)
-    result = self.db.run_query(test["query"], teardown=test.get("teardown"))
+    result = self.db.run_query(test["query"], teardown=test.get("teardown"), \
+      timeout=test.get("timeout"))
 
     if result.results and result.results[0]:
       result = str(result.results[0][0])

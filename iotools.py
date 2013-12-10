@@ -167,7 +167,7 @@ def parse_file(f):
       responses[curr].sql += inline_comment
       inline_comment = ""
       responses[curr].sql += line + "\n"
-    
+
     # Continuation of a response from a previous line, or the start of a SQL
     # statement. This could also contain comments.
     elif curr != "":
