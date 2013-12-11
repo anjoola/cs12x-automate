@@ -49,7 +49,7 @@ SQL_DEDUCTIONS = {
 
 # Type of tests to output for. This should not be modified unless the code
 # is also modified.
-TYPE_OUTPUTS = ["select", "stored-procedure", "function"]
+TYPE_OUTPUTS = ["select", "stored-procedure", "function", "script"]
 
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 100

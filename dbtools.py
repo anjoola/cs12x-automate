@@ -39,7 +39,7 @@ class DBTools:
     Close the database connection (only if it is already open) and any running
     queries.
     """
-    if self.db and self.db.is_connected():
+    if self.db:# and self.db.is_connected():
       self.kill_query()
       # TODO self.cursor.close()
       self.db.close()
@@ -54,12 +54,13 @@ class DBTools:
     if not self.db:
       return
 
-    if not self.db.is_connected():
-      self.get_db_connection()
-
+    #self.close_db_connection()
+    #self.db.close()
+    self.get_db_connection()
     try:
       self.db.cmd_process_kill(self.thread_id)
     except Exception:
+      print "Killed thread", str(self.thread_id) # TODO
       pass
 
     # Get a new connection no matter what.
@@ -86,10 +87,10 @@ class DBTools:
     returns: A database connection object.
     """
     # Connect to the database.
-    if not self.db or not self.db.is_connected():
-      self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-        database=DATABASE, port=PORT, autocommit=True)
-      self.cursor = self.db.cursor()
+    #if not self.db: #or not self.db.is_connected():
+    self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
+      database=DATABASE, port=PORT, autocommit=True)
+    self.cursor = self.db.cursor()
 
     return self.db
 
@@ -202,6 +203,7 @@ class DBTools:
 
     # Set to default timeout if none specified.
     signal.alarm(timeout or CONNECTION_TIMEOUT)
+    print "Timeout:", str(timeout)
     try:
       result = self.run_multi(query)
     # Kill the query if it takes too long.
@@ -288,3 +290,15 @@ def preprocess_sql(sql_file):
     lines.write(line)
 
   return lines.getvalue()
+
+
+def run_script(script):
+  """
+  Function: run_script
+  --------------------
+  Runs a script.
+
+  returns: The output from the script.
+  """
+  print "running", script
+  return subprocess.check_output(script, stderr=subprocess.STDOUT, shell=True)

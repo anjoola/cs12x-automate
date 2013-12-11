@@ -1,5 +1,7 @@
 from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
+import CONFIG
 from cache import Cache
+from cStringIO import StringIO
 import dbtools
 import iotools
 import mysql.connector
@@ -46,7 +48,8 @@ class Grade:
       return self.function
     elif test_type == "insert":
       return self.insert
-    # TODO add other functions?
+    elif test_type == "script":
+      return self.script
 
 
   def grade(self, problem, response, graded, file_responses):
@@ -88,6 +91,12 @@ class Grade:
     # Dependent query timed out.
     except timeouts.TimeoutError:
       graded["errors"].append("Dependent query could not run and timed out.")
+      return 0
+
+    # Dependent query has some syntax error.
+    except mysql.connector.errors.ProgrammingError as e:
+      graded["errors"].append("Dependent query had an error | MYSQL ERROR " + \
+        str(e))
       return 0
 
     # Run each test for the problem.
@@ -374,6 +383,24 @@ class Grade:
       graded["success"] = True
       return 0
 
+
+  def script(self, test, _, graded):
+    """
+    Function: script
+    ----------------
+    Calls one or more scripts and gets the output.
+
+    test: The test to run.
+    graded: The graded test output.
+
+    returns: The number of points to deduct.
+    """
+    script = test.get("script") % vars(CONFIG)
+    output = dbtools.run_script(script)
+
+    graded["output"] = output
+    graded["success"] = "UNDETERMINED"
+    return 0
 
 # ----------------------------- Utility Functions ---------------------------- #
 

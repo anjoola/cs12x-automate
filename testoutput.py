@@ -35,6 +35,8 @@ class TestOutput:
       return self.sp
     elif test_type == "function":
       return self.function
+    elif test_type == "script":
+      return self.script
 
 
   def output(self, tests, specs):
@@ -70,7 +72,8 @@ class TestOutput:
         str(test_specs["points"]) + " Points)</div><br>\n")
       if test_specs.get("desc"):
         o.write("<i>" + test_specs["desc"] + "</i><br>")
-      o.write("<div class='test-specs'>" + test_specs["query"] + "</div>")
+      if test_specs.get("query"):
+        o.write("<div class='test-specs'>" + test_specs["query"] + "</div>")
 
       # Specific test printouts.
       f = self.get_function(test_specs)
@@ -216,6 +219,17 @@ class TestOutput:
       o.write("<pre>" + e(test["actual"]) + "</pre>\n")
 
 
+  def script(self, test, specs):
+    """
+    Function: script
+    ----------------
+    Shows the output of the scripts.
+    """
+    if not specs.get("output"):
+      return
+
+    self.o.write("<pre>" + test["output"] + "</pre>")
+
 # ---------------------------- Utility Functions ---------------------------- #
 
 def e(text):
@@ -246,9 +260,6 @@ def get_diffs(lst1, lst2):
     ----------------------
     Returns whether or not a line is junk and should be ignored when doing
     a diff.
-    
-    
-         jkhhlhnj
     """
     return string == " " or string == "-" or string == "+"
 
