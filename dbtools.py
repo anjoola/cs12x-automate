@@ -177,8 +177,8 @@ class DBTools:
     print "Executing: " + queries
 
     # Get the thread ID of the query.
-    self.thread_id = self.db.connection_id
-    iterator = self.cursor.execute(queries, multi=True)
+    self.thread_id = self.db.connection_id # TODO replace tabs with spaces
+    iterator = self.cursor.execute(queries.replace("\t", "  "), multi=True)
     return self.results(iterator)
 
 

@@ -145,7 +145,7 @@ def html_student(student, specs):
         o.write("<b>Submitted Results</b>")
         o.write("<pre>" + problem["submitted-results"] + "</pre>")
       o.write("<b>SQL</b>")
-      o.write("<pre>" + problem["sql"] + "</pre>")
+      o.write("<pre>" + e(problem["sql"]) + "</pre>")
 
       # Test output.
       test_output = TestOutput(o)

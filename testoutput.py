@@ -228,7 +228,7 @@ class TestOutput:
     if not specs.get("output"):
       return
 
-    self.o.write("<pre>" + test["output"] + "</pre>")
+    self.o.write("<pre>" + e(test["output"]) + "</pre>")
 
 # ---------------------------- Utility Functions ---------------------------- #
 
