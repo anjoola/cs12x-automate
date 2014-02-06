@@ -1,8 +1,9 @@
+import mysql.connector
+
 from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
 from cache import Cache
 import dbtools
 import iotools
-import mysql.connector
 from response import Response
 
 class Grade:
@@ -48,6 +49,31 @@ class Grade:
     # TODO add other functions?
 
 
+  def run_dependencies():
+    """
+    Function: run_dependencies
+    --------------------------
+    Run dependent queries (which are student responses from other questions).
+    """
+    try:
+     if problem.get("dependencies"):
+       for dep in problem["dependencies"]:
+         [f, problem_num] = dep.split("|")
+         self.db.run_query(file_responses[f][0][problem_num].sql)
+     # Run setup queries.
+     if problem.get("setup"):
+       for q in problem["setup"]: self.db.run_query(q)
+
+    except mysql.connector.errors.ProgrammingError as e:
+      graded["errors"].append("Dependent query had an exception. Most " + \
+        "likely all tests after this one will fail | MYSQL ERROR " + \
+        str(e))
+      return 0
+      
+      
+      
+      
+      
   def grade(self, problem, response, graded, file_responses):
     """
     Function: grade
@@ -73,6 +99,8 @@ class Grade:
     # The number of points this student has received so far on this problem.
     got_points = num_points
 
+    if problem.get("dependencies"):
+      self.run_dependencies(problem, file_responses
     try:
       # Run dependent queries (which is the student's response from another
       # question).
@@ -142,7 +170,7 @@ class Grade:
     return got_points
 
 
-  def pretest(self, problem, response, graded):
+  def pretest(self, problem, response, graded): #TODO DELETE
     """
     Function: pretest
     -----------------

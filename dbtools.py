@@ -39,6 +39,7 @@ class DBTools:
     """
     if self.db:
       self.kill_query()
+      print "\n\n\nkilling\n\n\n"
       
       
       # Consume remaining output.

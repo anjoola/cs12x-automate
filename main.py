@@ -12,13 +12,26 @@ from stylechecker import StyleError
 import stylechecker
 import sys
 
-def grade():
+VERBOSE = True # TODO move
+
+def log(string): # TODO move to iotools
   """
-  Function: grade
+  Function: log
+  -------------
+  Outputs to the console if the VERBOSE flag is on.
+  """
+  if VERBOSE:
+    print string
+
+
+def setup():
+  """
+  Function: setup
   ---------------
-  Grades all the students and files.
+  Sets up the grading environment and tools. This includes establishing the
+  database connection and reading the specs file.
   """
-  print "\n\n========================START GRADING========================" ,
+  log("\n\n========================START GRADING========================\n")
 
   # The graded output.
   o = GradedOutput(specs)
@@ -49,7 +62,8 @@ def grade():
       formatter.html_student(graded_student, specs)
 
     # The student might not exist.
-    except IOError:
+    except IOError as e:
+      print "TODO" + str(e)
       print "Student " + student + " does not exist!"
 
   # Output the results to file.
@@ -143,7 +157,13 @@ def grade_student(db, student, graded_student):
   return total_points
 
 
-if __name__ == "__main__":
+def getargs():
+  """
+  Function: get_args
+  ------------------
+  Gets the command-line arguments and prints a usage message if needed.
+  """
+
   # Parse command-line arguments.
   parser = argparse.ArgumentParser(description="Get the arguments.")
   parser.add_argument("--assignment")
@@ -168,8 +188,12 @@ if __name__ == "__main__":
   # If nothing specified for the files, grade all the files.
   if files is None or files[0] == "*":
     files = specs["files"]
+
   # If nothing specified for the students, grade all the students.
   if students is None or students[0] == "*":
     students = iotools.get_students(assignment, after)
 
-  grade()
+
+if __name__ == "__main__":
+  getargs()
+  setup()
