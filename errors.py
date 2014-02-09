@@ -2,7 +2,7 @@ class DatabaseError(Exception):
   """
   Class: DatabaseError
   --------------------
-  Represents an error that occurs with the database connection.
+  Represents an error that occurs with the database connection
   """
 
   def __init__(self, value):

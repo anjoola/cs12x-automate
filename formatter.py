@@ -106,7 +106,7 @@ def html_student(student, specs):
   specs: The specs for the assignment.
   """
   # Create output per student, per file. Files are named student-file.html.
-  for f in student["files"]:
+  for f in student["files"].values():
     o = StringIO()
     o.write("<link rel='stylesheet' type='text/css' href='../style/css.css'>\n")
     o.write("<script type='text/javascript' src='../style/javascript.js'>" + \

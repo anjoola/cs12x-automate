@@ -5,6 +5,9 @@ Contains configuration parameters for the grading tool.
 """
 import secret
 
+# Verbose output.
+VERBOSE = True
+
 # Database username.
 USER = secret.USER
 

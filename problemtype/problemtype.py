@@ -1,5 +1,13 @@
 from errors import *
 
+TYPES = {
+  "select" : Select,
+  "insert" : Insert,
+  "trigger" : Trigger,
+  "function": Function,
+  "procedure": Procedure
+}
+
 class ProblemType(object):
   """
   Class: ProblemType
@@ -7,7 +15,10 @@ class ProblemType(object):
   A generic problem type. To be implemented for specific types of problems.
   """
 
-  def __init__(self, specs, response, output):
+  def __init__(self, db, specs, response, output):
+    # The database connection.
+    self.db = db
+
     # The specifications for this problem.
     self.specs = specs
 

@@ -26,6 +26,13 @@ class Grade:
     self.cache = Cache()
 
 
+
+
+
+
+
+
+
   def get_function(self, test):
     """
     Function: get_function
@@ -74,7 +81,60 @@ class Grade:
       
       
       
-  def grade(self, problem, response, graded, file_responses):
+  def grade(self, response, output):
+    """
+    Function: grade
+    ---------------
+    Grades a student's responses.
+
+    response: The student's response.
+    output: The graded output.
+
+    returns: The number of points received for this problem.
+    """
+    # Grade the files (that exist) for this student.
+    total_points = 0
+    for f in files:
+      # Skip this file if it doesn't exist.
+      if f not in response.keys():
+        continue
+
+      #print "- " + f + ":" ,
+      (responses, graded_file) = (response[f], output["files"][f])
+      got_points = 0
+
+      # Grade each problem in the assignment.
+      problems = specs[f]
+      for problem in problems:
+        graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
+          "got_points": 0}
+        graded_file["problems"].append(graded_problem)
+        try: # TODO call specific class depending on the problem type to grade
+          got_points += \
+              TYPES[problem["type"]](db, specs, response, output).grade()
+          
+            
+            
+            
+          got_points += ???g.grade(problem, responses[problem["number"]], \
+            graded_problem, file_responses)
+        # If they didn't do a problem.
+        except KeyError:
+          graded_problem["notexist"] = True
+        #print ".",
+
+      graded_file["got_points"] = got_points
+      total_points += got_points
+      #print "\n"
+
+    return total_points
+    
+    
+    
+    
+    
+    
+    
     """
     Function: grade
     ---------------

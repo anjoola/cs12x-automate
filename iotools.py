@@ -5,6 +5,7 @@ Functions involving input and output into the system, as well as file-related
 functions.
 """
 
+from CONFIG import VERBOSE
 from datetime import datetime
 import dbtools
 import formatter
@@ -39,7 +40,17 @@ def get_students(assignment, after=None):
   return [f.replace("-" + assignment, "") for f in files]
 
 
-def output(json, specs, output_type):
+def log(string):
+  """
+  Function: log
+  -------------
+  Outputs to the console if the VERBOSE flag is on.
+  """
+  if VERBOSE:
+    print string
+
+
+def output(json, specs, raw=False):
   """
   Function: output
   ----------------
@@ -47,8 +58,8 @@ def output(json, specs, output_type):
 
   json: The graded output.
   specs: The assignment specs.
-  output_type: The output type. Can be "html", "md", or "json". If nothing is
-               specified, outputs as a HTML file.
+  raw: Whether or not to output as a raw JSON string. True if so, False
+       otherwise.
   returns: The file where the output was written to.
   """
   path = specs["assignment"] + "/_results/"
@@ -60,10 +71,7 @@ def output(json, specs, output_type):
 
   # Formats the output nicely before writing it to file, if specified.
   f = None
-  if output_type == "md":
-    f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".md", "w")
-    f.write(formatter.markdown(json, specs))
-  elif output_type == "json":
+  if raw:
     f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".json", "w")
     f.write(json)
   else:

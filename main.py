@@ -5,6 +5,7 @@ from dbtools import DBTools
 import formatter
 from grade import Grade
 import iotools
+from iotools import log
 import mysql.connector
 import os
 from models import *
@@ -12,156 +13,12 @@ from stylechecker import StyleError
 import stylechecker
 import sys
 
-VERBOSE = True # TODO move
-
-def log(string): # TODO move to iotools
-  """
-  Function: log
-  -------------
-  Outputs to the console if the VERBOSE flag is on.
-  """
-  if VERBOSE:
-    print string
-
-
-def setup():
-  """
-  Function: setup
-  ---------------
-  Sets up the grading environment and tools. This includes establishing the
-  database connection and reading the specs file.
-  """
-  log("\n\n========================START GRADING========================\n")
-
-  # The graded output.
-  o = GradedOutput(specs)
-  # Start up the connection with the database.
-  db = DBTools()
-  db.get_db_connection(MAX_TIMEOUT)
-
-  # Source files needed prior to grading and run setup queries.
-  if specs.get("dependencies"):
-    db.source_files(assignment, specs["dependencies"])
-  if specs.get("import"):
-    dbtools.import_files(assignment, specs["import"])
-  if specs.get("setup"):
-    for q in specs["setup"]: db.run_query(q)
-
-  # Grade each student, and grade each file for each student.
-  for student in students:
-    got_points = 0
-    graded_student = {"name": student, "files": [], "got_points": 0}
-    o.fields["students"].append(graded_student)
-
-    try:
-      graded_student["got_points"] = grade_student(db, student, graded_student)
-      # Apply style deductions.
-      graded_student = stylechecker.deduct(graded_student)
-
-      # Output the results for this student.
-      formatter.html_student(graded_student, specs)
-
-    # The student might not exist.
-    except IOError as e:
-      print "TODO" + str(e)
-      print "Student " + student + " does not exist!"
-
-  # Output the results to file.
-  f = iotools.output(o.jsonify(), specs, output_type)
-  print "\n\n==== RESULTS: " + f.name
-
-  print "\n\n=========================END GRADING=========================\n\n"
-
-  # Run teardown queries.
-  if specs.get("teardown"):
-    for q in specs["teardown"]: db.run_query(q)
-
-  # Close connection with the database
-  db.close_db_connection()
-
-
-def grade_student(db, student, graded_student):
-  """
-  Function: grade_student
-  -----------------------
-  Grades a particular student.
-
-  dh: The database.
-  student: The student's name.
-  graded_student: A dictionary containing the graded results for that student.
-
-  returns: The number of points this student got.
-  """
-  # The grading tool.
-  g = Grade(specs, db)
-  # Dictionary containing files and a tuple containing the student's responses
-  # for each file and the graded file.
-  file_responses = {}
-
-  # Parse all of the responses first before grading.
-  print "\n\n" + student + ":"
-  for filename in files:
-    graded_file = {"filename": filename, "problems": [], "errors": []}
-    graded_student["files"].append(graded_file)
-
-    try:
-      f = open(assignment + "/students/" + student + "-" + assignment + \
-        "/" + filename, "r")
-      # Run their files through the style-checker to make sure it is valid and
-      # take points off for violations.
-      graded_student["style-deductions"] = stylechecker.check(f, specs)
-      responses = iotools.parse_file(f)
-      f.close()
-
-      # Add to the dictionary to process later.
-      file_responses[filename] = (responses, graded_file)
-
-    # If the file has a style error (and cannot be parsed), they get 0 points.
-    except StyleError:
-      graded_file["errors"].append("File does not follow the style guide.")
-
-    # If the file does not exist, then they get 0 points.
-    except IOError:
-      graded_file["errors"].append("File does not exist.")
-      raise
-
-  # Grade the files (that exist) for this student.
-  total_points = 0
-  for f in files:
-    # Skip this file if it doesn't exist.
-    if f not in file_responses.keys():
-      continue
-
-    print "- " + f + ":" ,
-    (responses, graded_file) = file_responses[f]
-    got_points = 0
-
-    # Grade each problem in the assignment.
-    problems = specs[f]
-    for problem in problems:
-      graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
-        "got_points": 0}
-      graded_file["problems"].append(graded_problem)
-      try:
-        got_points += g.grade(problem, responses[problem["number"]], \
-          graded_problem, file_responses)
-      # If they didn't do a problem.
-      except KeyError:
-        graded_problem["notexist"] = True
-      print ".",
-
-    graded_file["got_points"] = got_points
-    total_points += 0
-    print "\n"
-
-  return total_points
-
-
 def getargs():
   """
   Function: get_args
   ------------------
-  Gets the command-line arguments and prints a usage message if needed.
+  Gets the command-line arguments and prints a usage message if needed. Figures
+  out the files and students to grade.
   """
 
   # Parse command-line arguments.
@@ -169,11 +26,10 @@ def getargs():
   parser.add_argument("--assignment")
   parser.add_argument("--files", nargs="+")
   parser.add_argument("--students", nargs="+")
-  parser.add_argument("--output")
   parser.add_argument("--after")
   args = parser.parse_args()
-  (assignment, files, students, output_type, after) = \
-    (args.assignment, args.files, args.students, args.output, args.after)
+  (assignment, files, students, after) = \
+    (args.assignment, args.files, args.students, args.after)
 
   # If the assignment argument isn't specified, print usage statement.
   if assignment is None:
@@ -194,6 +50,112 @@ def getargs():
     students = iotools.get_students(assignment, after)
 
 
+def setup():
+  """
+  Function: setup
+  ---------------
+  Sets up the grading environment and tools. This includes establishing the
+  database connection, reading the specs file, and opening all the files needed
+  for grading.
+  """
+
+  # The graded output.
+  o = GradedOutput(specs) # TODO fix this
+  # Start up the connection with the database.
+  db = DBTools()
+  db.get_db_connection(MAX_TIMEOUT)
+
+  # Source files needed prior to grading and run setup queries.
+  if specs.get("dependencies"):
+    db.source_files(assignment, specs["dependencies"])
+  if specs.get("import"):
+    dbtools.import_files(assignment, specs["import"])
+  if specs.get("setup"):
+    for q in specs["setup"]: db.run_query(q)
+
+  # Create the grading tool and output.
+  grader = Grade(specs, db) #rename to grader TODO
+
+
+def grade_student(student):
+  """
+  Function: grade_student
+  -----------------------
+  Grades a particular student. Outputs the results to a file.
+
+  student: The student name.
+  """
+  log("\n\n" + student + ":")
+
+  # Graded output.
+  output = {"name": student, "files": {}, "got_points": 0}
+  o.fields["students"].append(output)
+
+  # Parse student's response.
+  response = {}
+  for filename in files:
+    # Add this file to the graded output.
+    graded_file = {"filename": filename, "problems": [], "errors": []}
+    output["files"][filename] = graded_file
+
+    try:
+      f = open(assignment + "/students/" + student + "-" + assignment + \
+               "/" + filename, "r")
+      # Run their files through the style-checker to make sure it is valid and
+      # take points off for violations.
+      # TODO output["style-deductions"] = stylechecker.check(f, specs)
+      response[filename] = iotools.parse_file(f)
+      f.close()
+
+    # If the file has a style error (and cannot be parsed), they get 0 points.
+    except StyleError:
+      graded_file["errors"].append("File does not follow the style guide.") # TODO better errrr
+
+    # If the file does not exist, then they get 0 points.
+    except IOError:
+      graded_file["errors"].append("File does not exist.")
+      raise
+
+  # Grade this student.
+  try:
+    output["got_points"] = grader.grade(response, output)
+    # Apply style deductions. todo pass by reference?
+    #graded_student = stylechecker.deduct(graded_student)
+
+    # Output the results for this student.
+    formatter.html_student(graded_student, specs) # TODO rename this function
+
+  # The student might not exist.
+  except IOError as e: # TODO error in the wrong place
+    print "TODO" + str(e)
+    log("Student " + student + " does not exist!")
+
+
+def teardown():
+  """
+  Function: teardown
+  ------------------
+  Outputs the results, runs the teardown queries and closes the database
+  connection.
+  """
+
+  # Output the results to file.
+  f = iotools.output(o.jsonify(), specs)
+  log("\n\n==== RESULTS: " + f.name)
+
+  # Run teardown queries.
+  if specs.get("teardown"):
+    for query in specs["teardown"]: db.run_query(query)
+
+  # Close connection with the database
+  db.close_db_connection()
+
+
 if __name__ == "__main__":
   getargs()
+  log("\n\n========================START GRADING========================\n")
   setup()
+  for student in students:
+    grade_student(student)
+  log("\n\n=========================END GRADING=========================\n")
+  teardown()
