@@ -33,11 +33,13 @@ class ProblemType(object):
     # query multiple times.
     self.cache = cache
 
+""" TODO"""
     # The problem number.
     self.num = self.specs["number"]
 
     # The number of points this problem is worth.
     self.points = self.specs["points"]
+""" TODO"""
 
     # The number of points the student has gotten on this question. They start
     # out with the maximum number of points, and points get deducted as the
@@ -137,3 +139,15 @@ class ProblemType(object):
     returns: The number of points to deduct.
     """
     raise NotImplementedError("Must be implemented!")
+
+
+# ----------------------------- Utility Functions ---------------------------- #
+
+def equals(self, lst1, lst2):
+  """
+  Function: equals
+  ----------------
+  Compares two lists of tuples to see if their contents are equal.
+  """
+  return [tuple(unicode(x).lower() for x in y) for y in lst1] == \
+    [tuple(unicode(x).lower() for x in y) for y in lst2]

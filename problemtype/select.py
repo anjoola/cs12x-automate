@@ -20,7 +20,7 @@ class Select(ProblemType):
     expected = self.cache.get(self.db.run_query, test["query"], \
       setup=test.get("setup"), teardown=test.get("teardown"))
     try:
-      actual = self.db.run_query(response.sql, setup=test.get("setup"), \
+      actual = self.db.run_query(self.response.sql, setup=test.get("setup"), \
         teardown=test.get("teardown"))
     except mysql.connector.errors.ProgrammingError as e:
       raise
@@ -45,7 +45,7 @@ class Select(ProblemType):
       actual.results = [set(x) for x in actual.results]
 
     # Compare the student's code to the results.
-    if not equals(expected.results, actual.results):
+    if not self.equals(expected.results, actual.results):
       output["expected"] = expected.output
       output["actual"] = actual.output
       deductions = test_points
@@ -62,7 +62,7 @@ class Select(ProblemType):
       if test.get("column-order"):
         eresults = [set(x) for x in expected.results]
         aresults = [set(x) for x in actual.results]
-        if equals(eresults, aresults):
+        if self.equals(eresults, aresults):
           deductions = 0
           output["deductions"].append("columnorder") # TODO
 
