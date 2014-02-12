@@ -26,61 +26,31 @@ class Grade:
     self.cache = Cache()
 
 
-
-
-
-
-
-
-
-  def get_function(self, test):
-    """
-    Function: get_function
-    ----------------------
-    Finds the right function to call on for the specified test.
-
-    test: The test to find the right function for.
-    returns: A function object.
-    """
-    test_type = test["type"]
-    if test_type == "select":
-      return self.select
-    elif test_type == "create":
-      return self.create
-    elif test_type == "stored-procedure":
-      return self.sp
-    elif test_type == "function":
-      return self.function
-    elif test_type == "insert":
-      return self.insert
-    # TODO add other functions?
-
-
-  def run_dependencies():
+  def run_dependencies(self, problem, response):
     """
     Function: run_dependencies
     --------------------------
     Run dependent queries (which are student responses from other questions).
+    
+    problem: The problem to run dependencies for.
+    response: The student's responses.
     """
     try:
-     if problem.get("dependencies"):
-       for dep in problem["dependencies"]:
-         [f, problem_num] = dep.split("|")
-         self.db.run_query(file_responses[f][0][problem_num].sql)
-     # Run setup queries.
-     if problem.get("setup"):
-       for q in problem["setup"]: self.db.run_query(q)
+      if problem.get("dependencies"):
+        for dep in problem["dependencies"]:
+          [f, problem_num] = dep.split("|")
+          self.db.run_query(response[f][0][problem_num].sql)
+      # Run setup queries.
+      if problem.get("setup"):
+        for q in problem["setup"]: self.db.run_query(q)
 
     except mysql.connector.errors.ProgrammingError as e:
-      graded["errors"].append("Dependent query had an exception. Most " + \
-        "likely all tests after this one will fail | MYSQL ERROR " + \
-        str(e))
-      return 0
-      
-      
-      
-      
-      
+      # TODO graded["errors"].append("Dependent query had an exception. Most " + \
+      #  "likely all tests after this one will fail | MYSQL ERROR " + \
+      #  str(e))
+      raise
+
+
   def grade(self, response, output):
     """
     Function: grade
@@ -104,20 +74,18 @@ class Grade:
       got_points = 0
 
       # Grade each problem in the assignment.
-      problems = specs[f]
+      problems = self.specs[f]
       for problem in problems:
+        self.run_dependencies(problem, response)
+
         graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
           "got_points": 0}
         graded_file["problems"].append(graded_problem)
+
         try: # TODO call specific class depending on the problem type to grade
-          got_points += \
-              TYPES[problem["type"]](db, specs, response, output).grade()
-          
-            
-            
-            
-          got_points += ???g.grade(problem, responses[problem["number"]], \
-            graded_problem, file_responses)
+          got_points += TYPES[problem["type"]](self.db, problem, \
+            responses[problem["number"]], output, cache).grade()
+
         # If they didn't do a problem.
         except KeyError:
           graded_problem["notexist"] = True
@@ -128,139 +96,8 @@ class Grade:
       #print "\n"
 
     return total_points
+
     
-    
-    
-    
-    
-    
-    
-    """
-    Function: grade
-    ---------------
-    Runs all of the tests for a particular problem and computes the number
-    of points received.
-
-    problem: The problem specification.
-    response: The student's response.
-    graded: The graded problem output.
-    file_responses: The entire list of responses (used for certain tests like
-                    stored procedure tests).
-
-    returns: The number of points received for this problem.
-    """
-    # Problem definitions.
-    num = problem["number"]
-    num_points = problem["points"]
-
-    # Print out some things before running tests.
-    self.pretest(problem, response, graded)
-
-    # The number of points this student has received so far on this problem.
-    got_points = num_points
-
-    if problem.get("dependencies"):
-      self.run_dependencies(problem, file_responses
-    try:
-      # Run dependent queries (which is the student's response from another
-      # question).
-      if problem.get("dependencies"):
-        for dep in problem["dependencies"]:
-          [f, problem_num] = dep.split("|")
-          self.db.run_query(file_responses[f][0][problem_num].sql)
-      # Run setup queries.
-      if problem.get("setup"):
-        for q in problem["setup"]: self.db.run_query(q)
-
-    except mysql.connector.errors.ProgrammingError as e:
-      graded["errors"].append("Dependent query had an exception. Most " + \
-        "likely all tests after this one will fail | MYSQL ERROR " + \
-        str(e))
-      return 0
-
-    # Run each test for the problem.
-    for test in problem["tests"]:
-      lost_points = 0
-      graded_test = {"errors": [], "deductions": [], "success": False}
-      graded["tests"].append(graded_test)
-
-      try:
-        # Change the connection timeout.
-        self.db.get_db_connection(test.get("timeout"))
-
-        # Figure out what kind of test it is and call the appropriate function.
-        f = self.get_function(test)
-        lost_points += f(test, response, graded_test)
-
-        # Apply any other deductions.
-        if graded_test.get("deductions"):
-          for deduction in graded_test["deductions"]:
-            (lost, desc) = SQL_DEDUCTIONS[deduction]
-            graded["errors"].append(desc)
-            lost_points += lost
-
-      # If their query times out or the database disconnected.
-      except mysql.connector.errors.InterfaceError as e:
-        print "error: ", e
-        graded["errors"].append("MYSQL ERROR " + str(e) + " (most likely " + \
-          "the query is invalid and failed or query timed out)")
-        lost_points += test["points"]
-        self.db.get_db_connection(MAX_TIMEOUT)
-        if test.get("teardown"): self.db.run_query(test["teardown"])
-
-      # If there was a MySQL error, print out the error that occurred and the
-      # code that caused the error.
-      except mysql.connector.errors.Error as e:
-        graded["errors"].append("MYSQL ERROR " + str(e))
-        lost_points += test["points"]
-        self.db.get_db_connection(MAX_TIMEOUT)
-        if test.get("teardown"): self.db.run_query(test["teardown"])
-
-      got_points -= lost_points
-      graded_test["got_points"] = test["points"] - lost_points
-
-    # Run problem teardown queries.
-    if problem.get("teardown"):
-      self.db.get_db_connection(MAX_TIMEOUT)
-      for q in problem["teardown"]: self.db.run_query(q)
-
-    # Get the total number of points received.
-    got_points = (got_points if got_points > 0 else 0)
-    graded["got_points"] = got_points
-    return got_points
-
-
-  def pretest(self, problem, response, graded): #TODO DELETE
-    """
-    Function: pretest
-    -----------------
-    Check for certain things before running the tests and print them out.
-    This includes:
-      - Comments
-      - Attaching results of query
-      - Checking their SQL for certain keywords
-      - Printing out their actual SQL
-
-    problem: The problem specification.
-    response: The student's response.
-    graded: The graded problem output.
-    """
-    # Comments, query results, and SQL.
-    graded["comments"] = response.comments
-    graded["submitted-results"] = response.results
-    graded["sql"] = response.sql
-
-    # Check for keywords.
-    if problem.get("keywords"):
-      missing = False
-      missing_keywords = []
-      for keyword in problem["keywords"]:
-        if keyword not in response.sql:
-          missing = True
-          missing_keywords.append(keyword)
-      if missing:
-        graded["errors"].append("MISSING KEYWORDS " + ", ".join(missing_keywords))
-    # TODO take points off for missing keywords?
 
 
   def select(self, test, response, graded):
@@ -279,74 +116,7 @@ class Grade:
 
     returns: The number of points to deduct.
     """
-    success = True
-    deductions = 0
-    test_points = test["points"]
-
-    # TODO make sure they aren't doing SQL injection
-    expected = self.cache.get(self.db.run_query, test["query"], \
-      setup=test.get("setup"), teardown=test.get("teardown"))
-    try:
-      actual = self.db.run_query(response.sql, setup=test.get("setup"), \
-        teardown=test.get("teardown"))
-    except mysql.connector.errors.ProgrammingError as e:
-      raise
-
-    # If the results aren't equal in length, then they are automatically wrong.
-    if len(expected.results) != len(actual.results):
-      graded["expected"] = expected.output
-      graded["actual"] = actual.output
-      graded["success"] = False
-      return test_points
-
-    # If we don't need to check that the results are ordered, then sort the
-    # results for easier checking.
-    if not test.get("ordered"):
-      expected.results = set(expected.results)
-      actual.results = set(actual.results)
-
-    # If we don't need to check that the columns are ordered in the same way,
-    # then sort each tuple for easier checking.
-    if not test.get("column-order"):
-      expected.results = [set(x) for x in expected.results]
-      actual.results = [set(x) for x in actual.results]
-
-    # Compare the student's code to the results.
-    if not equals(expected.results, actual.results):
-      graded["expected"] = expected.output
-      graded["actual"] = actual.output
-      deductions = test_points
-
-      # Check to see if they forgot to ORDER BY.
-      if test.get("ordered"):
-        eresults = set(expected.results)
-        aresults = set(actual.results)
-        if aresults == eresults:
-          deductions = 0
-          graded["deductions"].append("orderby")
-
-      # See if they chose the wrong column order.
-      if test.get("column-order"):
-        eresults = [set(x) for x in expected.results]
-        aresults = [set(x) for x in actual.results]
-        if equals(eresults, aresults):
-          deductions = 0
-          graded["deductions"].append("columnorder")
-
-      success = False
-
-    # Check to see if they named aggregates.
-    # TODO check for other things? must contain a certain word in col name?
-    if test.get("rename"):
-      for col in actual.col_names:
-        if col.find("(") + col.find(")") != -2:
-          graded["deductions"].append("renamecolumns")
-          success = False
-          break
-
-    # TODO more or fewer columns?
-    graded["success"] = success
-    return deductions
+    
 
 
   def create(self, test, response, graded):

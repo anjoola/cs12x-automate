@@ -55,12 +55,12 @@ def setup():
   Function: setup
   ---------------
   Sets up the grading environment and tools. This includes establishing the
-  database connection, reading the specs file, and opening all the files needed
-  for grading.
+  database connection, reading the specs file, sourcing all dependencies,
+  and running setup queries.
   """
 
   # The graded output.
-  o = GradedOutput(specs) # TODO fix this
+  o = GradedOutput(specs) # TODO fix this should have a better name
   # Start up the connection with the database.
   db = DBTools()
   db.get_db_connection(MAX_TIMEOUT)
@@ -123,7 +123,7 @@ def grade_student(student):
     #graded_student = stylechecker.deduct(graded_student)
 
     # Output the results for this student.
-    formatter.html_student(graded_student, specs) # TODO rename this function
+    formatter.html_student(output, specs) # TODO rename this function
 
   # The student might not exist.
   except IOError as e: # TODO error in the wrong place

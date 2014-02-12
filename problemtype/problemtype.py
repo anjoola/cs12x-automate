@@ -1,6 +1,7 @@
 from errors import *
 
 TYPES = {
+  "create" : Create,
   "select" : Select,
   "insert" : Insert,
   "trigger" : Trigger,
@@ -15,7 +16,7 @@ class ProblemType(object):
   A generic problem type. To be implemented for specific types of problems.
   """
 
-  def __init__(self, db, specs, response, output):
+  def __init__(self, db, specs, response, output, cache):
     # The database connection.
     self.db = db
 
@@ -27,6 +28,21 @@ class ProblemType(object):
 
     # The graded problem output.
     self.output = output
+
+    # Cache to store results of query runs to avoid having to run the same
+    # query multiple times.
+    self.cache = cache
+
+    # The problem number.
+    self.num = self.specs["number"]
+
+    # The number of points this problem is worth.
+    self.points = self.specs["points"]
+
+    # The number of points the student has gotten on this question. They start
+    # out with the maximum number of points, and points get deducted as the
+    # tests go on.
+    self.got_points = self.points
 
 
   def preprocess(self):
@@ -53,7 +69,7 @@ class ProblemType(object):
         if keyword not in self.response.sql:
           missing = True
           missing_keywords.append(keyword)
-      if missing:
+      if missing: # TODO errors
         self.output["errors"].append(MissingKeywordError(missing_keywords))
         # TODO need to convert this to a string later? using repr
 
@@ -67,28 +83,57 @@ class ProblemType(object):
 
     returns: The number of points received for this response.
     """
+    # Run each test for the problem.
+    for test in self.specs["tests"]:
+      lost_points = 0
+      graded_test = {"errors": [], "deductions": [], "success": False}
+      self.output["tests"].append(graded_test)
 
-    # Problem definitions and preprocessing.
-    number = problem["number"]
-    num_points = problem["points"]
-    self.preprocess()
+      try:
+        lost_points += grade_test(test, graded_test)
+
+        # Apply any other deductions.
+        if graded_test.get("deductions"):
+          for deduction in graded_test["deductions"]:
+            (lost, desc) = SQL_DEDUCTIONS[deduction]
+            self.output["errors"].append(desc) # TODO fix this
+            lost_points += lost
+
+      # If their query times out.
+      except timeouts.TimeoutError:
+        self.output["errors"].append("Query timed out.") # TODO errors
+        lost_points += test["points"]
+        if test.get("teardown"): self.db.run_query(test["teardown"])
+
+      # If there was a MySQL error, print out the error that occurred and the
+      # code that caused the error.
+      except mysql.connector.errors.Error as e:
+        self.output["errors"].append("MYSQL ERROR " + str(e)) # TODO errors
+        lost_points += test["points"]
+        if test.get("teardown"): self.db.run_query(test["teardown"])
+
+      self.got_points -= lost_points
+      graded_test["got_points"] = test["points"] - lost_points
+
+    # Run problem teardown queries.
+    if problem.get("teardown"):
+      for q in problem["teardown"]: self.db.run_query(q)
+
+    # Get the total number of points received.
+    self.got_points = (self.got_points if self.got_points > 0 else 0)
+    self.output["got_points"] = self.got_points
+    return self.got_points
 
 
+  def grade_test(self, test, output):
+    """
+    Function: grade_test
+    --------------------
+    Runs a test.
 
+    test: The specs for the test to run.
+    output: The graded output for this test.
 
-
-
-
-
-
-
-    # The number of points this student has received so far on this problem.
-    got_points = num_points
-    
-  
-    return 0
-
-
-class Function(ProblemType):
-  def grade(self):
-    super(Function, self).grade()
+    returns: The number of points to deduct.
+    """
+    raise NotImplementedError("Must be implemented!")
