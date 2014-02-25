@@ -1,10 +1,10 @@
 from problemtype import ProblemType
 
-class Create(ProblemType):
+class Trigger(ProblemType):
   """
-  Class: Create
-  -------------
-  Tests a create statement. TODO
+  Class: Trigger
+  --------------
+  Tests a tregger statement. TODO
   """
 
   def grade_test(self, test, output):

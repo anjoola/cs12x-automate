@@ -1,13 +1,6 @@
-from errors import *
+import mysql.connector
 
-TYPES = {
-  "create" : Create,
-  "select" : Select,
-  "insert" : Insert,
-  "trigger" : Trigger,
-  "function": Function,
-  "procedure": Procedure
-}
+from errors import *
 
 class ProblemType(object):
   """
@@ -15,6 +8,8 @@ class ProblemType(object):
   ------------------
   A generic problem type. To be implemented for specific types of problems.
   """
+
+ 
 
   def __init__(self, db, specs, response, output, cache):
     # The database connection.
@@ -33,13 +28,13 @@ class ProblemType(object):
     # query multiple times.
     self.cache = cache
 
-""" TODO"""
+    """ TODO"""
     # The problem number.
     self.num = self.specs["number"]
 
     # The number of points this problem is worth.
     self.points = self.specs["points"]
-""" TODO"""
+    """ TODO"""
 
     # The number of points the student has gotten on this question. They start
     # out with the maximum number of points, and points get deducted as the
@@ -72,7 +67,7 @@ class ProblemType(object):
           missing = True
           missing_keywords.append(keyword)
       if missing: # TODO errors
-        self.output["errors"].append(MissingKeywordError(missing_keywords))
+        self.output["errors"].append(str(MissingKeywordError(missing_keywords)))
         # TODO need to convert this to a string later? using repr
 
 
@@ -86,13 +81,14 @@ class ProblemType(object):
     returns: The number of points received for this response.
     """
     # Run each test for the problem.
+    self.preprocess()
     for test in self.specs["tests"]:
       lost_points = 0
       graded_test = {"errors": [], "deductions": [], "success": False}
       self.output["tests"].append(graded_test)
 
       try:
-        lost_points += grade_test(test, graded_test)
+        lost_points += self.grade_test(test, graded_test)
 
         # Apply any other deductions.
         if graded_test.get("deductions"):
@@ -102,10 +98,10 @@ class ProblemType(object):
             lost_points += lost
 
       # If their query times out.
-      except timeouts.TimeoutError:
-        self.output["errors"].append("Query timed out.") # TODO errors
-        lost_points += test["points"]
-        if test.get("teardown"): self.db.run_query(test["teardown"])
+      #except timeouts.TimeoutError:
+      #  self.output["errors"].append("Query timed out.") # TODO errors
+      #  lost_points += test["points"]
+      #  if test.get("teardown"): self.db.run_query(test["teardown"])
 
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
@@ -118,8 +114,8 @@ class ProblemType(object):
       graded_test["got_points"] = test["points"] - lost_points
 
     # Run problem teardown queries.
-    if problem.get("teardown"):
-      for q in problem["teardown"]: self.db.run_query(q)
+    if self.specs.get("teardown"):
+      for q in self.specs["teardown"]: self.db.run_query(q)
 
     # Get the total number of points received.
     self.got_points = (self.got_points if self.got_points > 0 else 0)
@@ -143,11 +139,11 @@ class ProblemType(object):
 
 # ----------------------------- Utility Functions ---------------------------- #
 
-def equals(self, lst1, lst2):
-  """
-  Function: equals
-  ----------------
-  Compares two lists of tuples to see if their contents are equal.
-  """
-  return [tuple(unicode(x).lower() for x in y) for y in lst1] == \
-    [tuple(unicode(x).lower() for x in y) for y in lst2]
+  def equals(self, lst1, lst2):
+    """
+    Function: equals
+    ----------------
+    Compares two lists of tuples to see if their contents are equal.
+    """
+    return [tuple(unicode(x).lower() for x in y) for y in lst1] == \
+      [tuple(unicode(x).lower() for x in y) for y in lst2]

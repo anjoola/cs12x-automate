@@ -1,8 +1,8 @@
 from problemtype import *
 
-class StoredProcedure(ProblemType):
+class Procedure(ProblemType):
   """
-  Class: StoredProcedure
+  Class: Procedure
   ----------------------
   Tests a stored procedure by calling the procedure and checking the contents
     of the table before and after.

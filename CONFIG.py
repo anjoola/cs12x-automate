@@ -4,6 +4,7 @@ File: CONFIG.py
 Contains configuration parameters for the grading tool.
 """
 import secret
+from problemtype import *
 
 # Verbose output.
 VERBOSE = True
@@ -56,3 +57,12 @@ TYPE_OUTPUTS = ["select", "stored-procedure", "function"]
 
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 100
+
+PROBLEM_TYPES = {
+  "create" : Create,
+  "select" : Select,
+  "insert" : Insert,
+  "trigger" : Trigger,
+  "function": Function,
+  "procedure": Procedure
+}

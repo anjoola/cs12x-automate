@@ -15,7 +15,7 @@ class TestOutput:
     self.o = o
 
 
-  def get_function(self, specs):
+  def get_function(self, test_type):
     """
     Function: get_function
     ----------------------
@@ -24,7 +24,6 @@ class TestOutput:
     specs: The specs for the test.
     returns: A function object.
     """
-    test_type = specs["type"]
     if test_type == "select":
       return self.select
     elif test_type == "create":
@@ -37,7 +36,7 @@ class TestOutput:
       return self.function
 
 
-  def output(self, tests, specs):
+  def output(self, test_type, tests, specs):
     """
     Function: output
     ----------------
@@ -52,7 +51,7 @@ class TestOutput:
       test_specs = specs[i]
 
       # Don't print output if not specified in the CONFIG file.
-      if test_specs["type"] not in TYPE_OUTPUTS:
+      if test_type not in TYPE_OUTPUTS:
         continue
 
       if not has_printed_test:
@@ -73,7 +72,7 @@ class TestOutput:
       o.write("<div class='test-specs'>" + test_specs["query"] + "</div>")
 
       # Specific test printouts.
-      f = self.get_function(test_specs)
+      f = self.get_function(test_type)
       f(test, test_specs)
 
       if has_printed_test: o.write("</li>\n")

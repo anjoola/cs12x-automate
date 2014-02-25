@@ -9,7 +9,7 @@ class DatabaseError(Exception):
     self.value = value
 
   def __str__(self):
-    return repr("Database Error: " + self.value)
+    return "Database Error: " + self.value
 
 
 class ParsingError(Exception):
@@ -22,7 +22,7 @@ class ParsingError(Exception):
     self.value = value
 
   def __str__(self):
-    return repr("Parsing Error: " + self.value)
+    return "Parsing Error: " + self.value
 
 
 class MissingKeywordError(Exception):
@@ -36,7 +36,7 @@ class MissingKeywordError(Exception):
     self.value = value
 
   def __str__(self):
-    return repr("Parsing Error: " + ", ".join(value))
+    return "Parsing Error: " + ", ".join(self.value)
 
 
 

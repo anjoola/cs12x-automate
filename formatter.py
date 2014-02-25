@@ -137,7 +137,7 @@ def html_student(student, specs):
       # Print out comments and submitted results if the specs ask for it.
       if problem_specs.get("comments") and problem:
         o.write("<b>Comments</b>")
-        if not problem["comments"]:
+        if not problem.get("comments"):
           o.write("<br><i>No comments provided...</i><br>\n")
         else:
           o.write("<pre>" + problem["comments"] + "</pre>")
@@ -149,14 +149,14 @@ def html_student(student, specs):
 
       # Test output.
       test_output = TestOutput(o)
-      test_output.output(problem["tests"], problem_specs["tests"])
+      test_output.output(problem_specs["type"], problem["tests"], problem_specs["tests"])
 
       # Any errors that have occurred.
       errors = problem["errors"]
       if len(errors) > 0:
         o.write("\n<b>Errors</b>\n<br><ul>")
         for error in errors:
-          o.write("<li>" + error + "</li>\n")
+          o.write("<li>" + str(error) + "</li>\n")
         o.write("</ul>")
 
       o.write("</div>")

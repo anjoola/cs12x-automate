@@ -1,17 +1,19 @@
 import argparse
+import os
+import sys
+
+import mysql.connector
+
 from CONFIG import MAX_TIMEOUT
 import dbtools
-from dbtools import DBTools
 import formatter
 from grade import Grade
 import iotools
 from iotools import log
-import mysql.connector
-import os
 from models import *
-from stylechecker import StyleError
 import stylechecker
-import sys
+
+(assignment, files, students, db, specs, o, grader) = tuple([None] * 7)
 
 def getargs():
   """
@@ -20,7 +22,7 @@ def getargs():
   Gets the command-line arguments and prints a usage message if needed. Figures
   out the files and students to grade.
   """
-
+  global assignment, files, students, specs
   # Parse command-line arguments.
   parser = argparse.ArgumentParser(description="Get the arguments.")
   parser.add_argument("--assignment")
@@ -58,11 +60,11 @@ def setup():
   database connection, reading the specs file, sourcing all dependencies,
   and running setup queries.
   """
-
+  global db, specs, o, grader
   # The graded output.
   o = GradedOutput(specs) # TODO fix this should have a better name
   # Start up the connection with the database.
-  db = DBTools()
+  db = dbtools.DBTools()
   db.get_db_connection(MAX_TIMEOUT)
 
   # Source files needed prior to grading and run setup queries.
@@ -85,6 +87,7 @@ def grade_student(student):
 
   student: The student name.
   """
+  global assignment, files, o, grader
   log("\n\n" + student + ":")
 
   # Graded output.
@@ -108,7 +111,7 @@ def grade_student(student):
       f.close()
 
     # If the file has a style error (and cannot be parsed), they get 0 points.
-    except StyleError:
+    except stylechecker.StyleError:
       graded_file["errors"].append("File does not follow the style guide.") # TODO better errrr
 
     # If the file does not exist, then they get 0 points.
@@ -153,8 +156,8 @@ def teardown():
 
 if __name__ == "__main__":
   getargs()
-  log("\n\n========================START GRADING========================\n")
   setup()
+  log("\n\n========================START GRADING========================\n")
   for student in students:
     grade_student(student)
   log("\n\n=========================END GRADING=========================\n")
