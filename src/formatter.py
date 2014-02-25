@@ -1,29 +1,31 @@
 """
 Module: formatter.py
 --------------------
-Formats the output.
+Formats the output into HTML.
 """
 
 import cgi
 from cStringIO import StringIO
-from CONFIG import TYPE_OUTPUTS
 import json
-from testoutput import TestOutput
 import os
+
+from CONFIG import ASSIGNMENT_DIR, PROBLEM_TYPES
+from problemtype import *
+from problemtype import ProblemType
 
 def e(text):
   """
-  Function: esc
-  -------------
+  Function: e
+  -----------
   Escapes text so it can be outputted as HTML.
   """
   return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
-def html(output, specs):
+def format(output, specs):
   """
-  Function: html
-  --------------
+  Function: format
+  ----------------
   Formats the JSON output into HTML.
 
   output: The graded JSON output.
@@ -35,14 +37,15 @@ def html(output, specs):
   o.write("<link rel='stylesheet' type='text/css' href='style/css.css'>\n")
   o.write("<script type='text/javascript' src='style/javascript.js'></script>")
   o.write("\n<input type='hidden' id='assignment' value='" + \
-    specs["assignment"] + "'>\n")
+          specs["assignment"] + "'>\n")
 
   # Print out the list of students to the list. Finds this by searching the
   # directory (since we may run the automation tool mutliple times on different
   # sets of students).
   o.write("<div id='left'>\n<div id='students'>Students</div><br>")
   found_students = []
-  for f in os.listdir(specs["assignment"] + "/_results/files/"):
+  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + \
+                      "/_results/files/"):
     student = f.split("-")[0]
     if student not in found_students:
       found_students.append(student)
@@ -50,7 +53,7 @@ def html(output, specs):
   # List students out in alphabetical order.
   for student in sorted(found_students):
     o.write("<a onclick='changeStudent(\"" + student + "\")'>" + student + \
-      "</a><br>\n")
+            "</a><br>\n")
   o.write("</div>\n")
 
   # Graded output and actual files.
@@ -58,7 +61,7 @@ def html(output, specs):
   first_file = output["files"][0]
   o.write("<div id='container'>\n")
   o.write("<div draggable='true' class='resizable' id='middle'>\n" + \
-    "<div class='title' id='name'>" + first_student + "</div>\n")
+          "<div class='title' id='name'>" + first_student + "</div>\n")
 
   # Graded files.
   o.write("<div class='links'>\n")
@@ -69,9 +72,9 @@ def html(output, specs):
     else:
       o.write("<div class='label' ")
     o.write("onclick='changeGradedFile(this, \"" + name + "\")'>" + name + \
-      "</div>\n")
+            "</div>\n")
   o.write("</div>\n<iframe src='files/" + first_student + "-" + first_file + \
-    ".html' name='middle' id='iframe-middle'></iframe></div>\n\n")
+          ".html' name='middle' id='iframe-middle'></iframe></div>\n\n")
 
   # Raw files.
   o.write("<div id='right' draggable='true' class='resizable'>\n")
@@ -84,33 +87,33 @@ def html(output, specs):
     else:
       o.write("<div class='label' ")
     o.write("onclick='changeRawFile(this, \"" + name + "\")'>" + name + \
-      "</div>\n")
+            "</div>\n")
   # Get the first file for the first student.
   f = "../students/" + first_student + "-" + specs["assignment"] + "/" + \
-    first_file
+      first_file
   o.write("</div>\n<iframe src='" + f + "' name='right' " + \
-    "id='iframe-right'></iframe></div>")
+          "id='iframe-right'></iframe></div>")
 
   o.write("</div>")
   return o.getvalue()
 
 
-def html_student(student, specs):
+def format_student(output, specs):
   """
-  Function: html_student
-  ----------------------
+  Function: format_student
+  ------------------------
   Outputs the graded output for a particular student. Each student's output
   gets written to its own file.
 
-  student: The student's JSON output.
+  output: The student's JSON output.
   specs: The specs for the assignment.
   """
   # Create output per student, per file. Files are named student-file.html.
-  for f in student["files"].values():
+  for f in output["files"].values():
     o = StringIO()
     o.write("<link rel='stylesheet' type='text/css' href='../style/css.css'>\n")
     o.write("<script type='text/javascript' src='../style/javascript.js'>" + \
-      "</script>\n")
+            "</script>\n")
     o.write("<html class='student-page'>")
 
     # Print out all errors that have occurred with the file.
@@ -148,9 +151,8 @@ def html_student(student, specs):
       o.write("<pre>" + problem["sql"] + "</pre>")
 
       # Test output.
-      test_output = TestOutput(o)
-      test_output.output(problem_specs["type"], problem["tests"], problem_specs["tests"])
-
+      PROBLEM_TYPES[problem_specs["type"]]().output_test(o, problem["tests"], \
+                                                         problem_specs["tests"])
       # Any errors that have occurred.
       errors = problem["errors"]
       if len(errors) > 0:
@@ -164,107 +166,8 @@ def html_student(student, specs):
     o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
     o.write("<br><br></html>")
 
-    filename = student["name"] + "-" + f["filename"] + ".html"
-    output = open(specs["assignment"] + "/_results/files/" + filename, "w")
-    output.write(o.getvalue())
-    output.close()
-
-
-def markdown(output, specs):
-  """
-  Function: markdown
-  ------------------
-  Formats the JSON output into markdown.
-
-  output: The graded JSON output.
-  specs: The specs for the assignment.
-  returns: The string containing the markdown.
-  """
-  output = json.loads(output)
-  o = StringIO()
-
-  def format_lines(sep, lines):
-    """
-    Function: format_lines
-    ----------------------
-    Format lines in a nice way. Gets rid of extra spacing.
-
-    lines: The lines to print and format.
-    """
-    return "\n" + sep + " " + ("\n" + sep + " ").join( \
-      filter(None, [line.strip() for line in lines.split("\n")])) + "\n"
-
-
-  def write(string):
-    """
-    Function: write
-    ---------------
-    Writes the markdown out to file. Markdown needs a lot of new lines!
-    """
-    o.write(string + "\n\n")
-
-
-  # Loop through each student to print the results.
-  for student in output["students"]:
-    write("# -------------------------------------------")
-    write("# [" + student["name"] + "]")
-
-    # Loop through the student's files.
-    for f in student["files"]:
-      write("#### " + ("-" * 95))
-      write("### " + f["filename"])
-
-      # Print out all errors that have occurred with the file.
-      if f.get("errors"):
-        write("#### File Errors")
-        for error in f["errors"]:
-          write("* " + error)
-
-      # Loop through all the problems.
-      for (i, problem) in enumerate(f["problems"]):
-        write("---")
-        problem_specs = specs[f["filename"]][i]
-        errors = problem["errors"]
-        num_points = str(problem_specs["points"])
-        write("#### Problem " + problem["num"] + " (" + num_points + " points)")
-
-        # Print out the comments and submitted results if the specs ask for it.
-        if problem_specs.get("comments"):
-          write("**Comments**\n")
-          write(problem["comments"])
-        if problem_specs.get("submitted-results"):
-          write("**Submitted Results**\n")
-          write(format_lines("   ", problem["submitted-results"]))
-        write("**SQL**")
-        write(format_lines("   ", problem["sql"]))
-
-        # Go through the tests and print the failures. Only print out the test
-        # if it is one to output for (see TYPE_OUTPUTS in the CONFIG file).
-        for (j, test) in enumerate(problem["tests"]):
-          test_specs = problem_specs["tests"][j]
-          if test.get("type") in TYPE_OUTPUTS and not test["success"] and \
-            "expected" in test:
-            write("**`TEST FAILED`** (Lost " + str(test_specs["points"]) + \
-              " points)")
-            write(format_lines("   ", test_specs["query"]))
-            write("_Expected Results_")
-            write(format_lines("   ", test["expected"]))
-            write("_Actual Results_")
-            write(format_lines("   ", test["actual"]))
-
-        # Any errors with the problem.
-        if len(errors) > 0:
-          write("**Errors**")
-          for error in errors:
-            write("* "+ error)
-
-        # Points received on this problem.
-        got_points = str(problem["got_points"])
-        if int(got_points) > 0:
-          write("> ##### Points: " + got_points + " / " + num_points)
-        else:
-          write("> `Points: " + got_points + " / " + num_points + "`")
-
-      write("\n### Total Points: " + str(f["got_points"]))
-
-  return o.getvalue()
+    filename = output["name"] + "-" + f["filename"] + ".html"
+    out = open(ASSIGNMENT_DIR + specs["assignment"] + "/_results/files/" +
+               filename, "w")
+    out.write(o.getvalue())
+    out.close()

@@ -11,3 +11,7 @@ class Create(ProblemType):
     output["success"] = "UNDETERMINED"
     # TODO create table statements are just printed.
     return 0
+
+
+  def to_string(self, o, test, specs):
+    pass

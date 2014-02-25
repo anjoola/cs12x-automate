@@ -4,16 +4,16 @@ Module: iotools
 Functions involving input and output into the system, as well as file-related
 functions.
 """
-
-from CONFIG import VERBOSE
 from datetime import datetime
-import dbtools
-import formatter
 import json
 import os
 from os.path import getmtime
-from models import Response
 from time import strftime
+
+from CONFIG import ASSIGNMENT_DIR, VERBOSE
+import dbtools
+import formatter
+from models import Response
 
 def get_students(assignment, after=None):
   """
@@ -26,16 +26,16 @@ def get_students(assignment, after=None):
          submitted at a time after this student (includes this student).
   returns: A list of students who've submitted for that assignment.
   """
-  files = [f for f in os.walk(assignment + "/").next()[1] \
+  files = [f for f in os.walk(ASSIGNMENT_DIR + assignment + "/").next()[1] \
     if f.endswith("-" + assignment)]
 
   # If looking for files after a particular person.
   if after is not None:
     # Sort the files such that the newest are first, then take a slice of
     # that list so only the newest files are there.
-    files = sorted(files, key=lambda f: getmtime(assignment + "/" + f), \
-      reverse=True)
-    files = files[0:files.index(after + "-" + assignment)+1]
+    files = sorted(files, key=lambda f: getmtime(ASSIGNMENT_DIR + assignment + \
+                   "/" + f), reverse=True)
+    files = files[0 : files.index(after + "-" + assignment) + 1]
 
   return [f.replace("-" + assignment, "") for f in files]
 
@@ -62,12 +62,12 @@ def output(json, specs, raw=False):
        otherwise.
   returns: The file where the output was written to.
   """
-  path = specs["assignment"] + "/_results/"
+  path = ASSIGNMENT_DIR + specs["assignment"] + "/_results/"
   if not os.path.exists(path):
     os.mkdir(path, 0644)
 
-  if not os.path.exists(specs["assignment"] + "/_results/files/"):
-    os.mkdir(specs["assignment"] + "/_results/files/", 0644)
+  if not os.path.exists(path+ "files/"):
+    os.mkdir(path + "files/", 0644)
 
   # Formats the output nicely before writing it to file, if specified.
   f = None
@@ -76,7 +76,7 @@ def output(json, specs, raw=False):
     f.write(json)
   else:
     f = open(path + "index.html", "w")
-    f.write(formatter.html(json, specs))
+    f.write(formatter.format(json, specs))
 
   f.close()
   return f
@@ -194,7 +194,7 @@ def parse_specs(assignment):
   assignment: The assignment.
   returns: A JSON object containing the specs for that assignment.
   """
-  f = open(assignment + "/" + assignment + "." + "spec", "r")
+  f = open(ASSIGNMENT_DIR + assignment + "/" + assignment + "." + "spec", "r")
   specs = json.loads("".join(f.readlines()))
   f.close()
   return specs

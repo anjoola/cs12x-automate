@@ -32,3 +32,7 @@ class Insert(ProblemType):
 
     else:
       return test["points"]
+
+
+  def to_string(self, o, test, specs):
+    pass

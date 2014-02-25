@@ -26,3 +26,12 @@ class Function(ProblemType):
     else:
       output["success"] = True
       return 0
+
+
+  def to_string(self, o, test, specs):
+    # If the test failed, print out the differences.
+    if not test["success"] and test.get("expected"):
+      o.write("<b>Expected</b>\n")
+      o.write("<pre>" + self.e(test["expected"]) + "</pre>\n")
+      o.write("<b>Actual</b>\n")
+      o.write("<pre>" + self.e(test["actual"]) + "</pre>\n")

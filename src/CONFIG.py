@@ -9,6 +9,8 @@ from problemtype import *
 # Verbose output.
 VERBOSE = True
 
+# ----------------------------- Database Details ----------------------------- #
+
 # Database username.
 USER = secret.USER
 
@@ -30,6 +32,27 @@ CONNECTION_TIMEOUT = 10
 # Maximum timeout for any query.
 MAX_TIMEOUT = 600
 
+# ------------------------------ Grading Config ------------------------------ #
+
+# Directory where all the assignment specs and student files are stored.
+ASSIGNMENT_DIR = "../assignments/"
+
+# Maximum number of results to print out.
+MAX_NUM_RESULTS = 100
+
+# The types of problems there are and the classes to handle each type.
+PROBLEM_TYPES = {
+  "create" : Create,
+  "select" : Select,
+  "insert" : Insert,
+  "trigger" : Trigger,
+  "function": Function,
+  "procedure": Procedure
+}
+
+
+
+#### TODO clean up below
 # Deductions for overall style problems. Values are tuples of the form
 # (points, message) where points is the number of points taken off overall, and
 # desc is the description of the style error.
@@ -51,18 +74,3 @@ SQL_DEDUCTIONS = {
   "groupingselect": (2, "Can only SELECT on things that are being grouped by.")
 }
 
-# Type of tests to output for. This should not be modified unless the code
-# is also modified.
-TYPE_OUTPUTS = ["select", "stored-procedure", "function"]
-
-# Maximum number of results to print out.
-MAX_NUM_RESULTS = 100
-
-PROBLEM_TYPES = {
-  "create" : Create,
-  "select" : Select,
-  "insert" : Insert,
-  "trigger" : Trigger,
-  "function": Function,
-  "procedure": Procedure
-}

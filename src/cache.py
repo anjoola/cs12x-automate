@@ -2,11 +2,12 @@ class Cache:
   """
   Class: Cache
   ------------
-  A cache to store query results.
+  A cache to store query results. Is used so that there are fewer requests to
+  the database if students have the same exact query.
   """
   def __init__(self):
-    # The cache. The key is the function arguments and the value is a Result
-    # object containing the function details.
+    # The cache. The key is the function arguments and the value is contains
+    # the function call details.
     self.cache = {}
 
 

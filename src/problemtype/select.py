@@ -80,3 +80,42 @@ class Select(ProblemType):
     # TODO more or fewer columns?
     output["success"] = success
     return deductions
+
+
+  def to_string(self, o, test, specs):
+    if test["success"] or "expected" not in test:
+      return
+
+    # Expected and actual output.
+    o.write("<pre class='results'>")
+    (ediff, adiff) = self.get_diffs(test["expected"].split("\n"), \
+      test["actual"].split("\n"))
+
+    (eindex, aindex) = (0, 0)
+    space = " " * (len(ediff[eindex][1]) + 6)
+    while eindex < len(ediff):
+      (diff_type, evalue) = ediff[eindex]
+      # An expected result not found in the actual results.
+      if diff_type == "remove":
+        o.write("<font color='red'>" + self.e(evalue) + "</font>\n")
+        eindex += 1
+        continue
+
+      (diff_type, avalue) = adiff[aindex]
+      # Matching actual and expected results.
+      if diff_type == "":
+        o.write(self.e(evalue + "      " + avalue) + "\n")
+        aindex += 1
+        eindex += 1
+      # An actual result not found in the expected results.
+      elif diff_type == "add":
+        o.write(space + "<font color='red'>" + self.e(avalue) + "</font>\n")
+        aindex += 1
+
+    # Any remaining actual results.
+    while aindex < len(adiff):
+      (_, avalue) = adiff[aindex]
+      o.write(space + "<font color='red'>" + self.e(avalue) + "</font>\n")
+      aindex += 1
+
+    o.write("</pre>")

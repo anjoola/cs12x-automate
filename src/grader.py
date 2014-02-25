@@ -8,10 +8,10 @@ import dbtools
 import iotools
 from response import Response
 
-class Grade:
+class Grader:
   """
-  Class: Grade
-  ------------
+  Class: Grader
+  -------------
   Handles the grading of different types of problems. Runs the different types
   of tests on that problem.
   """
@@ -99,3 +99,12 @@ class Grade:
       #print "\n"
 
     return total_points
+
+
+  def cleanup(self):
+    """
+    Function: cleanup
+    -----------------
+    TODO
+    """
+    self.cache.clear()

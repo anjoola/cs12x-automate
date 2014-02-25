@@ -4,10 +4,10 @@ import sys
 
 import mysql.connector
 
-from CONFIG import MAX_TIMEOUT
+from CONFIG import ASSIGNMENT_DIR, MAX_TIMEOUT
 import dbtools
 import formatter
-from grade import Grade
+from grader import Grader
 import iotools
 from iotools import log
 from models import *
@@ -35,7 +35,7 @@ def getargs():
 
   # If the assignment argument isn't specified, print usage statement.
   if assignment is None:
-    print "Usage: main.py --assignment <assignment folder> ", \
+    print "Usage: main.py --assignment <assignment name> ", \
       "[--files <files to check>] [--students <specific students to check>] ", \
       "\n[--after <grade submissions that are turned in on or after this ", \
       "student turned it in>]"
@@ -76,7 +76,7 @@ def setup():
     for q in specs["setup"]: db.run_query(q)
 
   # Create the grading tool and output.
-  grader = Grade(specs, db) #rename to grader TODO
+  grader = Grader(specs, db)
 
 
 def grade_student(student):
@@ -102,8 +102,8 @@ def grade_student(student):
     output["files"][filename] = graded_file
 
     try:
-      f = open(assignment + "/students/" + student + "-" + assignment + \
-               "/" + filename, "r")
+      f = open(ASSIGNMENT_DIR + assignment + "/students/" + student + "-" + \
+               assignment + "/" + filename, "r")
       # Run their files through the style-checker to make sure it is valid and
       # take points off for violations.
       # TODO output["style-deductions"] = stylechecker.check(f, specs)
@@ -126,10 +126,10 @@ def grade_student(student):
     #graded_student = stylechecker.deduct(graded_student)
 
     # Output the results for this student.
-    formatter.html_student(output, specs) # TODO rename this function
+    formatter.format_student(output, specs)
 
   # The student might not exist.
-  except IOError as e: # TODO error in the wrong place
+  except IOError as e: # TODO error in the wrong place???
     print "TODO" + str(e)
     log("Student " + student + " does not exist!")
 
@@ -141,6 +141,7 @@ def teardown():
   Outputs the results, runs the teardown queries and closes the database
   connection.
   """
+  global grader
 
   # Output the results to file.
   f = iotools.output(o.jsonify(), specs)
@@ -149,6 +150,7 @@ def teardown():
   # Run teardown queries.
   if specs.get("teardown"):
     for query in specs["teardown"]: db.run_query(query)
+  grader.cleanup()
 
   # Close connection with the database
   db.close_db_connection()
