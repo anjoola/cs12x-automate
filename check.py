@@ -38,7 +38,9 @@ MULTILINE_COMMENT = False
 
 def check_line(line, line_number):
   """
-  Fud
+  Function: check_line
+  --------------------
+  Checks a line of a file for style violations.
   """
   global HAS_HEADER, MULTILINE_COMMENT
 

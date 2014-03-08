@@ -10,7 +10,7 @@ import os
 from os.path import getmtime
 from time import strftime
 
-from CONFIG import ASSIGNMENT_DIR, VERBOSE
+from CONFIG import ASSIGNMENT_DIR, ERROR, VERBOSE
 import dbtools
 import formatter
 from models import Response
@@ -27,7 +27,7 @@ def get_students(assignment, after=None):
   returns: A list of students who've submitted for that assignment.
   """
   files = [f for f in os.walk(ASSIGNMENT_DIR + assignment + "/").next()[1] \
-    if f.endswith("-" + assignment)]
+           if f.endswith("-" + assignment)]
 
   # If looking for files after a particular person.
   if after is not None:
@@ -40,6 +40,17 @@ def get_students(assignment, after=None):
   return [f.replace("-" + assignment, "") for f in files]
 
 
+def err(string):
+  """
+  Function: err
+  -------------
+  Outputs to the console if the ERROR flag is on. If the VERBOSE flag is on,
+  will also output, no matter what the ERROR flag is set to.
+  """
+  if VERBOSE or ERROR:
+    print string, 
+
+
 def log(string):
   """
   Function: log
@@ -47,7 +58,7 @@ def log(string):
   Outputs to the console if the VERBOSE flag is on.
   """
   if VERBOSE:
-    print string
+    print string, 
 
 
 def output(json, specs, raw=False):
@@ -86,8 +97,9 @@ def parse_file(f):
   """
   Function: parse_file
   --------------------
-  Parses the file into a dict of the question number and the student's response
-  to that question. Parses their comments, query, and query results.
+  Parses a student's file into a dictionary with the key as the problem number
+  and the student's response as the value. Also parses the student's comments,
+  query, and query results.
 
   f: The file object to parse.
   returns: The dict of the question number and student's response.
@@ -113,7 +125,7 @@ def parse_file(f):
     # If these are comments at the top of the file, ignore them.
     if curr == "":
       return
-    #if len(line.strip()) > 0:
+    #if len(line.strip()) > 0: TODO
     line = line + "\n"
     if started_results:
       responses[curr].results += line

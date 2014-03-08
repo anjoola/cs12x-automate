@@ -11,3 +11,8 @@ class Trigger(ProblemType):
     output["success"] = "UNDETERMINED"
     # TODO create table statements are just printed.
     return 0
+
+
+  def output_test(self, o, test, specs):
+    pass
+

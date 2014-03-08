@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 from time import strftime
 
+# TODO lots of commenting needed..
 class Response:
   """
   Class: Response

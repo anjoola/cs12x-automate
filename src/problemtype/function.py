@@ -28,7 +28,7 @@ class Function(ProblemType):
       return 0
 
 
-  def to_string(self, o, test, specs):
+  def output_test(self, o, test, specs):
     # If the test failed, print out the differences.
     if not test["success"] and test.get("expected"):
       o.write("<b>Expected</b>\n")

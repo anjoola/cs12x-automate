@@ -5,7 +5,7 @@ class Select(ProblemType):
   Class: Select
   -------------
   Runs a test SELECT statement and compares it to the student's SELECT
-    statement. Possibly checks for the following things:
+    statement. Checks for the following things (if required):
       - Order of rows
       - Order of columns
       - Whether or not derived relations are renamed
@@ -16,12 +16,11 @@ class Select(ProblemType):
     deductions = 0
     test_points = test["points"]
 
-    # TODO make sure they aren't doing SQL injection
     expected = self.cache.get(self.db.run_query, test["query"], \
-      setup=test.get("setup"), teardown=test.get("teardown"))
+                              test.get("setup"), test.get("teardown"))
     try:
-      actual = self.db.run_query(self.response.sql, setup=test.get("setup"), \
-        teardown=test.get("teardown"))
+      actual = self.db.run_query(self.response.sql, test.get("setup"), \
+                                 test.get("teardown"))
     except mysql.connector.errors.ProgrammingError as e:
       raise
 
@@ -56,7 +55,7 @@ class Select(ProblemType):
         aresults = set(actual.results)
         if aresults == eresults:
           deductions = 0
-          output["deductions"].append("orderby") # TODO
+          output["deductions"].append("OrderBy")
 
       # See if they chose the wrong column order.
       if test.get("column-order"):
@@ -64,25 +63,29 @@ class Select(ProblemType):
         aresults = [set(x) for x in actual.results]
         if self.equals(eresults, aresults):
           deductions = 0
-          output["deductions"].append("columnorder") # TODO
+          output["deductions"].append("ColumnOrder")
 
       success = False
 
     # Check to see if they named aggregates.
-    # TODO check for other things? must contain a certain word in col name?
     if test.get("rename"):
       for col in actual.col_names:
         if col.find("(") + col.find(")") != -2:
-          output["deductions"].append("renamecolumns") # TODO
+          output["deductions"].append("RenameValues")
           success = False
           break
 
-    # TODO more or fewer columns?
+    # More or fewer columns included.
+    if len(expected.col_names) != len(actual.col_names):
+      output["deductions"].append("WrongNumColumns")
+
+    # TODO selecting something that is not grouped on
+
     output["success"] = success
     return deductions
 
 
-  def to_string(self, o, test, specs):
+  def output_test(self, o, test, specs):
     if test["success"] or "expected" not in test:
       return
 

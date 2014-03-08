@@ -8,8 +8,38 @@ class DatabaseError(Exception):
   def __init__(self, value):
     self.value = value
 
-  def __str__(self):
+  def __repr__(self):
     return "Database Error: " + self.value
+
+
+class DependencyError(Exception):
+  """
+  Class: DependencyError
+  ----------------------
+  Occurs when there is a problem with a dependent query.
+  """
+
+  def __init__(self, value):
+    self.value = value
+
+  def __repr__(self):
+    return "DependencyError: One or more dependent problems (" + \
+           (", ".join(self.value)) + ") had errors. Most likely all tests " + \
+           "after this one will fail."
+
+
+class MySQLError(Exception):
+  """
+  Class: MySQLError
+  -----------------
+  Represents a MySQL error.
+  """
+
+  def __init__(self, value):
+    self.value = value
+
+  def __repr__(self):
+    return "MySQL Error " + str(self.value)
 
 
 class ParsingError(Exception):
@@ -21,7 +51,7 @@ class ParsingError(Exception):
   def __init__(self, value):
     self.value = value
 
-  def __str__(self):
+  def __repr__(self):
     return "Parsing Error: " + self.value
 
 
@@ -35,10 +65,6 @@ class MissingKeywordError(Exception):
   def __init__(self, value):
     self.value = value
 
-  def __str__(self):
-    return "Parsing Error: " + ", ".join(self.value)
-
-
-
-
-
+  def __repr__(self):
+    return "Missing Keyword" + ("s" if len(self.value) > 1 else "") + ": " + \
+           ", ".join(self.value)

@@ -30,7 +30,7 @@ class Procedure(ProblemType):
     return 0
 
 
-  def to_string(self, o, test, specs):
+  def output_test(self, o, test, specs):
     # If there are no changes in the table, don't print anything out.
     if not test.get("adds") and not test.get("subs"):
       return

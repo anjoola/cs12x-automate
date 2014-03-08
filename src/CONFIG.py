@@ -6,8 +6,12 @@ Contains configuration parameters for the grading tool.
 import secret
 from problemtype import *
 
-# Verbose output.
+# Verbose output. Set to True for all logging statements.
 VERBOSE = True
+
+# Error output. Set to True for only error messages (if VERSBOSE is set to
+# False).
+ERROR = True
 
 # ----------------------------- Database Details ----------------------------- #
 
@@ -50,6 +54,23 @@ PROBLEM_TYPES = {
   "procedure": Procedure
 }
 
+# Deductions for SQL problems. Values are tuples of the form (points, desc)
+# where points is the number of points to take off for this problem, and
+# desc is the description of the style error.
+SQL_DEDUCTIONS = {
+  "OrderBy":          (1, "Missing ORDER BY."),
+  "ColumnOrder":      (1, "Wrong column order."),
+  "MissingResults":   (1, "Did not include query results."),
+  "RenameValues":     (1, "Did not rename computed values."),
+  "WrongNumColumns":  (0, "More or fewer columns included."),
+  "GroupingSelect":   (2, "SELECTed something that was not grouped on.")
+}
+
+
+
+
+
+
 
 
 #### TODO clean up below
@@ -62,15 +83,5 @@ STYLE_DEDUCTIONS = {
   "semicolon": (3, "Missing semicolons at the end of the commands!")
 }
 
-# Deductions for SQL problems. Values are tuples of the form (points, desc)
-# where points is the number of points to take off for this problem, and
-# desc is the description of the style error.
-SQL_DEDUCTIONS = {
-  "orderby": (1, "Missing ORDER BY."),
-  "columnorder": (1, "Wrong column order."),
-  "missingresults": (1, "Forgot to include results."),
-  "renamecolumns": (1, "Did not rename computed values."),
-  "missingcols": (1, "More or fewer columns than the question asked for."),
-  "groupingselect": (2, "Can only SELECT on things that are being grouped by.")
-}
+
 

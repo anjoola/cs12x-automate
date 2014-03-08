@@ -13,12 +13,14 @@ class Insert(ProblemType):
 
     # Compare the expected rows inserted versus the actual.
     self.cache.get(self.db.run_query, test["query"], \
-      setup=test.get("setup"), teardown=test.get("teardown"))
+                   setup=test.get("setup"), teardown=test.get("teardown"))
     expected = self.db.run_query(table_sql)
 
+    # Clean up the results of the test INSERT statement so the student's query
+    # can be run.
     self.db.run_query("DELETE FROM " + test["table"])
     self.db.run_query(self.response.sql, setup=test.get("setup"), \
-      teardown=test.get("teardown"))
+                      teardown=test.get("teardown"))
     actual = self.db.run_query(table_sql)
 
     # If the results are not equal in size, then they are wrong.
@@ -34,5 +36,5 @@ class Insert(ProblemType):
       return test["points"]
 
 
-  def to_string(self, o, test, specs):
+  def output_test(self, o, test, specs):
     pass

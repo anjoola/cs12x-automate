@@ -13,5 +13,5 @@ class Create(ProblemType):
     return 0
 
 
-  def to_string(self, o, test, specs):
+  def output_test(self, o, test, specs):
     pass

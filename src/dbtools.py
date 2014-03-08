@@ -1,11 +1,14 @@
 import codecs
 from cStringIO import StringIO
-from CONFIG import *
-import mysql.connector
 import re
-import sqlparse
 import subprocess
+
+import mysql.connector
 import prettytable
+import sqlparse
+
+from CONFIG import *
+from iotools import err
 from models import Result
 
 # Used to find delimiters in the file.
@@ -25,7 +28,7 @@ class DBTools:
     # The database cursor.
     self.cursor = None
 
-    # The current connection timeout.
+    # The current connection timeout limit.
     self.timeout = CONNECTION_TIMEOUT
 
   # --------------------------- Database Utilities --------------------------- #
@@ -39,10 +42,8 @@ class DBTools:
     """
     if self.db:
       self.kill_query()
-      print "\n\n\nkilling\n\n\n"
-      
-      
-      # Consume remaining output.
+
+      # Consume remaining output. TODO
       #for _ in self.cursor: pass
       
       #self.cursor.close() TODO?
@@ -60,7 +61,7 @@ class DBTools:
         thread_id = self.db.connection_id
         self.db.cmd_process_kill(thread_id)
       except Exception as e:
-        "error:", str(e) # TODO
+        err("Error while killing query: " + str(e))
         pass
 
 
@@ -92,13 +93,14 @@ class DBTools:
       if timeout is not None and timeout == self.timeout:
         return self.db
 
-    print "Timeout:", timeout # TODO
+    log("New timeout: " + timeout)
     # Close any old connections and make another one with the new setting.
     self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
     self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-      database=DATABASE, port=PORT, connection_timeout=self.timeout, \
-      autocommit=True)
+                                      database=DATABASE, port=PORT, \
+                                      connection_timeout=self.timeout, \
+                                      autocommit=True)
     self.cursor = self.db.cursor()
     return self.db
 
@@ -182,7 +184,8 @@ class DBTools:
     # Separate the CALL procedure statements.
     sql_list = queries.split("CALL")
     if len(sql_list) > 0:
-      sql_list = sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
+      sql_list = \
+          sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
     else:
       sql_list = sqlparse.split(queries)
 
@@ -191,7 +194,6 @@ class DBTools:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
-      print "Executing: ", sql # TODO
 
       # If it is a CALL procedure statement, execute it differently.
       if sql.strip().startswith("CALL"):
@@ -210,15 +212,15 @@ class DBTools:
     """
     Function: run_query
     -------------------
-    Runs one or more queries as well as the setup and teardown necessary for that
-    query (if provided).
+    Runs one or more queries as well as the setup and teardown necessary for
+    that query (if provided).
 
     query: The query to run.
     setup: The setup query to run before executing the actual query.
     teardown: The teardown query to run after executing the actual query.
 
-    returns: A Result object containing the result, the schema of the results and
-             pretty-printed output.
+    returns: A Result object containing the result, the schema of the results
+             and pretty-printed output.
     """
     # Query setup.
     result = Result()
@@ -276,11 +278,11 @@ def import_files(assignment, files):
   if len(files) == 0:
     return
 
-  print "\nImporting files..."
+  log("\nImporting files...")
   # Import all the data files.
   files = " ".join([assignment + "/" + f for f in files])
   subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
-    " -p" + PASS + " --delete --local " + DATABASE + " " + files)
+                  " -p" + PASS + " --delete --local " + DATABASE + " " + files)
 
 
 def preprocess_sql(sql_file):

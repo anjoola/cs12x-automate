@@ -10,10 +10,13 @@ class ProblemType(object):
   """
   Class: ProblemType
   ------------------
-  A generic problem type. To be implemented for specific types of problems.
+  A generic problem type. To be implemented for specific types of problems. If
+  initialized with all its parameters set as None, then it would be used as
+  a static class.
   """
 
-  def __init__(self, db=None, specs=None, response=None, output=None, cache=None):
+  def __init__(self, db=None, specs=None, response=None, output=None,
+               cache=None):
     # The database connection.
     self.db = db
 
@@ -26,8 +29,8 @@ class ProblemType(object):
     # The graded problem output.
     self.output = output
 
-    # Cache to store results of query runs to avoid having to run the same
-    # query multiple times.
+    # Reference to the cache to store results of query runs to avoid having to
+    # run the same query multiple times.
     self.cache = cache
 
     # The number of points the student has gotten on this question. They start
@@ -54,15 +57,13 @@ class ProblemType(object):
 
     # Check if they included certain keywords.
     if self.specs.get("keywords"):
-      missing = False
-      missing_keywords = []
+      missing = []
       for keyword in self.specs["keywords"]:
         if keyword not in self.response.sql:
-          missing = True
-          missing_keywords.append(keyword)
-      if missing: # TODO errors
-        self.output["errors"].append(str(MissingKeywordError(missing_keywords)))
-        # TODO need to convert this to a string later? using repr
+          missing.append(keyword)
+      # Add the missing keywords to the graded output.
+      if len(missing) > 0:
+        self.output["errors"].append(repr(MissingKeywordError(missing)))
 
 
   def grade(self):
@@ -70,7 +71,7 @@ class ProblemType(object):
     Function: grade
     ---------------
     Runs all the tests for a particular problem and computes the number of
-    points received for this response.
+    points received for the student's response.
 
     returns: The number of points received for this response.
     """
@@ -86,10 +87,10 @@ class ProblemType(object):
         lost_points += self.grade_test(test, graded_test)
 
         # Apply any other deductions.
-        if graded_test.get("deductions"):
+        if graded_test.get("deductions"): # TODO2
           for deduction in graded_test["deductions"]:
-            (lost, desc) = SQL_DEDUCTIONS[deduction] # TODO should have its own class?
-            self.output["errors"].append(desc) # TODO fix this and use an actual error
+            (lost, desc) = SQL_DEDUCTIONS[deduction]
+            self.output["errors"].append("[-" + str(lost) + "]" + desc)
             lost_points += lost
 
       # If their query times out.
@@ -101,7 +102,7 @@ class ProblemType(object):
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
       except mysql.connector.errors.Error as e:
-        self.output["errors"].append("MYSQL ERROR " + str(e)) # TODO errors
+        self.output["errors"].append(repr(MySQLError(e)))
         lost_points += test["points"]
         if test.get("teardown"): self.db.run_query(test["teardown"])
 
@@ -132,15 +133,15 @@ class ProblemType(object):
     raise NotImplementedError("Must be implemented!")
 
 
-  def output_test(self, o, output, problem_specs):
+  def do_output(self, o, output, problem_specs):
     """
-    Function: output_test
-    ---------------------
-    TODO
+    Function: do_output
+    -------------------
+    Output the graded results for this problem to the given output string.
 
     o: The HTML output for this problem.
     output: The graded output for all the tests.
-    specs: The specs for this problem.
+    problem_specs: The specs for this problem.
     """
     has_printed_test = False
     for (i, test) in enumerate(output):
@@ -165,16 +166,16 @@ class ProblemType(object):
         o.write("<div class='test-specs'>" + specs["query"] + "</div>")
 
       # Specific test printouts.
-      self.to_string(o, test, specs)
+      self.output_test(o, test, specs)
 
       if has_printed_test: o.write("</li>\n")
     if has_printed_test: o.write("</ul>")
 
 
-  def to_string(self, o, test, specs):
+  def output_test(self, o, test, specs):
     """
-    Function: to_string
-    -------------------
+    Function: output_test
+    ---------------------
     Outputs the test results of a particular problem type.
 
     o: The HTML output.
@@ -192,6 +193,7 @@ class ProblemType(object):
     Escapes text so it can be outputted as HTML.
     """
     return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
+
 
   def equals(self, lst1, lst2):
     """
@@ -215,7 +217,7 @@ class ProblemType(object):
              contains tuples of the form (type, value) where type can either be
              "add", "remove", or "".
     """
-  
+
     def is_line_junk(string):
       """
       Function: is_line_junk
@@ -224,23 +226,23 @@ class ProblemType(object):
       a diff.
       """
       return string == " " or string == "-" or string == "+"
-  
+
     # Get the diffs.
     (one, two) = ([], [])
     diff = difflib.ndiff([x.lower() for x in lst1], \
       [x.lower() for x in lst2], is_line_junk)
-  
+
     # True if last added to "one".
     last_added = True
     # True if we've just seen a close match and need to modify the NEXT
     # row coming in.
     close_match = False
-  
+
     for item in diff:
       # If just a whitespace change, ignore.
       if len(item[2: ].strip()) == 0:
         continue
-  
+
       # If the previous thing was a close match.
       if close_match and item.startswith("+"):
         close_match = False
@@ -269,5 +271,5 @@ class ProblemType(object):
       else:
         one.append(("", item[2:]))
         two.append(("", item[2:]))
-  
+
     return (one, two)

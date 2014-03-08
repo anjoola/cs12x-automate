@@ -6,7 +6,8 @@ from problemtype import *
 from problemtype import ProblemType
 import dbtools
 import iotools
-from response import Response
+from iotools import log
+from models import Response
 
 class Grader:
   """
@@ -33,7 +34,7 @@ class Grader:
     Function: run_dependencies
     --------------------------
     Run dependent queries (which are student responses from other questions).
-    
+
     problem: The problem to run dependencies for.
     response: The student's responses.
     """
@@ -42,14 +43,14 @@ class Grader:
         for dep in problem["dependencies"]:
           [f, problem_num] = dep.split("|")
           self.db.run_query(response[f][problem_num].sql)
+
       # Run setup queries.
       if problem.get("setup"):
         for q in problem["setup"]: self.db.run_query(q)
 
     except mysql.connector.errors.ProgrammingError as e:
-      # TODO graded["errors"].append("Dependent query had an exception. Most " + \
-      #  "likely all tests after this one will fail | MYSQL ERROR " + \
-      #  str(e))
+      graded["errors"].append(DependencyError(problem["dependencies"]))
+      graded["errors"].append(MySQLError(e))
       raise
 
 
@@ -71,7 +72,7 @@ class Grader:
       if f not in response.keys():
         continue
 
-      #print "- " + f + ":" ,
+      log("- " + f + ": ")
       (responses, graded_file) = (response[f], output["files"][f])
       got_points = 0
 
@@ -80,23 +81,26 @@ class Grader:
       for problem in problems:
         self.run_dependencies(problem, response)
 
-        graded_problem = {"num": problem["number"], "tests": [], "errors": [], \
+        num = problem["number"]
+        graded_problem = {"num": num, "tests": [], "errors": [], \
           "got_points": 0}
         graded_file["problems"].append(graded_problem)
 
-        try: # TODO call specific class depending on the problem type to grade
-          got_points += PROBLEM_TYPES[problem["type"]](self.db, problem, \
-            responses[problem["number"]], graded_problem, self.cache).grade()
+        try:
+          # Call the grade function on the specific class corresponding to this
+          # problem type.
+          grader = PROBLEM_TYPES[problem["type"]]
+          got_points += grader(self.db, problem, responses[num], \
+                               graded_problem, self.cache).grade()
 
-        # If they didn't do a problem.
+        # If they didn't do a problem, indicate that it doesn't exist.
         except KeyError as e:
-          print str(e)
-          graded_problem["notexist"] = True # TODO other errors like problem type
-        #print ".",
+          graded_problem["notexist"] = True
+        log(".")
 
       graded_file["got_points"] = got_points
       total_points += got_points
-      #print "\n"
+      log("\n")
 
     return total_points
 
@@ -105,6 +109,6 @@ class Grader:
     """
     Function: cleanup
     -----------------
-    TODO
+    Cleanup stuff after grading.
     """
     self.cache.clear()

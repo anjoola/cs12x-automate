@@ -88,6 +88,7 @@ def format(output, specs):
       o.write("<div class='label' ")
     o.write("onclick='changeRawFile(this, \"" + name + "\")'>" + name + \
             "</div>\n")
+
   # Get the first file for the first student.
   f = "../students/" + first_student + "-" + specs["assignment"] + "/" + \
       first_file
@@ -127,8 +128,8 @@ def format_student(output, specs):
     for (i, problem) in enumerate(f["problems"]):
       problem_specs = specs[f["filename"]][i]
       o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " + \
-        problem["num"] + " (" + str(problem["got_points"]) + "/" + \
-        str(problem_specs["points"]) + " Points)</h3></a>\n")
+              problem["num"] + " (" + str(problem["got_points"]) + "/" + \
+              str(problem_specs["points"]) + " Points)</h3></a>\n")
 
       o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
       # If the student did not submit an answer for this problem.
@@ -151,8 +152,8 @@ def format_student(output, specs):
       o.write("<pre>" + problem["sql"] + "</pre>")
 
       # Test output.
-      PROBLEM_TYPES[problem_specs["type"]]().output_test(o, problem["tests"], \
-                                                         problem_specs["tests"])
+      PROBLEM_TYPES[problem_specs["type"]]().do_output(o, problem["tests"], \
+                                                       problem_specs["tests"])
       # Any errors that have occurred.
       errors = problem["errors"]
       if len(errors) > 0:
