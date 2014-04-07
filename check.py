@@ -27,12 +27,14 @@ import os, sys, re
 MAX_LINE_LENGTH = 80
 
 header              = re.compile("-- \[Problem ([0-9])+([a-zA-Z])*\]")
-bad_header          = re.compile("-- \[Problem.\]")
+bad_header          = re.compile("-- \[Problem([^\]])*\]")
 comment             = re.compile("^--.|^/\*.|^\*/.")
 tabs                = re.compile(r"\t+")
-comma_space         = re.compile(",[^ ]\w")
-operator_space      = re.compile("(\w(\+|\-|\*|\<|\>|\=)\w)" + \
-                                 "|(\w(\=\=|\<\=|\>\=|\<\>)\w)")
+comma_space         = re.compile(",[^ ][^\n]")
+operator_space      = re.compile(r"(.(\+|\-|\*|\<|\>|\=)\S)" + \
+                                 r"|(.(\=\=|\<\=|\>\=|\<\>)\S)" + \
+                                 r"|(\S(\+|\-|\*|\<|\>|\=).)" + \
+                                 r"|(\S(\=\=|\<\=|\>\=|\<\>).)")
 HAS_HEADER = False
 MULTILINE_COMMENT = False
 
@@ -43,6 +45,7 @@ def check_line(line, line_number):
   Checks a line of a file for style violations.
   """
   global HAS_HEADER, MULTILINE_COMMENT
+  is_bad_header = False
 
   def h():
     return "Line %d " % (line_number)
@@ -63,6 +66,7 @@ def check_line(line, line_number):
   # Check for style mistakes.
   if bad_header.search(line) and not header.search(line):
     print h() + "[BAD PROBLEM HEADER]" + f(line)
+    is_bad_header = True
   if tabs.search(line):
     print h() + "[DO NOT USE TABS]" + f(line)
   if len(line) > MAX_LINE_LENGTH:
@@ -73,7 +77,8 @@ def check_line(line, line_number):
     print h() + "[PUT SPACE AROUND OPERATORS]" + f(line)
 
   # Continue checking for problem header mistakes.
-  if not (HAS_HEADER or MULTILINE_COMMENT or comment.search(line.strip())):
+  if not (HAS_HEADER or MULTILINE_COMMENT or is_bad_header or \
+    comment.search(line.strip())):
     print h() + "[CODE BEFORE PROBLEM HEADER]" + f(line)
   if line.strip().startswith("*/") or line.strip().endswith("*/"):
     MULTILINE_COMMENT = False
