@@ -8,7 +8,7 @@ import prettytable
 import sqlparse
 
 from CONFIG import *
-from iotools import err
+from iotools import err, log
 from models import Result
 
 # Used to find delimiters in the file.
@@ -61,7 +61,7 @@ class DBTools:
         thread_id = self.db.connection_id
         self.db.cmd_process_kill(thread_id)
       except Exception as e:
-        err("Error while killing query: " + str(e))
+        # TODO err("Error while killing query: " + str(e))
         pass
 
 
@@ -93,7 +93,7 @@ class DBTools:
       if timeout is not None and timeout == self.timeout:
         return self.db
 
-    log("New timeout: " + timeout)
+    log("New timeout: " + str(timeout))
     # Close any old connections and make another one with the new setting.
     self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT

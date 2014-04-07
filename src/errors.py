@@ -1,3 +1,12 @@
+def add(lst, error):
+  lst.append(error.__repr__())
+
+
+def adds(lst, errors):
+  for error in errors:
+    lst.append(error.__repr__())
+
+
 class DatabaseError(Exception):
   """
   Class: DatabaseError
@@ -26,6 +35,20 @@ class DependencyError(Exception):
     return "DependencyError: One or more dependent problems (" + \
            (", ".join(self.value)) + ") had errors. Most likely all tests " + \
            "after this one will fail."
+
+
+class FileNotFoundError(Exception):
+  """
+  Class: FileNotFoundError
+  ------------------------
+  Occurs when a file cannot be found for grading.
+  """
+
+  def __init__(self, value):
+    self.value = value
+
+  def __repr__(self):
+    return "FileNotFoundError: File " + value + " could not be found."
 
 
 class MySQLError(Exception):
