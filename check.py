@@ -27,18 +27,19 @@ import os, sys, re
 
 MAX_LINE_LENGTH = 80
 
-S                   = "[^\(\) \t\n\r\f\v]"
+S                   = "[^\>\<\=\(\) \t\n\r\f\v]"
 
 header              = re.compile("-- \[Problem ([0-9])+([a-zA-Z])*\]")
 result_header       = re.compile("-- \[Results\]")
 bad_header          = re.compile("-- \[Problem([^\]])*\]")
-comment             = re.compile("^--.|^/\*.|^\*/.")
+comment             = re.compile(r"\s*--.|/\*.|\*/.")
 tabs                = re.compile(r"\t+")
 comma_space         = re.compile(",[^ ][^\n]")
-operator_space      = re.compile(r"(.(\+|\-|\*|\<|\>|\=)" + S + ")" + \
-                                 r"|(.(\=\=|\<\=|\>\=|\<\>)" + S + ")" + \
-                                 r"|(" + S + "(\+|\-|\*|\<|\>|\=).)" + \
-                                 r"|(" + S + "(\=\=|\<\=|\>\=|\<\>).)")
+operator_space      = re.compile(r"(.(\=\=|\<\=|\>\=|\<\>)" + S + ")" + \
+                                 r"|(" + S + "(\=\=|\<\=|\>\=|\<\>).)" + \
+                                 r"|(.(\+|\-|\*|\<|\>|\=)" + S + ")" + \
+                                 r"|(" + S + "(\+|\-|\*|\<|\>|\=).)")
+negative_num        = re.compile(r"\-([0-9]*\.?[0-9]+)")
 count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
 double_quote        = re.compile("\"([^\"])*\"")
 HAS_HEADER = False
@@ -87,7 +88,7 @@ def check_line(line, line_number):
   if not MULTILINE_COMMENT and not comment.search(line):
     if comma_space.search(line):
       print h() + "[PUT SPACE AFTER COMMA]" + f(line)
-    if operator_space.search(line) and not \
+    if operator_space.search(line) and not negative_num.search(line) and not \
        reduce(lambda total, match: count_star.search(match[0]) and total, \
               operator_space.findall(line), True):
       print h() + "[PUT SPACE AROUND OPERATORS]" + f(line)
