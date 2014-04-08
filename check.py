@@ -18,25 +18,32 @@ Errors:
   [PUT SPACE AFTER COMMA] - There should be a space after any comma.
   [PUT SPACE AROUND OPERATORS] - Operators like '+', '-', etc. shoud have spaces
                                  around them.
-  [CODE BEFORE PROBLEM HEADER] - No code shoulda appear before any problem
+  [CODE BEFORE PROBLEM HEADER] - No code should appear before the first problem
                                  header.
+  [NO DOUBLE-QUOTED STRINGS] - Strings must be enclosed by SINGLE quotes.
 """
 
 import os, sys, re
 
 MAX_LINE_LENGTH = 80
 
+S                   = "[^\(\) \t\n\r\f\v]"
+
 header              = re.compile("-- \[Problem ([0-9])+([a-zA-Z])*\]")
+result_header       = re.compile("-- \[Results\]")
 bad_header          = re.compile("-- \[Problem([^\]])*\]")
 comment             = re.compile("^--.|^/\*.|^\*/.")
 tabs                = re.compile(r"\t+")
 comma_space         = re.compile(",[^ ][^\n]")
-operator_space      = re.compile(r"(.(\+|\-|\*|\<|\>|\=)\S)" + \
-                                 r"|(.(\=\=|\<\=|\>\=|\<\>)\S)" + \
-                                 r"|(\S(\+|\-|\*|\<|\>|\=).)" + \
-                                 r"|(\S(\=\=|\<\=|\>\=|\<\>).)")
+operator_space      = re.compile(r"(.(\+|\-|\*|\<|\>|\=)" + S + ")" + \
+                                 r"|(.(\=\=|\<\=|\>\=|\<\>)" + S + ")" + \
+                                 r"|(" + S + "(\+|\-|\*|\<|\>|\=).)" + \
+                                 r"|(" + S + "(\=\=|\<\=|\>\=|\<\>).)")
+count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
+double_quote        = re.compile("\"([^\"])*\"")
 HAS_HEADER = False
 MULTILINE_COMMENT = False
+STARTED_RESULT = False
 
 def check_line(line, line_number):
   """
@@ -44,7 +51,7 @@ def check_line(line, line_number):
   --------------------
   Checks a line of a file for style violations.
   """
-  global HAS_HEADER, MULTILINE_COMMENT
+  global HAS_HEADER, MULTILINE_COMMENT, STARTED_RESULT
   is_bad_header = False
 
   def h():
@@ -60,8 +67,14 @@ def check_line(line, line_number):
   # problem header).
   if not HAS_HEADER and header.search(line):
     HAS_HEADER = True
-  if not HAS_HEADER and line.strip().startswith("/*"):
+  if line.strip().startswith("/*"):
     MULTILINE_COMMENT = True
+
+  # If they started the results, ignore the 80 character limit.
+  if result_header.search(line):
+    STARTED_RESULT = True
+  if STARTED_RESULT and header.search(line):
+    STARTED_RESULT = False
 
   # Check for style mistakes.
   if bad_header.search(line) and not header.search(line):
@@ -69,12 +82,17 @@ def check_line(line, line_number):
     is_bad_header = True
   if tabs.search(line):
     print h() + "[DO NOT USE TABS]" + f(line)
-  if len(line) > MAX_LINE_LENGTH:
+  if not STARTED_RESULT and len(line) > MAX_LINE_LENGTH:
     print h() + "[LINE TOO LONG (" + str(len(line)) + " CHARS)]" + f(line)
-  if comma_space.search(line):
-    print h() + "[PUT SPACE AFTER COMMA]" + f(line)
-  if operator_space.search(line) and not comment.search(line):
-    print h() + "[PUT SPACE AROUND OPERATORS]" + f(line)
+  if not MULTILINE_COMMENT and not comment.search(line):
+    if comma_space.search(line):
+      print h() + "[PUT SPACE AFTER COMMA]" + f(line)
+    if operator_space.search(line) and not \
+       reduce(lambda total, match: count_star.search(match[0]) and total, \
+              operator_space.findall(line), True):
+      print h() + "[PUT SPACE AROUND OPERATORS]" + f(line)
+    if double_quote.search(line):
+      print h() + "[NO DOUBLE-QUOTED STRINGS]" + f(line)
 
   # Continue checking for problem header mistakes.
   if not (HAS_HEADER or MULTILINE_COMMENT or is_bad_header or \

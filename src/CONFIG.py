@@ -4,17 +4,18 @@ File: CONFIG.py
 Contains configuration parameters for the grading tool.
 """
 import secret
+from errors import *
 from problemtype import *
 
 # Verbose output. Set to True for all logging statements.
 VERBOSE = True
 
-# Error output. Set to True for only error messages (if VERSBOSE is set to
-# False).
+# Error output. Set to True for only error messages (if VERBOSE is False)
 ERROR = True
 
 # ----------------------------- Database Details ----------------------------- #
 
+# The following 5 fields must be modified in the secret.py file.
 # Database username.
 USER = secret.USER
 
@@ -47,11 +48,14 @@ MAX_NUM_RESULTS = 100
 # The types of problems there are and the classes to handle each type.
 PROBLEM_TYPES = {
   "create" : Create,
-  "select" : Select,
-  "insert" : Insert,
-  "trigger" : Trigger,
+  "delete" : Delete,
   "function": Function,
-  "procedure": Procedure
+  "insert" : Insert,
+  "procedure": Procedure,
+  "select" : Select,
+  "trigger" : Trigger,
+  "view" : View,
+  "manual" : Manual
 }
 
 # Deductions for SQL problems. Values are tuples of the form (points, desc)
@@ -66,22 +70,15 @@ SQL_DEDUCTIONS = {
   "GroupingSelect":   (2, "SELECTed something that was not grouped on.")
 }
 
-
-
-
-
-
-
-
-#### TODO clean up below
-# Deductions for overall style problems. Values are tuples of the form
-# (points, message) where points is the number of points taken off overall, and
-# desc is the description of the style error.
+# Deductions for overall style mistakes. The key is the style error, and the
+# value is the number of points to deduct overall for each mistake. None of
+# these style errors should occur if they run the style checker and fix the
+# errors.
 STYLE_DEDUCTIONS = {
-  "80char": (5, "Too many lines over 80 characters!"),
-  "doublequotes": (3, "Double-quoting instead of single-quoting strings!"),
-  "semicolon": (3, "Missing semicolons at the end of the commands!")
+  BadHeaderError          : 0,  # Problem header not formatted correctly.
+  UsedTabsError           : 5,  # Tabs should not be used for indentation.
+  LineTooLongError        : 5,  # Lines should not be longer than 80 characters.
+  SpaceError              : 2,  # Operators should have spaces around them.
+  CodeBeforeHeaderError   : 0,  # No code should appear before problem headers.
+  DoubleQuoteError        : 5   # Double quotes cannot be used for strings.
 }
-
-
-

@@ -2,6 +2,7 @@ import mysql.connector
 
 from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS, PROBLEM_TYPES
 from cache import Cache
+from errors import *
 from problemtype import *
 from problemtype import ProblemType
 import dbtools
@@ -49,8 +50,8 @@ class Grader:
         for q in problem["setup"]: self.db.run_query(q)
 
     except mysql.connector.errors.ProgrammingError as e:
-      graded["errors"].append(DependencyError(problem["dependencies"]))
-      graded["errors"].append(MySQLError(e))
+      add(graded["errors"], DependencyError(problem["dependencies"]))
+      add(graded["errors"], MySQLError(e))
       raise
 
 
@@ -98,6 +99,7 @@ class Grader:
           graded_problem["notexist"] = True
         log(".")
 
+      # Compute total points for this file.
       graded_file["got_points"] = got_points
       total_points += got_points
       log("\n")

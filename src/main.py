@@ -103,18 +103,23 @@ def grade_student(student):
 
   # Parse student's response.
   response = {}
+  style_errors = set()
   for filename in files:
     # Add this file to the graded output.
-    graded_file = {"filename": filename, "problems": [], "errors": []}
+    graded_file = {"filename": filename, "problems": [], "errors": [], \
+      "got_points": 0}
     output["files"][filename] = graded_file
     fname = path + filename
 
     try:
       f = open(fname, "r")
-      # Run their files through the stylechecker to make sure it is valid and
-      # take points off for violations.
-      (output["style-deductions"], errors) = stylechecker.check(f)
-      adds(graded_file["errors"], errors)
+      # Run their files through the stylechecker to make sure it is valid. Add
+      # the errors to the list of style errors for this file and overall for
+      # this student.
+      errors = stylechecker.check(f)
+      for e in errors:
+        add(graded_file["errors"], e())
+        style_errors.add(e)
 
       f.seek(0)
       response[filename] = iotools.parse_file(f)
@@ -123,13 +128,12 @@ def grade_student(student):
     # If the file does not exist, then they get 0 points.
     except IOError:
       add(graded_file["errors"], FileNotFoundError(fname))
-      raise
 
-  # Grade this student and apply style deductions.
+  # Grade this student, make style deductions, and output the results.
   output["got_points"] = grader.grade(response, output)
-  output["got_points"] -= output["style-deductions"]
-
-  # Output the results for this student.
+  output["got_points"] -= stylechecker.deduct(style_errors)
+  
+  print "GOT POINTS: ", str(output["got_points"])
   formatter.format_student(output, specs)
 
 

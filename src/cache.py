@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class Cache:
   """
   Class: Cache
@@ -20,13 +22,13 @@ class Cache:
     """
     key = (tuple(args), frozenset(kwargs.iteritems()))
     if key in self.cache:
-      return self.cache[key]
+      return deepcopy(self.cache[key])
 
     # If it doesn't exist in the cache, run the query, then store it.
     else:
       result = function(*args, **kwargs)
       self.cache[key] = result
-      return result
+      return deepcopy(result)
 
 
   def clear(self):
