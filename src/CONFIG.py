@@ -62,12 +62,12 @@ PROBLEM_TYPES = {
 # where points is the number of points to take off for this problem, and
 # desc is the description of the style error.
 SQL_DEDUCTIONS = {
-  "OrderBy":          (1, "Missing ORDER BY."),
-  "ColumnOrder":      (1, "Wrong column order."),
-  "MissingResults":   (1, "Did not include query results."),
-  "RenameValues":     (1, "Did not rename computed values."),
-  "WrongNumColumns":  (0, "More or fewer columns included."),
-  "GroupingSelect":   (2, "SELECTed something that was not grouped on.")
+  OrderByError            : 1,  # Missing or incorrect ORDER BY.
+  ColumnOrderError        : 1,  # Wrong column order.
+  MissingResultsError     : 1,  # Did not include query results.
+  RenameValueError        : 1,  # Did not rename computed values.
+  WrongNumColumnError     : 0,  # More or fewer columns included.
+  GroupingSelectError     : 2   # Selected on a column that was not grouped on.
 }
 
 # Deductions for overall style mistakes. The key is the style error, and the

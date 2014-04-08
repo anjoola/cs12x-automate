@@ -13,7 +13,7 @@ def add(lst, error):
   lst: The list of errors.
   error: The error object.
   """
-  lst.append(error.__repr__())
+  lst.append(repr(error))
 
 
 def adds(lst, errors):
@@ -24,7 +24,7 @@ def adds(lst, errors):
   errors 'lst'.
   """
   for error in errors:
-    lst.append(error.__repr__())
+    lst.append(repr(error))
 
 
 class Error(Exception):
@@ -57,6 +57,16 @@ class CodeBeforeHeaderError(Error):
     return "CodeBeforeHeaderError: There is code before a problem header! " + \
            "There will probably be major point deductions for all problems" + \
            " in this file."
+
+
+class ColumnOrderError(Error):
+  """
+  Class: ColumnOrderError
+  -----------------------
+  Occurs if the query produces results in the wrong column order.
+  """
+  def __repr__(self):
+    return "ColumnOrderError: Columns are in the wrong order."
 
 
 class DatabaseError(Error):
@@ -110,6 +120,16 @@ class FileNotFoundError(Error):
     return "FileNotFoundError: File " + self.filename + " could not be found."
 
 
+class GroupingSelectError(Error):
+  """
+  Class: GroupingSelectError
+  --------------------------
+  Occurs when a query selects on a column that was not grouped on.
+  """
+  def __repr__(self):
+    return "GroupingSelectError: Selected on a column that was not grouped on."
+
+
 class LineTooLongError(Error):
   """
   Class: LineTooLongError
@@ -119,6 +139,33 @@ class LineTooLongError(Error):
   def __repr__(self):
     return "LineTooLongError: There are lines of code longer than 80 " + \
            "characters."
+
+
+class MissingKeywordError(Error):
+  """
+  Class: MissingKeywordError
+  --------------------------
+  Occurs when a student is missing one or more keywords from their response.
+  The value of the error is a list of keywords that were missing.
+  """
+  def __init__(self, keywords):
+    self.keywords = keywords
+
+  def __repr__(self):
+    return "MissingKeywordError: Keyword" + \
+           ("s" if len(self.keywords) > 1 else "") + ": " + \
+           ", ".join(self.keywords)
+
+
+class MissingResultsError(Error):
+  """
+  Class: MissingResultsError
+  --------------------------
+  Occurs if results were required for the problem but the student did not
+  include them.
+  """
+  def __repr__(self):
+    return "MissingResultsError: No results included."
 
 
 class MySQLError(Error):
@@ -134,6 +181,16 @@ class MySQLError(Error):
     return "MySQL Error " + str(self.value)
 
 
+class OrderByError(Error):
+  """
+  Class: OrderByError
+  -------------------
+  Occurs when the results are not in the right order.
+  """
+  def __repr__(self):
+    return "OrderByError: Missing or incorrect ORDER BY statement."
+
+
 class ParsingError(Error):
   """
   Class: ParsingError
@@ -147,6 +204,16 @@ class ParsingError(Error):
     return "ParsingError: " + self.value
 
 
+class RenameValueError(Error):
+  """
+  Class: RenameValueError
+  -----------------------
+  The query did not rename computed values.
+  """
+  def __repr__(self):
+    return "RenameValueError: Did not rename computed values."
+
+
 class SpaceError(Error):
   """
   Class: SpaceError
@@ -157,21 +224,6 @@ class SpaceError(Error):
     return "SpaceError: No spaces after operators!"
 
 
-class MissingKeywordError(Error):
-  """
-  Class: MissingKeywordError
-  --------------------------
-  Occurs when a student is missing one or more keywords from their response.
-  The value of the error is a list of keywords that were missing.
-  """
-  def __init__(self, keywords):
-    self.keywords = keywords
-
-  def __repr__(self):
-    return "Missing Keyword" + ("s" if len(self.keywords) > 1 else "") + \
-           ": " + ", ".join(self.keywords)
-
-
 class UsedTabsError(Error):
   """
   Class: UsedTabsError
@@ -180,3 +232,13 @@ class UsedTabsError(Error):
   """
   def __repr__(self):
     return "UsedTabsError: Tabs were used."
+
+
+class WrongNumColumnError(Error):
+  """
+  Class: WrongNumColumnError
+  --------------------------
+  Occurs if the students provides more or fewer columns than required.
+  """
+  def __repr__(self):
+    return "WrongNumColumnError: More or fewer columns included."

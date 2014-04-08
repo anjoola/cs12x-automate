@@ -81,7 +81,7 @@ def check_line(line, line_number):
   if bad_header.search(line) and not header.search(line):
     print h() + "[BAD PROBLEM HEADER]" + f(line)
     is_bad_header = True
-  if tabs.search(line):
+  if not STARTED_RESULT and tabs.search(line):
     print h() + "[DO NOT USE TABS]" + f(line)
   if not STARTED_RESULT and len(line) > MAX_LINE_LENGTH:
     print h() + "[LINE TOO LONG (" + str(len(line)) + " CHARS)]" + f(line)

@@ -39,7 +39,9 @@ def check(f):
   returns: The set of style violations for this file.
   """
   lines = f.readlines()
-  errors = set()
+  errors = set() # TODO make it a dictionary so we know HOW MANY times a style
+                 # issue has occurred. So only take off points if they make the
+                 # mistake more than X times or X% of the time.
   for i in range(len(lines)):
     line = lines[i][:-1]
     check_line(line, i + 1, errors)
@@ -93,7 +95,7 @@ def check_line(line, line_number, errors):
   if bad_header.search(line) and not header.search(line):
     errors.add(BadHeaderError)
     is_bad_header = True
-  if tabs.search(line):
+  if not STARTED_RESULT and tabs.search(line):
     errors.add(UsedTabsError)
   if not STARTED_RESULT and len(line) > MAX_LINE_LENGTH:
     errors.add(LineTooLongError)

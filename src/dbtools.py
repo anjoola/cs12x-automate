@@ -202,7 +202,10 @@ class DBTools:
         args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
         self.cursor.callproc(proc, args)
       else:
-        self.cursor.execute(sql)
+        try:
+          self.cursor.execute(sql)
+        except mysql.connector.errors.InterfaceError: # TODO handle this...
+          self.cursor.execute(sql, multi=True)
         result.append(self.results())
 
     return result

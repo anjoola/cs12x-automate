@@ -89,8 +89,9 @@ class ProblemType(object):
         # Apply any other deductions.
         if graded_test.get("deductions"): # TODO2
           for deduction in graded_test["deductions"]:
-            (lost, desc) = SQL_DEDUCTIONS[deduction]
-            self.output["errors"].append("[-" + str(lost) + "]" + desc)
+            lost = SQL_DEDUCTIONS[deduction]
+            self.output["errors"].append("[-" + str(lost) + "]" + \
+                                         repr(deduction()))
             lost_points += lost
 
       # If their query times out.
