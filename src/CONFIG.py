@@ -1,9 +1,10 @@
 """
-File: CONFIG.py
----------------
+Module: CONFIG
+--------------
 Contains configuration parameters for the grading tool.
 """
 import secret
+
 from errors import *
 from problemtype import *
 

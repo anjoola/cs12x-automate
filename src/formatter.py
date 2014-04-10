@@ -1,7 +1,7 @@
 """
-Module: formatter.py
---------------------
-Formats the output into HTML.
+Module: formatter
+-----------------
+Formats the graded output into HTML.
 """
 
 import cgi
@@ -26,13 +26,17 @@ def format(output, specs):
   """
   Function: format
   ----------------
-  Formats the JSON output into HTML.
+  Formats the JSON output into HTML. This is the formatting for the main page.
 
   output: The graded JSON output.
   specs: The specs for the assignment.
   returns: A string containing the HTML.
   """
+  
+  # TODO copy files from the style/ folder to the output folder
+  
   o = StringIO()
+  o.write("<head><title>CS 121 Automation</title></head>")
   o.write("<link rel='stylesheet' type='text/css' href='style/css.css'>\n")
   o.write("<script type='text/javascript' src='style/javascript.js'></script>")
   o.write("\n<input type='hidden' id='assignment' value='" + \
@@ -97,6 +101,7 @@ def format(output, specs):
   o.write("</div>")
   return o.getvalue()
 
+# TODO TODO add fancy javascript stuff
 
 def format_student(output, specs):
   """
@@ -141,6 +146,8 @@ def format_student(output, specs):
       if problem_specs.get("comments") and problem:
         o.write("<b>Comments</b>")
         if not problem.get("comments"):
+          # TODO should check specs to see if comments were expected and output
+          # that
           o.write("<br><i>No comments provided...</i><br>\n")
         else:
           o.write("<pre>" + problem["comments"] + "</pre>")

@@ -61,8 +61,9 @@ def setup():
   and running setup queries.
   """
   global db, specs, o, grader
+
   # The graded output.
-  o = GradedOutput(specs) # TODO fix this should have a better name
+  o = GradedOutput(specs)
   # Start up the connection with the database.
   db = dbtools.DBTools()
   db.get_db_connection(MAX_TIMEOUT)
@@ -107,7 +108,7 @@ def grade_student(student):
   for filename in files:
     # Add this file to the graded output.
     graded_file = {"filename": filename, "problems": [], "errors": [], \
-      "got_points": 0}
+                   "got_points": 0}
     output["files"][filename] = graded_file
     fname = path + filename
 
@@ -132,8 +133,6 @@ def grade_student(student):
   # Grade this student, make style deductions, and output the results.
   output["got_points"] = grader.grade(response, output)
   output["got_points"] -= stylechecker.deduct(style_errors)
-  
-  print "GOT POINTS: ", str(output["got_points"])
   formatter.format_student(output, specs)
 
 

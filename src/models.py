@@ -1,13 +1,20 @@
+"""
+Module: models
+--------------
+Contains all models that are passed around and used in the automation tool.
+"""
+
 from datetime import datetime
 import json
 from time import strftime
 
-# TODO lots of commenting needed..
 class Response:
   """
   Class: Response
   ---------------
-  Represents a student's response to a particular homework problem.
+  Represents a student's response to a particular homework problem. The
+  response includes any comments before the SQL, the actual SQL response, and
+  any attached results TODO
   """
   def __init__(self):
     # Their comments.
@@ -24,7 +31,6 @@ class Response:
 
   def __str__(self):
     return "(" + self.comments + ", " + self.sql + ", " + self.results + ")"
-
 
 
 class Result:
@@ -53,7 +59,6 @@ class Result:
     return "(" + str(self.schema) + ", " + str(self.results) + ", " + \
       self.output + ")"
 
-
   def append(self, other):
     """
     Function: append
@@ -64,13 +69,12 @@ class Result:
     self.output += other.output
 
 
-
 class GradedOutput:
   """
   Class: GradedOutput
   -------------------
   Contains the graded output. Has functions to convert such output into JSON.
-  Contains the following fields:
+  Contains the following fields: TODO this needs to change.....
     {
       "start": "",
       "end": "",
@@ -124,4 +128,3 @@ class GradedOutput:
     self.fields["end"] = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
     return json.dumps(self.fields, indent=2)
-

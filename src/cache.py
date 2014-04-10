@@ -8,8 +8,8 @@ class Cache:
   the database if students have the same exact query.
   """
   def __init__(self):
-    # The cache. The key is the function arguments and the value is contains
-    # the function call details.
+    # The cache. The key is the function arguments and the value contains the
+    # function call details.
     self.cache = {}
 
 
@@ -18,7 +18,8 @@ class Cache:
     Function: get
     -------------
     Get the results of a query, if it exists. If not, runs the query then
-    gets the results.
+    gets the results. Returns a deep copy of the results since they might be
+    modified.
     """
     key = (tuple(args), frozenset(kwargs.iteritems()))
     if key in self.cache:

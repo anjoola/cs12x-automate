@@ -52,7 +52,7 @@ class ProblemType(object):
     """
     # Comments, query results, and SQL.
     self.output["comments"] = self.response.comments
-    self.output["submitted-results"] = self.response.results
+    self.output["submitted-results"] = self.response.results # TODO might not include submitted results
     self.output["sql"] = self.response.sql
 
     # Check if they included certain keywords.
@@ -63,7 +63,7 @@ class ProblemType(object):
           missing.append(keyword)
       # Add the missing keywords to the graded output.
       if len(missing) > 0:
-        self.output["errors"].append(repr(MissingKeywordError(missing)))
+        add(self.output["errors"], MissingKeywordError(missing))
 
 
   def grade(self):
@@ -148,17 +148,21 @@ class ProblemType(object):
     for (i, test) in enumerate(output):
       specs = problem_specs[i]
 
+      # Only print the "Test" header once.
       if not has_printed_test:
         has_printed_test = True
         o.write("<b>Tests</b>\n<ul>\n")
 
-      # General test details.
+      # Print whether or not the test was successful.
       if test["success"] == "UNDETERMINED":
         o.write("<li><div class='uncertain'>UNDETERMINED")
       elif test["success"]:
         o.write("<li><div class='passed'>PASSED")
       else:
         o.write("<li><div class='failed'>FAILED")
+
+      # Other test details such as the number of points received, and the
+      # description of the test.
       o.write(" (" + str(test["got_points"]) + "/" + \
         str(specs["points"]) + " Points)</div><br>\n")
       if specs.get("desc"):
@@ -166,7 +170,7 @@ class ProblemType(object):
       if specs.get("query"):
         o.write("<div class='test-specs'>" + specs["query"] + "</div>")
 
-      # Specific test printouts.
+      # Specific test printouts (different for different problem types).
       self.output_test(o, test, specs)
 
       if has_printed_test: o.write("</li>\n")
@@ -239,6 +243,7 @@ class ProblemType(object):
     # row coming in.
     close_match = False
 
+    # TODO: This diff stuff doesn't actually work?
     for item in diff:
       # If just a whitespace change, ignore.
       if len(item[2: ].strip()) == 0:

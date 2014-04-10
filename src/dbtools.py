@@ -1,3 +1,8 @@
+"""
+Module: dbtools
+---------------
+Contains helper methods involving the database and queries.
+"""
 import codecs
 from cStringIO import StringIO
 import re
@@ -18,7 +23,7 @@ class DBTools:
   """
   Class: DBTools
   --------------
-  Contains helper methods involving the database and queries.
+  Handles requests to a particular database (as specified in the CONFIG file).
   """
 
   def __init__(self):
@@ -41,12 +46,12 @@ class DBTools:
     queries.
     """
     if self.db:
-      self.kill_query()
+      # Consume remaining output.
+      for _ in self.cursor: pass
+      self.cursor.close()
 
-      # Consume remaining output. TODO
-      #for _ in self.cursor: pass
-      
-      #self.cursor.close() TODO?
+      # Kill any remaining queries and close the database connection.
+      self.kill_query()
       self.db.close()
 
 
@@ -58,11 +63,20 @@ class DBTools:
     """
     if self.db and self.db.is_connected():
       try:
+        # Gets the current thread ID of the database connection and attempts
+        # to kill it.
         thread_id = self.db.connection_id
         self.db.cmd_process_kill(thread_id)
-      except Exception as e:
-        # TODO err("Error while killing query: " + str(e))
-        pass
+
+      except mysql.connector.errors.DatabaseError as e:
+        # If this error is actually because the connection was successfully
+        # terminated.
+        if e.errno == 1927:
+          pass
+        # Otherwise, this is an actual error.
+        else:
+          err("Error while killing query: " + str(e))
+          raise
 
 
   def get_cursor(self):
@@ -125,8 +139,8 @@ class DBTools:
     of the form (column_name, type, None, None, None, None, null_ok, flags).
     """
     return self.cursor.description
-  
-  
+
+
   def prettyprint(self, results):
     """
     Function: prettyprint
@@ -187,7 +201,7 @@ class DBTools:
       sql_list = \
           sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
     else:
-      sql_list = sqlparse.split(queries)
+      sql_list = sqlparse.split(queries) # TODO test to see if this actually splits things?
 
     result = Result()
     for sql in sql_list:
@@ -203,7 +217,9 @@ class DBTools:
         self.cursor.callproc(proc, args)
       else:
         try:
-          self.cursor.execute(sql)
+          self.cursor.execute(sql) # TODO should multi=True? 
+          # TODO should breakdown the sql query so only one statement is executed
+          # at at time...
         except mysql.connector.errors.InterfaceError: # TODO handle this...
           self.cursor.execute(sql, multi=True)
         result.append(self.results())
@@ -225,15 +241,16 @@ class DBTools:
     returns: A Result object containing the result, the schema of the results
              and pretty-printed output.
     """
-    # Query setup.
+    # Run the query setup.
     result = Result()
     if setup is not None:
       self.run_multi(setup)
+
     try:
       result = self.run_multi(query)
-
     except mysql.connector.errors.ProgrammingError:
       raise
+
     # Always run the query teardown.
     finally:
       if teardown is not None:
@@ -264,6 +281,8 @@ class DBTools:
         # Skip this line if there is nothing in it.
         if len(sql.strip()) == 0:
           continue
+        # Otherwise execute each line. Output must be consumed for the query
+        # to actually be executed.
         for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
       f.close()
 

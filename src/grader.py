@@ -1,14 +1,14 @@
 import mysql.connector
 
-from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS, PROBLEM_TYPES
 from cache import Cache
-from errors import *
-from problemtype import *
-from problemtype import ProblemType
+from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS, PROBLEM_TYPES
 import dbtools
+from errors import *
 import iotools
 from iotools import log
 from models import Response
+from problemtype import *
+from problemtype import ProblemType
 
 class Grader:
   """
@@ -34,7 +34,8 @@ class Grader:
     """
     Function: run_dependencies
     --------------------------
-    Run dependent queries (which are student responses from other questions).
+    Run dependent queries (which are the student's responses for other
+    questions).
 
     problem: The problem to run dependencies for.
     response: The student's responses.
@@ -42,13 +43,15 @@ class Grader:
     try:
       if problem.get("dependencies"):
         for dep in problem["dependencies"]:
-          [f, problem_num] = dep.split("|")
-          self.db.run_query(response[f][problem_num].sql)
+          # Get the file and problem number for the dependent query.
+          [dep_file, problem_num] = dep.split("|")
+          self.db.run_query(response[dep_file][problem_num].sql)
 
       # Run setup queries.
       if problem.get("setup"):
         for q in problem["setup"]: self.db.run_query(q)
 
+    # If there was an error with the dependent query.
     except mysql.connector.errors.ProgrammingError as e:
       add(graded["errors"], DependencyError(problem["dependencies"]))
       add(graded["errors"], MySQLError(e))
@@ -82,9 +85,10 @@ class Grader:
       for problem in problems:
         self.run_dependencies(problem, response)
 
+        # Add this graded problem to the list in the graded file.
         num = problem["number"]
         graded_problem = {"num": num, "tests": [], "errors": [], \
-          "got_points": 0}
+                          "got_points": 0}
         graded_file["problems"].append(graded_problem)
 
         try:
