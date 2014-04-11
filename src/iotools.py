@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 import os
 from os.path import getmtime
+import sys
 from time import strftime
 
 from CONFIG import ASSIGNMENT_DIR, ERROR, VERBOSE
@@ -48,7 +49,7 @@ def err(string):
   will also output, no matter what the ERROR flag is set to.
   """
   if VERBOSE or ERROR:
-    print string, 
+    print "(ERROR)", string, 
 
 
 def log(string):
@@ -206,7 +207,17 @@ def parse_specs(assignment):
   assignment: The assignment.
   returns: A JSON object containing the specs for that assignment.
   """
-  f = open(ASSIGNMENT_DIR + assignment + "/" + assignment + "." + "spec", "r")
-  specs = json.loads("".join(f.readlines()))
-  f.close()
-  return specs
+  path = ASSIGNMENT_DIR + assignment + "/" + assignment + "." + "spec"
+  try:
+    f = open(path, "r")
+    specs = json.loads("".join(f.readlines()))
+    f.close()
+    return specs
+
+  # If there are any errors finding or loading the spec file, exit.
+  # Automation cannot continue until the proper spec file is found.
+  except IOError:
+    err("Could not find spec file: " + path)
+  except ValueError as e:
+    err("Could not parse spec file!\n" + str(e))
+  sys.exit(1)

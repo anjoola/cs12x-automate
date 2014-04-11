@@ -43,6 +43,12 @@ MAX_TIMEOUT = 600
 # Directory where all the assignment specs and student files are stored.
 ASSIGNMENT_DIR = "../assignments/"
 
+# Directory where results an assignment are stored.
+RESULT_DIR = "_results/"
+
+# Directory where the stylesheet and Javascripts are.
+STYLE_DIR = "../style/"
+
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 100
 

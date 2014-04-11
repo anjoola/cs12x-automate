@@ -8,10 +8,24 @@ import cgi
 from cStringIO import StringIO
 import json
 import os
+import shutil
 
-from CONFIG import ASSIGNMENT_DIR, PROBLEM_TYPES
+from CONFIG import ASSIGNMENT_DIR, PROBLEM_TYPES, RESULT_DIR, STYLE_DIR
 from problemtype import *
 from problemtype import ProblemType
+
+def create_path(assignment):
+  # Copy necessary stylesheets and create results folder if it doesn't exist.
+  path = ASSIGNMENT_DIR + assignment + "/"
+  if not os.path.exists(path + RESULT_DIR):
+    os.mkdir(path + RESULT_DIR)
+    os.mkdir(path + RESULT_DIR + "files/")
+    os.mkdir(path + RESULT_DIR + "style/")
+
+    # Get everything in the style folder.
+    for f in os.listdir(STYLE_DIR):
+      shutil.copy(STYLE_DIR + f, path + RESULT_DIR + "style/" + f)
+
 
 def e(text):
   """
@@ -32,9 +46,10 @@ def format(output, specs):
   specs: The specs for the assignment.
   returns: A string containing the HTML.
   """
-  
-  # TODO copy files from the style/ folder to the output folder
-  
+
+  # Create the necessary directories if needed.
+  create_path(specs["assignment"])
+
   o = StringIO()
   o.write("<head><title>CS 121 Automation</title></head>")
   o.write("<link rel='stylesheet' type='text/css' href='style/css.css'>\n")
@@ -47,8 +62,8 @@ def format(output, specs):
   # sets of students).
   o.write("<div id='left'>\n<div id='students'>Students</div><br>")
   found_students = []
-  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + \
-                      "/_results/files/"):
+  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" + \
+                      RESULT_DIR + "files/"):
     student = f.split("-")[0]
     if student not in found_students:
       found_students.append(student)
@@ -113,6 +128,10 @@ def format_student(output, specs):
   output: The student's JSON output.
   specs: The specs for the assignment.
   """
+
+  # Create the necessary directories if needed.
+  create_path(specs["assignment"])
+
   # Create output per student, per file. Files are named student-file.html.
   for f in output["files"].values():
     o = StringIO()
