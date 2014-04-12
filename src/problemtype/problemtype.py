@@ -163,9 +163,12 @@ class ProblemType(object):
         o.write("<li><div class='failed'>FAILED")
 
       # Other test details such as the number of points received, and the
-      # description of the test.
-      o.write(" (" + str(test["got_points"]) + "/" + \
-        str(specs["points"]) + " Points)</div><br>\n")
+      # description of the test. Only print the number of points if the test is
+      # not undetermined.
+      if test["success"] != "UNDETERMINED":
+        o.write(" (" + str(test["got_points"]) + "/" + \
+          str(specs["points"]) + " Points)")
+      o.write("</div><br>\n")
       if specs.get("desc"):
         o.write("<i>" + specs["desc"] + "</i><br>")
       if specs.get("query"):
