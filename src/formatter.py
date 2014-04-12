@@ -15,6 +15,14 @@ from problemtype import *
 from problemtype import ProblemType
 
 def create_path(assignment):
+  """
+  Function: create_path
+  ---------------------
+  Create the path for the result files if it doesn't exist already, and add the
+  necessary files for the automation output.
+
+  assignment: The assignment that is currently being graded.
+  """
   # Copy necessary stylesheets and create results folder if it doesn't exist.
   path = ASSIGNMENT_DIR + assignment + "/"
   if not os.path.exists(path + RESULT_DIR):
@@ -22,7 +30,7 @@ def create_path(assignment):
     os.mkdir(path + RESULT_DIR + "files/")
     os.mkdir(path + RESULT_DIR + "style/")
 
-    # Get everything in the style folder.
+    # Copy over stylesheets and Javascript files.
     for f in os.listdir(STYLE_DIR):
       shutil.copy(STYLE_DIR + f, path + RESULT_DIR + "style/" + f)
 

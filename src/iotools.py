@@ -81,11 +81,13 @@ def output(json, specs, raw=False):
   if not os.path.exists(path+ "files/"):
     os.mkdir(path + "files/", 0644)
 
-  # Formats the output nicely before writing it to file, if specified.
   f = None
+  # For the raw, JSON output.
   if raw:
     f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".json", "w")
     f.write(json)
+
+  # A nicely formatted HTML file.
   else:
     f = open(path + "index.html", "w")
     f.write(formatter.format(json, specs))

@@ -153,6 +153,7 @@ class ProblemType(object):
         has_printed_test = True
         o.write("<b>Tests</b>\n<ul>\n")
 
+      # TODO fancy javascript?
       # Print whether or not the test was successful.
       if test["success"] == "UNDETERMINED":
         o.write("<li><div class='uncertain'>UNDETERMINED")
