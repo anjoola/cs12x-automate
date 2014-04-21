@@ -25,7 +25,8 @@ class Update(ProblemType):
 
     self.db.start_transaction()
     try:
-      actual = self.db.run_query(self.response.sql)
+      self.db.run_query(self.response.sql)
+      actual = self.db.run_query(table_sql)
 
     except Exception as e:
       raise e
@@ -37,7 +38,7 @@ class Update(ProblemType):
     # Start a transaction and run the solution update statement.
     self.db.start_transaction()
     try:
-      self.db_run_query(test["query"])
+      self.db.run_query(test["query"])
       expected = self.db.run_query(table_sql)
 
     except Exception as e:
@@ -55,8 +56,10 @@ class Update(ProblemType):
     # the same, then they are also wrong.
     if len(expected.results) != len(actual.results) or not \
        self.equals(set(expected.results), set(actual.results)):
-      output["expected"] = list(set(before.results) - set(expected.results))
-      output["actual"] = list(set(before.results) - set(actual.results))
+      output["expected"] = self.stringify(list(set(before.results) - \
+                                          set(expected.results)))
+      output["actual"] = self.stringify(list(set(before.results) - \
+                                        set(actual.results)))
       return test["points"]
 
     # Otherwise, their update statement is correct.

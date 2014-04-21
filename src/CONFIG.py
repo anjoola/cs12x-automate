@@ -61,6 +61,7 @@ PROBLEM_TYPES = {
   "procedure": Procedure,
   "select" : Select,
   "trigger" : Trigger,
+  "update" : Update,
   "view" : View,
   "manual" : Manual
 }

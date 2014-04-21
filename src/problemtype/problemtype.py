@@ -283,3 +283,12 @@ class ProblemType(object):
         two.append(("", item[2:]))
 
     return (one, two)
+
+
+  def stringify(self, lst):
+    """
+    Function: stringify
+    -------------------
+    Converts every element into a string to be easily JSONified.
+    """
+    return [str(x) for x in lst]
