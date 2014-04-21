@@ -4,7 +4,10 @@ class Trigger(ProblemType):
   """
   Class: Trigger
   --------------
-  Tests a tregger statement. TODO
+  Tests a trigger statement.
+  
+  
+  TODO
   """
 
   def grade_test(self, test, output):
@@ -15,4 +18,3 @@ class Trigger(ProblemType):
 
   def output_test(self, o, test, specs):
     pass
-

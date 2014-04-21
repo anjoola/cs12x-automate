@@ -14,6 +14,17 @@ class View(ProblemType):
   """
 
   def grade_test(self, test, output):
+    # TODO
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
     table_sql = "SELECT * FROM " + test["table"]
 
     # Compare the expected rows inserted versus the actual.
@@ -42,4 +53,5 @@ class View(ProblemType):
 
 
   def output_test(self, o, test, specs):
+    # TODO
     pass
