@@ -13,25 +13,43 @@ class Insert(ProblemType):
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.run_query(table_sql)
 
-    # Start a transaction and run the student's insert query. Assert that it
+    # Start a transaction and run the student's insert query. Make sure that it
     # IS an insert statement and is only a single statement (by checking that
     # after removing the trailing semicolon, there are no more).
-    assert(self.response.sql.lower().find("insert") and \
-           self.response.sql.strip().rstrip(";").find(";") == 0)
-    self.db.start_transaction()
-    self.db.run_query(self.response.sql, setup=test.get("setup"), \
-                      teardown=test.get("teardown"))
-    actual = self.db.run_query(table_sql)
-    self.db.rollback()
+    if not (self.response.sql.lower().find("insert") != -1 and \
+            self.response.sql.strip().rstrip(";").find(";") == -1):
+      # TODO output something that says they attempted somethign OTHER than insert
+      return test["points"]
 
-    # Make sure the rollback occurred properly.
-    assert(len(before.results) == len(self.db.run_query(table_sql).results))
+    self.db.start_transaction()
+    try:
+      self.db.run_query(self.response.sql, setup=test.get("setup"), \
+                        teardown=test.get("teardown"))
+      actual = self.db.run_query(table_sql)
+
+    except Exception as e:
+      raise e
+    finally:
+      self.db.rollback()
+      # Make sure the rollback occurred properly.
+      assert(len(before.results) == len(self.db.run_query(table_sql).results))
 
     # Start a transaction and run the solution insert statement.
     self.db.start_transaction()
-    self.cache.get(self.db.run_query, test["query"], \
-                   setup=test.get("setup"), teardown=test.get("teardown"))
-    expected = self.db.run_query(table_sql)
+    try:
+      self.cache.get(self.db.run_query, test["query"], \
+                     setup=test.get("setup"), teardown=test.get("teardown"))
+      expected = self.db.run_query(table_sql)
+
+    except Exception as e:
+      raise e
+    finally:
+      if test.get("rollback"):
+        self.db.rollback()
+        # Make sure the rollback occurred properly.
+        assert(len(before.results) == len(self.db.run_query(table_sql).results))
+      else:
+        self.db.commit()
 
     # Compare the results of the test insert versus the actual. If the results
     # are not equal in size, then it is automatically wrong. If the results are

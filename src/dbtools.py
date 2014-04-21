@@ -55,11 +55,21 @@ class DBTools:
       self.db.close()
 
 
+  def commit(self):
+    """
+    Function: commit
+    ----------------
+    Commits the current transaction.
+    """
+    self.db.commit()
+
+
   def kill_query(self):
     """
     Function: kill_query
     --------------------
     Kills the running query.
+    """
     """
     if self.db and self.db.is_connected():
       try:
@@ -77,6 +87,8 @@ class DBTools:
         else:
           err("Error while killing query: " + str(e))
           raise
+    """ # TODO
+    pass
 
 
   def get_cursor(self):
@@ -117,6 +129,24 @@ class DBTools:
                                       autocommit=True)
     self.cursor = self.db.cursor()
     return self.db
+
+
+  def rollback(self):
+    """
+    Function: rollback
+    ------------------
+    Rolls back a database transaction.
+    """
+    self.db.rollback()
+
+
+  def start_transaction(self):
+    """
+    Function: start_transaction
+    ---------------------------
+    Starts a database transaction.
+    """
+    self.db.start_transaction()
 
   # ----------------------------- Query Utilities ---------------------------- #
 
@@ -275,7 +305,7 @@ class DBTools:
 
     # Loop through each source file.
     for source in files:
-      f = codecs.open(assignment + "/" + source, "r", "utf-8")
+      f = codecs.open(ASSIGNMENT_DIR + assignment + "/" + source, "r", "utf-8")
       sql_list = sqlparse.split(preprocess_sql(f))
       for sql in sql_list:
         # Skip this line if there is nothing in it.
