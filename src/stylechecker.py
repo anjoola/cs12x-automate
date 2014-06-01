@@ -13,7 +13,6 @@ MAX_LINE_LENGTH = 80
 S                   = "[^\>\<\=\(\) \t\n\r\f\v]"
 
 header              = re.compile("-- \[Problem ([0-9])+([a-zA-Z])*\]")
-result_header       = re.compile("-- \[Results\]")
 bad_header          = re.compile("-- \[Problem([^\]])*\]")
 comment             = re.compile(r"\s*--.|/\*.|\*/.")
 tabs                = re.compile(r"\t+")
@@ -27,7 +26,6 @@ count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
 double_quote        = re.compile("\"([^\"])*\"")
 HAS_HEADER = False
 MULTILINE_COMMENT = False
-STARTED_RESULT = False
 
 def check(f):
   """
@@ -72,7 +70,7 @@ def check_line(line, line_number, errors):
   line_number: The line number of the line to check.
   errors: A set of errors so far.
   """
-  global HAS_HEADER, MULTILINE_COMMENT, STARTED_RESULT
+  global HAS_HEADER, MULTILINE_COMMENT
   is_bad_header = False
 
   if not len(line.strip()):
@@ -85,19 +83,13 @@ def check_line(line, line_number, errors):
   if not HAS_HEADER and line.strip().startswith("/*"):
     MULTILINE_COMMENT = True
 
-  # If they started the results, ignore the 80 character limit.
-  if result_header.search(line):
-    STARTED_RESULT = True
-  if STARTED_RESULT and header.search(line):
-    STARTED_RESULT = False
-
   # Check for style mistakes.
   if bad_header.search(line) and not header.search(line):
     errors.add(BadHeaderError)
     is_bad_header = True
-  if not STARTED_RESULT and tabs.search(line):
+  if tabs.search(line):
     errors.add(UsedTabsError)
-  if not STARTED_RESULT and len(line) > MAX_LINE_LENGTH:
+  if len(line) > MAX_LINE_LENGTH:
     errors.add(LineTooLongError)
   if not MULTILINE_COMMENT and not comment.search(line):
     if comma_space.search(line):

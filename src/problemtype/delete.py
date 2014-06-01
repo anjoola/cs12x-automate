@@ -1,4 +1,4 @@
-from problemtype import *
+from types import *
 
 class Delete(ProblemType):
   """
@@ -59,7 +59,7 @@ class Delete(ProblemType):
     if len(expected.results) != len(actual.results) or not \
        self.equals(set(expected.results), set(actual.results)):
       output["expected"] = list(set(before.results) - set(expected.results))
-      output["actual"] = list(set(before.results) - set(expected.results))
+      output["actual"] = list(set(before.results) - set(actual.results))
       return test["points"]
 
     # Otherwise, their delete statement is correct.
@@ -68,5 +68,12 @@ class Delete(ProblemType):
 
 
   def output_test(self, o, test, specs):
-    # TODO
-    pass
+    # Don't output anything if they are successful.
+    if test["success"] or "expected" not in test:
+      return
+
+    # Expected and actual output.
+    o.write("<pre class='results'>")
+    self.generate_diffs(test["expected"].split("\n"), \
+                        test["actual"].split("\n"), o)
+    o.write("</pre>")

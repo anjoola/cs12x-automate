@@ -27,7 +27,7 @@ def get_students(assignment, after=None):
          submitted at a time after this student (includes this student).
   returns: A list of students who've submitted for that assignment.
   """
-  files = [f for f in os.walk(ASSIGNMENT_DIR + assignment + "/").next()[1] \
+  files = [f for f in os.walk(ASSIGNMENT_DIR + assignment + "/students/").next()[1] \
            if f.endswith("-" + assignment)]
 
   # If looking for files after a particular person.
@@ -101,8 +101,8 @@ def parse_file(f):
   Function: parse_file
   --------------------
   Parses a student's file into a dictionary with the key as the problem number
-  and the student's response as the value. Also parses the student's comments,
-  query, and query results.
+  and the student's response as the value. Also parses the student's comments
+  and query.
 
   f: The file object to parse.
   returns: The dict of the question number and student's response.
@@ -114,8 +114,6 @@ def parse_file(f):
   curr = ""
   # True if in the middle of parsing a block comment.
   started_block_comment = False
-  # True if in the middle of parsing results.
-  started_results = False
   # True if in the middle of parsing SQL.
   started_sql = False
 
@@ -123,17 +121,14 @@ def parse_file(f):
     """
     Function: add_line
     ------------------
-    Adds a line to the results or comments depending on where we are at parsing.
+    Adds a line to the comments.
     """
     # If these are comments at the top of the file, ignore them.
     if curr == "":
       return
     #if len(line.strip()) > 0: TODO
     line = line + "\n"
-    if started_results:
-      responses[curr].results += line
-    else:
-      responses[curr].comments += line
+    responses[curr].comments += line
 
   inline_comment = ""
   # Preprocess the file for DELIMITER statements.
@@ -154,13 +149,8 @@ def parse_file(f):
     elif len(line.strip()) == 0:
       continue
 
-    # Query results.
-    elif line.strip().startswith("-- [Results]"):
-      started_results = True
-
     # Indicator denoting the start of an response.
     elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
-      started_results = False
       started_sql = False
       curr = line.replace("-- [Problem ", "").replace("]", "")
       curr = curr.strip()

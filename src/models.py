@@ -13,8 +13,7 @@ class Response:
   Class: Response
   ---------------
   Represents a student's response to a particular homework problem. The
-  response includes any comments before the SQL, the actual SQL response, and
-  any attached results TODO
+  response includes any comments before the SQL and the actual SQL response.
   """
   def __init__(self):
     # Their comments.
@@ -23,14 +22,11 @@ class Response:
     # The SQL for that problem.
     self.sql = ""
 
-    # The results of the query that they attached.
-    self.results = ""
-
   def __repr__(self):
     return self.__str__()
 
   def __str__(self):
-    return "(" + self.comments + ", " + self.sql + ", " + self.results + ")"
+    return "(" + self.comments + ", " + self.sql + ")"
 
 
 class Result:
@@ -97,7 +93,6 @@ class GradedOutput:
       "num": "",
       "num_points": 0,
       "errors": [],
-      "submitted-results": "",
       "got_points" 0,
       "sql": "",
       

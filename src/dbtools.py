@@ -59,7 +59,7 @@ class DBTools:
     """
     Function: commit
     ----------------
-    Commits the current transaction.
+    Commits the current transaction. Destroys any savepoints.
     """
     self.db.commit()
 
@@ -131,13 +131,40 @@ class DBTools:
     return self.db
 
 
-  def rollback(self):
+  def release(self, savepoint):
+    """
+    Function: release
+    -----------------
+    Releases the named savepoint.
+
+    savepoint: The savepoint to release.
+    """
+    self.run_query("RELEASE SAVEPOINT " + savepoint)
+
+
+  def rollback(self, savepoint=None):
     """
     Function: rollback
     ------------------
-    Rolls back a database transaction.
+    Rolls back a database transaction. If a savepoint is named, rolls back to
+    the named savepoint, then does a normal rollback.
+
+    savepoint: The savepoint to rollback to, if specified.
     """
+    if savepoint:
+      self.run_query("ROLLBACK TO " + savepoint)
     self.db.rollback()
+
+
+  def savepoint(self, name):
+    """
+    Function: savepoint
+    -------------------
+    Creates a savepoint with the specified name.
+
+    name: The name of the savepoint.
+    """
+    self.run_query("SAVEPOINT " + name)
 
 
   def start_transaction(self):
@@ -289,35 +316,30 @@ class DBTools:
 
   # ----------------------------- File Utilities ----------------------------- #
 
-  def source_files(self, assignment, files):
+  def source_file(self, assignment, f):
     """
     Function: source_files
     ----------------------
-    Sources files into the database. Since the "source" command is for the
+    Sources a file into the database. Since the "source" command is for the
     MySQL command-line interface, we have to parse the source file and run
     each command one at a time.
 
     assignment: The assignment name, which is prepended to all the files.
-    files: The source files to source.
+    f: The source file to source.
     """
-    if len(files) == 0:
-      return
-
-    # Loop through each source file.
-    for source in files:
-      f = codecs.open(ASSIGNMENT_DIR + assignment + "/" + source, "r", "utf-8")
-      sql_list = sqlparse.split(preprocess_sql(f))
-      for sql in sql_list:
-        # Skip this line if there is nothing in it.
-        if len(sql.strip()) == 0:
-          continue
-        # Otherwise execute each line. Output must be consumed for the query
-        # to actually be executed.
-        for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
-      f.close()
+    f = codecs.open(ASSIGNMENT_DIR + assignment + "/" + f, "r", "utf-8")
+    sql_list = sqlparse.split(preprocess_sql(f))
+    for sql in sql_list:
+      # Skip this line if there is nothing in it.
+      if len(sql.strip()) == 0:
+        continue
+      # Otherwise execute each line. Output must be consumed for the query
+      # to actually be executed.
+      for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
+    f.close()
 
 
-def import_files(assignment, files):
+def import_file(assignment, f):
   """
   Function: import_files
   ----------------------
@@ -325,16 +347,13 @@ def import_files(assignment, files):
   command on the terminal. We will have to invoke the command via Python.
 
   assignment: The assignment name, which is prepended to all the files.
-  files: The files to import.
+  f: The file to import.
   """
-  if len(files) == 0:
-    return
-
-  log("\nImporting files...")
-  # Import all the data files.
-  files = " ".join([assignment + "/" + f for f in files])
+  log("\nImporting file " + f + "...\n")
+  filename = ASSIGNMENT_DIR + assignment + "/" + f
   subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
-                  " -p" + PASS + " --delete --local " + DATABASE + " " + files)
+                  " -p" + PASS + " --delete --local " + DATABASE + " " + \
+                  filename)
 
 
 def preprocess_sql(sql_file):

@@ -1,4 +1,4 @@
-from problemtype import ProblemType
+from types import *
 
 class Create(ProblemType):
   """
@@ -14,11 +14,6 @@ class Create(ProblemType):
     
     
     
-    
-    
-    
-    
-    
     output["success"] = "UNDETERMINED"
     # TODO create table statements are just printed.
     
@@ -28,3 +23,4 @@ class Create(ProblemType):
 
   def output_test(self, o, test, specs):
     o.write(str(test["a"]))
+    

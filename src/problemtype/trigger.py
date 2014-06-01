@@ -1,4 +1,4 @@
-from problemtype import ProblemType
+from types import ProblemType
 
 class Trigger(ProblemType):
   """

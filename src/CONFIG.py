@@ -6,7 +6,6 @@ Contains configuration parameters for the grading tool.
 import secret
 
 from errors import *
-from problemtype import *
 
 # Verbose output. Set to True for all logging statements.
 VERBOSE = True
@@ -52,27 +51,12 @@ STYLE_DIR = "../style/"
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 100
 
-# The types of problems there are and the classes to handle each type.
-PROBLEM_TYPES = {
-  "create" : Create,
-  "delete" : Delete,
-  "function": Function,
-  "insert" : Insert,
-  "procedure": Procedure,
-  "select" : Select,
-  "trigger" : Trigger,
-  "update" : Update,
-  "view" : View,
-  "manual" : Manual
-}
-
 # Deductions for SQL problems. Values are tuples of the form (points, desc)
 # where points is the number of points to take off for this problem, and
 # desc is the description of the style error.
 SQL_DEDUCTIONS = {
   OrderByError            : 1,  # Missing or incorrect ORDER BY.
   ColumnOrderError        : 1,  # Wrong column order.
-  MissingResultsError     : 1,  # Did not include query results.
   RenameValueError        : 1,  # Did not rename computed values.
   WrongNumColumnError     : 0,  # More or fewer columns included.
   GroupingSelectError     : 2   # Selected on a column that was not grouped on.

@@ -1,4 +1,4 @@
-from problemtype import ProblemType
+from types import *
 
 class Update(ProblemType):
   """
@@ -56,10 +56,10 @@ class Update(ProblemType):
     # the same, then they are also wrong.
     if len(expected.results) != len(actual.results) or not \
        self.equals(set(expected.results), set(actual.results)):
-      output["expected"] = self.stringify(list(set(before.results) - \
-                                          set(expected.results)))
-      output["actual"] = self.stringify(list(set(before.results) - \
-                                        set(actual.results)))
+      output["expected"] = stringify(list(set(before.results) - \
+                                     set(expected.results)))
+      output["actual"] = stringify(list(set(before.results) - \
+                                   set(actual.results)))
       return test["points"]
 
     # Otherwise, their update statement is correct.

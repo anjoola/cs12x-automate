@@ -1,14 +1,13 @@
 import mysql.connector
 
 from cache import Cache
-from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS, PROBLEM_TYPES
+from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
 import dbtools
 from errors import *
 import iotools
 from iotools import log
 from models import Response
 from problemtype import *
-from problemtype import ProblemType
 
 class Grader:
   """

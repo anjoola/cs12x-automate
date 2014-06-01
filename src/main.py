@@ -68,13 +68,15 @@ def setup():
   db = dbtools.DBTools()
   db.get_db_connection(MAX_TIMEOUT)
 
-  # Source files needed prior to grading, import files, and run setup queries.
-  if specs.get("dependencies"):
-    db.source_files(assignment, specs["dependencies"])
-  if specs.get("import"):
-    dbtools.import_files(assignment, specs["import"])
+  # Source and import files needed prior to grading and run setup queries.
   if specs.get("setup"):
-    for q in specs["setup"]: db.run_query(q)
+    for item in specs.get("setup"):
+      if item["type"] == "dependency":
+        db.source_file(assignment, item["file"])
+      elif item["type"] == "import":
+        dbtools.import_file(assignment, item["file"])
+      elif item["type"] == "queries":
+        for q in item["queries"]: db.run_query(q)
 
   # Initialize the grading tool.
   grader = Grader(specs, db)

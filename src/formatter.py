@@ -10,9 +10,8 @@ import json
 import os
 import shutil
 
-from CONFIG import ASSIGNMENT_DIR, PROBLEM_TYPES, RESULT_DIR, STYLE_DIR
+from CONFIG import ASSIGNMENT_DIR, RESULT_DIR, STYLE_DIR
 from problemtype import *
-from problemtype import ProblemType
 
 def create_path(assignment):
   """
@@ -169,7 +168,7 @@ def format_student(output, specs):
         o.write("</div>")
         continue
 
-      # Print out comments and submitted results if the specs ask for it.
+      # Print out comments if the specs ask for it.
       if problem_specs.get("comments") and problem:
         o.write("<b>Comments</b>")
         if not problem.get("comments"):
@@ -178,9 +177,6 @@ def format_student(output, specs):
           o.write("<br><i>No comments provided...</i><br>\n")
         else:
           o.write("<pre>" + problem["comments"] + "</pre>")
-      if problem_specs.get("submitted-results"):
-        o.write("<b>Submitted Results</b>")
-        o.write("<pre>" + problem["submitted-results"] + "</pre>")
       o.write("<b>SQL</b>")
       o.write("<pre>" + problem["sql"] + "</pre>")
 

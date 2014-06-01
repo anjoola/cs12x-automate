@@ -157,17 +157,6 @@ class MissingKeywordError(Error):
            ", ".join(self.keywords)
 
 
-class MissingResultsError(Error):
-  """
-  Class: MissingResultsError
-  --------------------------
-  Occurs if results were required for the problem but the student did not
-  include them.
-  """
-  def __repr__(self):
-    return "MissingResultsError: No results included."
-
-
 class MySQLError(Error):
   """
   Class: MySQLError
