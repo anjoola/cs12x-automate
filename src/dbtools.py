@@ -36,6 +36,9 @@ class DBTools:
     # The current connection timeout limit.
     self.timeout = CONNECTION_TIMEOUT
 
+    # The savepoints.
+    self.savepoints = []
+
   # --------------------------- Database Utilities --------------------------- #
 
   def close_db_connection(self):
@@ -62,6 +65,7 @@ class DBTools:
     Commits the current transaction. Destroys any savepoints.
     """
     self.db.commit()
+    self.savepoints = []
 
 
   def get_cursor(self):
@@ -169,6 +173,21 @@ class DBTools:
     pass
 
 
+  def release(self, savepoint):
+    """
+    Function: release
+    -----------------
+    Releases the named savepoint.
+
+    savepoint: The savepoint to release.
+    """
+    if savepoint not in self.savepoints:
+      return
+
+    self.savepoints.remove(savepoint)
+    self.run_query('RELEASE SAVEPOINT %s' % savepoint)
+
+
   def reset_state(self, old, new):
     """
     Functions: reset_state
@@ -199,15 +218,44 @@ class DBTools:
     for table in new.tables:
       self.run_query('DROP TABLE %s' % table)
 
+    # Remove all savepoints.
+    self.savepoints = []
 
-  def rollback(self):
+
+  def rollback(self, savepoint=None):
     """
     Function: rollback
     ------------------
-    Rolls back a database transaction, if currently in one.
+    Rolls back a database transaction, if currently in one. If a savepoint is
+    named, rolls back to the named savepoint, otherwise, does a normal rollback
+    which will remove all savepoints.
+
+    savepoint: The savepoint to rollback to, if specified.
     """
     if self.db.in_transaction:
-      self.db.rollback()
+      # Roll back to the named savepoint. All savepoints created after this
+      # savepoint are deleted.
+      if savepoint and savepoint in self.savepoints:
+        self.run_query('ROLLBACK TO %s' % savepoint)
+        self.savepoints = self.savepoints[0:self.savepoints.index(savepoint)+1]
+      else:
+        self.db.rollback()
+        self.savepoints = []
+
+
+  def savepoint(self, savepoint):
+    """
+    Function: savepoint
+    -------------------
+    Creates a savepoint with the specified name.
+
+    savepoint: The name of the savepoint.
+    """
+    self.run_query('SAVEPOINT %s' % savepoint) # TODO error in this query, what to do?
+    # If this savepoint name already exists, add and remove it.
+    if savepoint in self.savepoints:
+      self.savepoints.remove(savepoint)
+    self.savepoints.append(savepoint)
 
 
   def start_transaction(self):
@@ -325,6 +373,10 @@ class DBTools:
           self.cursor.execute(sql, multi=True)
         result.append(self.results())
 
+    # If no longer in a transaction, remove all savepoints.
+    if not self.db.in_transaction:
+      self.savepoints = []
+
     return result
 
 
@@ -357,6 +409,7 @@ class DBTools:
       if teardown is not None:
         self.run_multi(teardown)
     return result
+    # TODO get stuff from the cache? instead of in other things
 
   # ----------------------------- File Utilities ----------------------------- #
 

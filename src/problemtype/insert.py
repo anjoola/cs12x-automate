@@ -13,7 +13,7 @@ class Insert(ProblemType):
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.run_query(table_sql)
 
-    # Start a transaction and run the student's insert query. Make sure that it
+    # Create a savepoint and run the student's insert query. Make sure that it
     # IS an insert statement and is only a single statement (by checking that
     # after removing the trailing semicolon, there are no more).
     if not (self.response.sql.lower().find("insert") != -1 and \
@@ -21,7 +21,7 @@ class Insert(ProblemType):
       # TODO output something that says they attempted somethign OTHER than insert
       return test["points"]
 
-    self.db.start_transaction()
+    self.db.savepoint('spt_insert')
     try:
       self.db.run_query(self.response.sql, setup=test.get("setup"), \
                         teardown=test.get("teardown"))
@@ -30,12 +30,11 @@ class Insert(ProblemType):
     except Exception as e:
       raise e
     finally:
-      self.db.rollback()
+      self.db.rollback('spt_insert')
       # Make sure the rollback occurred properly.
       assert(len(before.results) == len(self.db.run_query(table_sql).results))
 
-    # Start a transaction and run the solution insert statement.
-    self.db.start_transaction()
+    # Run the solution insert statement.
     try:
       self.cache.get(self.db.run_query, test["query"], \
                      setup=test.get("setup"), teardown=test.get("teardown"))
@@ -45,11 +44,10 @@ class Insert(ProblemType):
       raise e
     finally:
       if test.get("rollback"):
-        self.db.rollback()
+        self.db.rollback('spt_insert')
         # Make sure the rollback occurred properly.
         assert(len(before.results) == len(self.db.run_query(table_sql).results))
-      else:
-        self.db.commit()
+      self.db.release('spt_insert')
 
     # Compare the results of the test insert versus the actual. If the results
     # are not equal in size, then it is automatically wrong. If the results are

@@ -15,7 +15,7 @@ class Update(ProblemType):
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.run_query(table_sql)
 
-    # Start a transaction and run the student's update statement. Make sure that
+    # Create a savepoint and run the student's update statement. Make sure that
     # it IS an update statement and is only a single statement (by checking
     # that after removing the trailing semicolon, there are no more).
     if not (self.response.sql.lower().find("update") != -1 and \
@@ -23,33 +23,31 @@ class Update(ProblemType):
       # TODO output some error thing
       return test["points"]
 
-    self.db.start_transaction()
+    self.db.savepoint('spt_update')
     try:
       self.db.run_query(self.response.sql)
       actual = self.db.run_query(table_sql)
 
-    except Exception as e:
+    except Exception as e: # TODO
       raise e
     finally:
-      self.db.rollback()
+      self.db.rollback('spt_update')
       # Make sure the rollback occurred properly.
       assert(len(before.results) == len(self.db.run_query(table_sql).results))
     
-    # Start a transaction and run the solution update statement.
-    self.db.start_transaction()
+    # Run the solution update statement.
     try:
       self.db.run_query(test["query"])
       expected = self.db.run_query(table_sql)
 
-    except Exception as e:
+    except Exception as e: # TODO
       raise e
     finally:
       if test.get("rollback"):
-        self.db.rollback()
+        self.db.rollback('spt_update')
         # Make sure the rollback occurred properly.
         assert(len(before.results) == len(self.db.run_query(table_sql).results))
-      else:
-        self.db.commit()
+      self.db.release('spt_update')
 
     # Compare the expected rows changed versus the actual. If the changes are
     # not equal in size, then it is automatically wrong. If the changes are not
@@ -68,5 +66,12 @@ class Update(ProblemType):
 
 
   def output_test(self, o, test, specs):
-    # TODO
-    pass
+     # Don't output anything if they are successful.
+    if test["success"] or "expected" not in test:
+      return
+
+    # Expected and actual output.
+    o.write("<pre class='results'>")
+    self.generate_diffs(test["expected"], \
+                        test["actual"], o)
+    o.write("</pre>")

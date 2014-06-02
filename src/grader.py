@@ -61,6 +61,7 @@ class Grader:
 
     # If there was an error with the dependent query.
     except mysql.connector.errors.ProgrammingError as e:
+      # TODO graded["errors"] does not exist...
       add(graded["errors"], DependencyError(problem["dependencies"]))
       add(graded["errors"], MySQLError(e))
       raise
