@@ -1,7 +1,7 @@
 """
 Module: dbtools
 ---------------
-Contains helper methods involving the database and queries.
+Contains helper methods involving the database, its state, and queries.
 """
 import codecs
 from cStringIO import StringIO
@@ -14,10 +14,7 @@ import sqlparse
 
 from CONFIG import *
 from iotools import err, log
-from models import Result
-
-# Used to find delimiters in the file.
-DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
+from models import DatabaseState, Result
 
 class DBTools:
   """
@@ -25,6 +22,9 @@ class DBTools:
   --------------
   Handles requests to a particular database (as specified in the CONFIG file).
   """
+
+  # Used to find delimiters in the file.
+  DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
 
   def __init__(self):
     # The database connection parameters are specified in the CONFIG.py file.
@@ -62,33 +62,6 @@ class DBTools:
     Commits the current transaction. Destroys any savepoints.
     """
     self.db.commit()
-
-
-  def kill_query(self):
-    """
-    Function: kill_query
-    --------------------
-    Kills the running query.
-    """
-    """
-    if self.db and self.db.is_connected():
-      try:
-        # Gets the current thread ID of the database connection and attempts
-        # to kill it.
-        thread_id = self.db.connection_id
-        self.db.cmd_process_kill(thread_id)
-
-      except mysql.connector.errors.DatabaseError as e:
-        # If this error is actually because the connection was successfully
-        # terminated.
-        if e.errno == 1927:
-          pass
-        # Otherwise, this is an actual error.
-        else:
-          err("Error while killing query: " + str(e))
-          raise
-    """ # TODO
-    pass
 
 
   def get_cursor(self):
@@ -131,49 +104,120 @@ class DBTools:
     return self.db
 
 
-  def release(self, savepoint):
+  def get_state(self):
     """
-    Function: release
-    -----------------
-    Releases the named savepoint.
+    Function: get_state
+    -------------------
+    Gets the current state of the database, which includes the tables, views,
+    foreign keys, functions, and procedures.
 
-    savepoint: The savepoint to release.
+    returns: A DatabaseState object which contains the current state.
     """
-    self.run_query("RELEASE SAVEPOINT " + savepoint)
+    state = DatabaseState()
+
+    # Get tables and their foreign keys.
+    state.tables = self.run_query(
+      "SELECT table_name FROM information_schema.tables "
+      "WHERE table_type='BASE TABLE'"
+    ).results
+    state.foreign_keys = self.run_query(
+      "SELECT DISTINCT table_name, constraint_name FROM "
+      "information_schema.table_constraints WHERE constraint_type='FOREIGN KEY'"
+    ).results
+
+    # Get views, functions, and procedures.
+    state.views = self.run_query(
+      "SELECT table_name FROM information_schema.tables "
+      "WHERE table_type='VIEW'"
+    ).results
+    state.functions = self.run_query(
+      "SELECT routine_name FROM information_schema.routines "
+      "WHERE routine_type='FUNCTION'"
+    ).results
+    state.procedures = self.run_query(
+      "SELECT routine_name FROM information_schema.routines "
+      "WHERE routine_type='PROCEDURE'"
+    ).results
+
+    return state
 
 
-  def rollback(self, savepoint=None):
+  def kill_query(self):
+    """
+    Function: kill_query
+    --------------------
+    Kills the running query.
+    """
+    """
+    if self.db and self.db.is_connected():
+      try:
+        # Gets the current thread ID of the database connection and attempts
+        # to kill it.
+        thread_id = self.db.connection_id
+        self.db.cmd_process_kill(thread_id)
+
+      except mysql.connector.errors.DatabaseError as e:
+        # If this error is actually because the connection was successfully
+        # terminated.
+        if e.errno == 1927:
+          pass
+        # Otherwise, this is an actual error.
+        else:
+          err("Error while killing query: " + str(e))
+          raise
+    """ # TODO
+    pass
+
+
+  def reset_state(self, old, new):
+    """
+    Functions: reset_state
+    ----------------------
+    Resets the state of the database from 'new' back to 'old'. This involves
+    removing all functions, views, functions, and procedures that have been
+    newly created.
+
+    old: The old state of the database to be reverted back to.
+    new: The new (current) state of the database.
+    """
+    new.subtract(old)
+
+    # Drop all functions and procedures first.
+    for proc in new.procedures:
+      self.run_query('DROP PROCEDURE IF EXISTS %s' % proc)
+    for func in new.functions:
+      self.run_query('DROP FUNCTION IF EXISTS %s' % func)
+
+    # Drop views.
+    for view in new.views:
+      self.run_query('DROP VIEW IF EXISTS %s' % view)
+
+    # Drop tables. First must drop foreign keys on the tables in order to be
+    # able to drop the tables without any errors.
+    for (table, fk) in new.foreign_keys:
+      self.run_query('ALTER TABLE %s DROP FOREIGN KEY %s' % (table, fk))
+    for table in new.tables:
+      self.run_query('DROP TABLE %s' % table)
+
+
+  def rollback(self):
     """
     Function: rollback
     ------------------
-    Rolls back a database transaction. If a savepoint is named, rolls back to
-    the named savepoint, then does a normal rollback.
-
-    savepoint: The savepoint to rollback to, if specified.
+    Rolls back a database transaction, if currently in one.
     """
-    if savepoint:
-      self.run_query("ROLLBACK TO " + savepoint)
-    self.db.rollback()
-
-
-  def savepoint(self, name):
-    """
-    Function: savepoint
-    -------------------
-    Creates a savepoint with the specified name.
-
-    name: The name of the savepoint.
-    """
-    self.run_query("SAVEPOINT " + name)
+    if self.db.in_transaction:
+      self.db.rollback()
 
 
   def start_transaction(self):
     """
     Function: start_transaction
     ---------------------------
-    Starts a database transaction.
+    Starts a database transaction, if not already in one.
     """
-    self.db.start_transaction()
+    if not self.db.in_transaction:
+      self.db.start_transaction()
 
   # ----------------------------- Query Utilities ---------------------------- #
 
@@ -369,7 +413,7 @@ def preprocess_sql(sql_file):
   delimiter = ';'
   for line in sql_file:
     # See if there is a new delimiter.
-    match = re.match(DELIMITER_RE, line)
+    match = re.match(DBTools.DELIMITER_RE, line)
     if match:
       delimiter = match.group(1)
       continue

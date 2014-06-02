@@ -163,10 +163,22 @@ def teardown():
 
 
 if __name__ == "__main__":
+  # Parse arguments and run setup.
   getargs()
   setup()
+
   log("\n\n========================START GRADING========================\n")
+  # Get the state of the database before grading.
+  state = db.get_state()
+
+  # Grade each student.
   for student in students:
     grade_student(student)
+
+    # Get the state of the database after the student is graded and reset it
+    # to what it was before.
+    new_state = db.get_state()
+    db.reset_state(state, new_state)
+
   log("\n\n=========================END GRADING=========================\n")
   teardown()

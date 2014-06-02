@@ -8,6 +8,50 @@ from datetime import datetime
 import json
 from time import strftime
 
+# TODO
+class DatabaseState:
+  """
+  Class: DatabaseState
+  --------------------
+  Represents the state of the database, which includes the functions,
+  procedures, tables, foreign keys, and views.
+  """
+  def __init__(self):
+    # A list of tables.
+    self.tables = []
+
+    # A list of foreign keys. In the form of (table, foreign key name).
+    self.foreign_keys = []
+
+    # A list of views.
+    self.views = []
+
+    # A list of functions.
+    self.functions = []
+
+    # A list of procedures.
+    self.procedures = []
+
+  def subtract(self, other):
+    """
+    Function: subtract
+    --------------
+    Removes the elements that are the same between this DatabaseState and
+    another one.
+
+    other: The other database state.
+    """
+
+    def diff(a, b):
+      return [x for x in a if x not in b]
+
+    self.tables = diff(self.tables, other.tables)
+    self.foreign_keys = diff(self.foreign_keys, other.foreign_keys)
+    self.views = diff(self.views, other.views)
+    self.functions = diff(self.functions, other.functions)
+    self.procedures = diff(self.procedures, other.procedures)
+
+
 class Response:
   """
   Class: Response

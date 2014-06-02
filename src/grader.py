@@ -29,6 +29,15 @@ class Grader:
     self.cache = Cache()
 
 
+  def cleanup(self):
+    """
+    Function: cleanup
+    -----------------
+    Cleanup stuff after grading.
+    """
+    self.cache.clear()
+
+
   def run_dependencies(self, problem, response):
     """
     Function: run_dependencies
@@ -55,6 +64,23 @@ class Grader:
       add(graded["errors"], DependencyError(problem["dependencies"]))
       add(graded["errors"], MySQLError(e))
       raise
+
+
+  def run_teardown(self, problem):
+    """
+    Function: run_teardown
+    ----------------------
+    Run teardown queries.
+
+    problem: The problem to run teardown queries for.
+    """
+    try:
+      if problem.get("teardown"):
+        for q in problem["teardown"]: self.db.run_query(q)
+
+    except mysql.connector.errors as e:
+      print e # TODO
+      pass
 
 
   def grade(self, response, output):
@@ -100,6 +126,9 @@ class Grader:
         # If they didn't do a problem, indicate that it doesn't exist.
         except KeyError as e:
           graded_problem["notexist"] = True
+
+        # Run teardown queries.
+        self.run_teardown(problem)
         log(".")
 
       # Compute total points for this file.
@@ -108,12 +137,3 @@ class Grader:
       log("\n")
 
     return total_points
-
-
-  def cleanup(self):
-    """
-    Function: cleanup
-    -----------------
-    Cleanup stuff after grading.
-    """
-    self.cache.clear()

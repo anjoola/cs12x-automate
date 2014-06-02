@@ -1,4 +1,4 @@
-from types import *
+from types import ProblemType
 
 class Manual(ProblemType):
   """
