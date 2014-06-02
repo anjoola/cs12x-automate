@@ -10,7 +10,7 @@ from errors import *
 import formatter
 from grader import Grader
 import iotools
-from iotools import log
+from iotools import err, log
 from models import *
 import stylechecker
 
@@ -38,8 +38,7 @@ def getargs():
   if assignment is None:
     print "Usage: main.py --assignment <assignment name> ", \
       "[--files <files to check>] [--students <specific students to check>] ", \
-      "\n[--after <grade submissions that are turned in on or after this ", \
-      "student turned it in>]"
+      "\n[--after <submissions turned in on or after YYYY-MM-DD>]"
     sys.exit()
 
   # Get the specs, files, and students for this assignment.
@@ -172,6 +171,8 @@ if __name__ == "__main__":
   state = db.get_state()
 
   # Grade each student.
+  if len(students) == 0:
+    err("No students to grade!")
   for student in students:
     grade_student(student)
 

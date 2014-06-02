@@ -5,11 +5,9 @@ Functions involving input and output into the system, as well as file-related
 functions.
 """
 from datetime import datetime
-import json
-import os
+import json, os
 from os.path import getmtime
-import sys
-from time import strftime
+import sys, time
 
 from CONFIG import ASSIGNMENT_DIR, ERROR, VERBOSE
 import dbtools
@@ -27,16 +25,22 @@ def get_students(assignment, after=None):
          submitted at a time after this student (includes this student).
   returns: A list of students who've submitted for that assignment.
   """
-  files = [f for f in os.walk(ASSIGNMENT_DIR + assignment + "/students/").next()[1] \
+  directory = ASSIGNMENT_DIR + assignment + "/students/"
+  files = [f for f in os.walk(directory).next()[1]
            if f.endswith("-" + assignment)]
 
   # If looking for files after a particular person.
   if after is not None:
-    # Sort the files such that the newest are first, then take a slice of
-    # that list so only the newest files are there.
-    files = sorted(files, key=lambda f: getmtime(ASSIGNMENT_DIR + assignment + \
-                   "/" + f), reverse=True)
-    files = files[0 : files.index(after + "-" + assignment) + 1]
+    try:
+      # Only get files modified after the provided time.
+      after = time.mktime(time.strptime(after, "%Y-%m-%d"))
+      files = [f for f in files if getmtime(directory + f) >= after]
+
+    # If the string they entered for the date is incorrect, just skip the date
+    # filtering.
+    except ValueError:
+      err("'after' parameter not formatted correctly (must be YYYY-MM-DD)")
+      pass
 
   return [f.replace("-" + assignment, "") for f in files]
 
