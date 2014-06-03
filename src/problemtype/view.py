@@ -39,7 +39,7 @@ class View(ProblemType):
 
     returns: True if the view is updatable, False otherwise.
     """
-    result = self.db.run_query(
+    result = self.db.execute_sql(
       "SELECT is_updtable FROM information_schema.views WHERE "
       "table_name='%s'" % test['view']
     ).result
@@ -49,12 +49,12 @@ class View(ProblemType):
 
   def grade_test(self, test, output):
     # Get the rows that are expected.
-    expected = self.db.run_query(test['select'])
+    expected = self.db.execute_sql(test['select'])
 
     # Run the student's create view statement and select from that view to see
     # what is in the view.
-    self.db.run_query(self.response.sql)
-    actual = self.db.run_query('SELECT * FROM %s' % test['view'])
+    self.db.execute_sql(self.response.sql)
+    actual = self.db.execute_sql('SELECT * FROM %s' % test['view'])
 
     # Check if the view is updatable, if necessary. If not, take points off.
     if test.get('updatable'):

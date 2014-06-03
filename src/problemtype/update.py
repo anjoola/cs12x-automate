@@ -13,7 +13,7 @@ class Update(ProblemType):
   def grade_test(self, test, output):
     # Get the state of the table before the update.
     table_sql = "SELECT * FROM " + test["table"]
-    before = self.db.run_query(table_sql)
+    before = self.db.execute_sql(table_sql)
 
     # Create a savepoint and run the student's update statement. Make sure that
     # it IS an update statement and is only a single statement (by checking
@@ -25,20 +25,20 @@ class Update(ProblemType):
 
     self.db.savepoint('spt_update')
     try:
-      self.db.run_query(self.response.sql)
-      actual = self.db.run_query(table_sql)
+      self.db.execute_sql(self.response.sql)
+      actual = self.db.execute_sql(table_sql)
 
     except Exception as e: # TODO
       raise e
     finally:
       self.db.rollback('spt_update')
       # Make sure the rollback occurred properly.
-      assert(len(before.results) == len(self.db.run_query(table_sql).results))
+      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
     
     # Run the solution update statement.
     try:
-      self.db.run_query(test["query"])
-      expected = self.db.run_query(table_sql)
+      self.db.execute_sql(test["query"])
+      expected = self.db.execute_sql(table_sql)
 
     except Exception as e: # TODO
       raise e
@@ -46,7 +46,7 @@ class Update(ProblemType):
       if test.get("rollback"):
         self.db.rollback('spt_update')
         # Make sure the rollback occurred properly.
-        assert(len(before.results) == len(self.db.run_query(table_sql).results))
+        assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
       self.db.release('spt_update')
 
     # Compare the expected rows changed versus the actual. If the changes are

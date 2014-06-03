@@ -3,15 +3,12 @@ Module: dbtools
 ---------------
 Contains helper methods involving the database, its state, and queries.
 """
-import codecs
+import codecs, re, subprocess
 from cStringIO import StringIO
-import re
-import subprocess
 
-import mysql.connector
-import prettytable
-import sqlparse
+import mysql.connector, prettytable, sqlparse
 
+from cache import Cache
 from CONFIG import *
 from iotools import err, log
 from models import DatabaseState, Result
@@ -28,10 +25,15 @@ class DBTools:
 
   def __init__(self):
     # The database connection parameters are specified in the CONFIG.py file.
+    # Contains the reference to the database object.
     self.db = None
 
     # The database cursor.
     self.cursor = None
+
+    # Cache to store results of query runs to avoid having to run the same
+    # query multiple times.
+    self.cache = Cache()
 
     # The current connection timeout limit.
     self.timeout = CONNECTION_TIMEOUT
@@ -96,7 +98,7 @@ class DBTools:
       if timeout is not None and timeout == self.timeout:
         return self.db
 
-    log("New timeout: " + str(timeout))
+    log("New timeout: %d" % timeout)
     # Close any old connections and make another one with the new setting.
     self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
@@ -120,25 +122,25 @@ class DBTools:
     state = DatabaseState()
 
     # Get tables and their foreign keys.
-    state.tables = self.run_query(
+    state.tables = self.execute_sql(
       "SELECT table_name FROM information_schema.tables "
       "WHERE table_type='BASE TABLE'"
     ).results
-    state.foreign_keys = self.run_query(
+    state.foreign_keys = self.execute_sql(
       "SELECT DISTINCT table_name, constraint_name FROM "
       "information_schema.table_constraints WHERE constraint_type='FOREIGN KEY'"
     ).results
 
     # Get views, functions, and procedures.
-    state.views = self.run_query(
+    state.views = self.execute_sql(
       "SELECT table_name FROM information_schema.tables "
       "WHERE table_type='VIEW'"
     ).results
-    state.functions = self.run_query(
+    state.functions = self.execute_sql(
       "SELECT routine_name FROM information_schema.routines "
       "WHERE routine_type='FUNCTION'"
     ).results
-    state.procedures = self.run_query(
+    state.procedures = self.execute_sql(
       "SELECT routine_name FROM information_schema.routines "
       "WHERE routine_type='PROCEDURE'"
     ).results
@@ -185,7 +187,7 @@ class DBTools:
       return
 
     self.savepoints.remove(savepoint)
-    self.run_query('RELEASE SAVEPOINT %s' % savepoint)
+    self.execute_sql("RELEASE SAVEPOINT %s" % savepoint)
 
 
   def reset_state(self, old, new):
@@ -203,20 +205,20 @@ class DBTools:
 
     # Drop all functions and procedures first.
     for proc in new.procedures:
-      self.run_query('DROP PROCEDURE IF EXISTS %s' % proc)
+      self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
     for func in new.functions:
-      self.run_query('DROP FUNCTION IF EXISTS %s' % func)
+      self.execute_sql("DROP FUNCTION IF EXISTS %s" % func)
 
     # Drop views.
     for view in new.views:
-      self.run_query('DROP VIEW IF EXISTS %s' % view)
+      self.execute_sql("DROP VIEW IF EXISTS %s" % view)
 
     # Drop tables. First must drop foreign keys on the tables in order to be
     # able to drop the tables without any errors.
     for (table, fk) in new.foreign_keys:
-      self.run_query('ALTER TABLE %s DROP FOREIGN KEY %s' % (table, fk))
+      self.execute_sql("ALTER TABLE %s DROP FOREIGN KEY %s" % (table, fk))
     for table in new.tables:
-      self.run_query('DROP TABLE %s' % table)
+      self.execute_sql("DROP TABLE %s" % table)
 
     # Remove all savepoints.
     self.savepoints = []
@@ -236,7 +238,7 @@ class DBTools:
       # Roll back to the named savepoint. All savepoints created after this
       # savepoint are deleted.
       if savepoint and savepoint in self.savepoints:
-        self.run_query('ROLLBACK TO %s' % savepoint)
+        self.execute_sql("ROLLBACK TO %s" % savepoint)
         self.savepoints = self.savepoints[0:self.savepoints.index(savepoint)+1]
       else:
         self.db.rollback()
@@ -251,7 +253,7 @@ class DBTools:
 
     savepoint: The name of the savepoint.
     """
-    self.run_query('SAVEPOINT %s' % savepoint) # TODO error in this query, what to do?
+    self.execute_sql("SAVEPOINT %s" % savepoint) # TODO error in this query, what to do?
     # If this savepoint name already exists, add and remove it.
     if savepoint in self.savepoints:
       self.savepoints.remove(savepoint)
@@ -268,6 +270,38 @@ class DBTools:
       self.db.start_transaction()
 
   # ----------------------------- Query Utilities ---------------------------- #
+
+  def execute_sql(self, sql, setup=None, teardown=None, cached=False):
+    """
+    Function: execute_sql
+    ---------------------
+    Runs one or more queries as well as the setup and teardown necessary for
+    that query (if provided).
+
+    sql: The SQL query to run.
+    setup: The setup query to run before executing the actual query.
+    teardown: The teardown query to run after executing the actual query.
+    cached: Whether or not the result should be pulled from the cache. True if
+            so, False otherwise.
+
+    returns: A Result object containing the result.
+    """
+    # Run the query setup.
+    result = Result()
+    if setup is not None:
+      self.run_multi(setup)
+
+    try:
+      result = self.run_multi(sql, cached)
+    except mysql.connector.errors.ProgrammingError:
+      raise
+
+    # Always run the query teardown.
+    finally:
+      if teardown is not None:
+        self.run_multi(teardown)
+    return result
+
 
   def get_column_names(self):
     """
@@ -301,7 +335,7 @@ class DBTools:
     """
     # If the results are too long, don't print it.
     if len(results) > MAX_NUM_RESULTS:
-      return "Too many results (" + str(len(results)) + ") to print!"
+      return "Too many results (%d) to print!" % len(results)
 
     output = prettytable.PrettyTable(self.get_column_names())
     output.align = "l"
@@ -330,12 +364,12 @@ class DBTools:
 
       # If there are too many results.
       if len(result.results) > MAX_NUM_RESULTS:
-        result.results = ["Too many results (" + str(len(rows)) + ") to print!"]
+        result.results = ["Too many results (%d) to print!" % len(results)]
 
     return result
 
 
-  def run_multi(self, queries):
+  def run_multi(self, queries, cached=False):
     """
     Function: run_multi
     -------------------
@@ -358,7 +392,7 @@ class DBTools:
       if len(sql) == 0:
         continue
 
-      # If it is a CALL procedure statement, execute it differently.
+      # If it is a CALL procedure statement, execute it differently. TODO document numbers
       if sql.strip().startswith("CALL"):
         proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
         args = sql[sql.find("(") + 1:sql.find(")")].split(",")
@@ -366,50 +400,29 @@ class DBTools:
         self.cursor.callproc(proc, args)
       else:
         try:
-          self.cursor.execute(sql) # TODO should multi=True? 
+          query_results = self.cache.get(sql)
+
+          # Results are not to be cached or are not in the cache and needs to
+          # be cached. Run the query.
+          if not query_results or not cached:
+            self.cursor.execute(sql) # TODO should be multi=True?
+            query_results = self.results()
+            if cached:
+              self.cache.put(sql, query_results)
+
+          result.append(query_results)
+
           # TODO should breakdown the sql query so only one statement is executed
           # at at time...
         except mysql.connector.errors.InterfaceError: # TODO handle this...
+          sys.exit(1) # TODO
           self.cursor.execute(sql, multi=True)
-        result.append(self.results())
 
     # If no longer in a transaction, remove all savepoints.
     if not self.db.in_transaction:
       self.savepoints = []
 
     return result
-
-
-  def run_query(self, query, setup=None, teardown=None):
-    """
-    Function: run_query
-    -------------------
-    Runs one or more queries as well as the setup and teardown necessary for
-    that query (if provided).
-
-    query: The query to run.
-    setup: The setup query to run before executing the actual query.
-    teardown: The teardown query to run after executing the actual query.
-
-    returns: A Result object containing the result, the schema of the results
-             and pretty-printed output.
-    """
-    # Run the query setup.
-    result = Result()
-    if setup is not None:
-      self.run_multi(setup)
-
-    try:
-      result = self.run_multi(query)
-    except mysql.connector.errors.ProgrammingError:
-      raise
-
-    # Always run the query teardown.
-    finally:
-      if teardown is not None:
-        self.run_multi(teardown)
-    return result
-    # TODO get stuff from the cache? instead of in other things
 
   # ----------------------------- File Utilities ----------------------------- #
 

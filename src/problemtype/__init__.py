@@ -13,14 +13,14 @@ from types import *
 
 # The types of problems there are and the classes to handle each type.
 PROBLEM_TYPES = {
-  'create' : Create,
-  'delete' : Delete,
-  'function': Function,
-  'insert' : Insert,
-  'manual' : Manual,
-  'procedure' : Procedure,
-  'select' : Select,
-  'trigger' : Trigger,
-  'update' : Update,
-  'view' : View
+  "create" : Create,
+  "delete" : Delete,
+  "function": Function,
+  "insert" : Insert,
+  "manual" : Manual,
+  "procedure" : Procedure,
+  "select" : Select,
+  "trigger" : Trigger,
+  "update" : Update,
+  "view" : View
 }

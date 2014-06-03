@@ -14,8 +14,8 @@ class Delete(ProblemType):
 
   def grade_test(self, test, output):
     # Get the state of the table before the delete.
-    table_sql = "SELECT * FROM " + test["table"]
-    before = self.db.run_query(table_sql)
+    table_sql = ('SELECT * FROM %s' + test['table'])
+    before = self.db.execute_sql(table_sql)
 
     # Create a savepoint and run the student's delete statement. Make sure that
     # it IS a delete statement and is only a single statement (by checking that
@@ -27,20 +27,20 @@ class Delete(ProblemType):
 
     self.db.savepoint('spt_delete')
     try:
-      self.db.run_query(self.response.sql)
-      actual = self.db.run_query(table_sql)
+      self.db.execute_sql(self.response.sql)
+      actual = self.db.execute_sql(table_sql)
 
     except Exception as e:
       raise
     finally:
       self.db.rollback('spt_delete')
       # Make sure the rollback occurred properly.
-      assert(len(before.results) == len(self.db.run_query(table_sql).results))
+      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
 
     # Run the solution delete statement.
     try:
-      self.db.run_query(test["query"])
-      expected = self.db.run_query(table_sql)
+      self.db.execute_sql(test["query"])
+      expected = self.db.execute_sql(table_sql)
 
     except Exception as e:
       raise e
@@ -48,7 +48,7 @@ class Delete(ProblemType):
       if test.get("rollback"):
         self.db.rollback('spt_delete')
         # Make sure the rollback occurred properly.
-        assert(len(before.results) == len(self.db.run_query(table_sql).results))
+        assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
       self.db.release('spt_delete')
 
     # Compare the remaining expected rows versus the actual. If the results are

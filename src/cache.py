@@ -13,25 +13,6 @@ class Cache:
     self.cache = {}
 
 
-  def get(self, function, *args, **kwargs):
-    """
-    Function: get
-    -------------
-    Get the results of a query, if it exists. If not, runs the query then
-    gets the results. Returns a deep copy of the results since they might be
-    modified.
-    """
-    key = (tuple(args), frozenset(kwargs.iteritems()))
-    if key in self.cache:
-      return deepcopy(self.cache[key])
-
-    # If it doesn't exist in the cache, run the query, then store it.
-    else:
-      result = function(*args, **kwargs)
-      self.cache[key] = result
-      return deepcopy(result)
-
-
   def clear(self):
     """
     Function: clear
@@ -39,3 +20,64 @@ class Cache:
     Clears all entries in the cache.
     """
     self.cache.clear()
+
+
+  def create_key(self, string):
+    """
+    Function: create_key
+    --------------------
+    Creates a key from a string by removing spaces between characters if not
+    enclosed by single quotes. For example, this ensures that the following
+    two queries result in the same key:
+      SELECT MAX( DISTINCT count)   FROM bank;
+      SELECT MAX (DISTINCT   count) FROM bank
+    """
+    key = ""
+    prev_char = ""
+    started_quotes = False
+    for char in string:
+      if char == "'" and prev_char != "\\":
+        started_quotes = not started_quotes
+      key += char if char != " " or started_quotes else ""
+      prev_char = char
+
+    return key
+
+
+  def delete(self, key):
+    """
+    Function: delete
+    ----------------
+    Deletes a specific entry in the cache.
+
+    key: The key for the entry to delete.
+    """
+    key = self.create_key(key)
+    if key in self.cache:
+      del self.cache[key]
+
+
+  def get(self, key):
+    """
+    Function: get
+    -------------
+    Get an element in the cache. Returns a deep copy of the results since they
+    might be modified.
+
+    key: The key for the entry to get.
+    returns: The entry in the cache, None if they key does not exist.
+    """
+    key = self.create_key(key)
+    return deepcopy(self.cache[key]) if key in self.cache else None
+
+
+  def put(self, key, value):
+    """
+    Function: put
+    -------------
+    Puts an entry into the cache.
+
+    key: The key for the entry.
+    value: The value to store in the cache.
+    """
+    self.cache[self.create_key(key)] = value

@@ -11,7 +11,7 @@ class Insert(ProblemType):
   def grade_test(self, test, output):
     # Get the state of the table before the insert.
     table_sql = "SELECT * FROM " + test["table"]
-    before = self.db.run_query(table_sql)
+    before = self.db.execute_sql(table_sql)
 
     # Create a savepoint and run the student's insert query. Make sure that it
     # IS an insert statement and is only a single statement (by checking that
@@ -23,22 +23,22 @@ class Insert(ProblemType):
 
     self.db.savepoint('spt_insert')
     try:
-      self.db.run_query(self.response.sql, setup=test.get("setup"), \
+      self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
                         teardown=test.get("teardown"))
-      actual = self.db.run_query(table_sql)
+      actual = self.db.execute_sql(table_sql)
 
     except Exception as e:
       raise e
     finally:
       self.db.rollback('spt_insert')
       # Make sure the rollback occurred properly.
-      assert(len(before.results) == len(self.db.run_query(table_sql).results))
+      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
 
     # Run the solution insert statement.
     try:
-      self.cache.get(self.db.run_query, test["query"], \
-                     setup=test.get("setup"), teardown=test.get("teardown"))
-      expected = self.db.run_query(table_sql)
+      self.db.execute_sql(test["query"], setup=test.get("setup"), \
+                       teardown=test.get("teardown"))
+      expected = self.db.execute_sql(table_sql)
 
     except Exception as e:
       raise e
@@ -46,7 +46,7 @@ class Insert(ProblemType):
       if test.get("rollback"):
         self.db.rollback('spt_insert')
         # Make sure the rollback occurred properly.
-        assert(len(before.results) == len(self.db.run_query(table_sql).results))
+        assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
       self.db.release('spt_insert')
 
     # Compare the results of the test insert versus the actual. If the results

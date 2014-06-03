@@ -9,8 +9,8 @@ class Function(ProblemType):
 
   def grade_test(self, test, output):
     if test.get("run-query"):
-      self.db.run_query(self.response.sql)
-    result = self.db.run_query(test["query"], teardown=test.get("teardown"))
+      self.db.execute_sql(self.response.sql)
+    result = self.db.execute_sql(test["query"], teardown=test.get("teardown"))
 
     if result.results and result.results[0]:
       result = str(result.results[0][0])

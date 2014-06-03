@@ -1,6 +1,5 @@
 import mysql.connector
 
-from cache import Cache
 from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
 import dbtools
 from errors import *
@@ -24,19 +23,6 @@ class Grader:
     # The database tool object used to interact with the database.
     self.db = db
 
-    # Cache to store results of query runs to avoid having to run the same
-    # query multiple times.
-    self.cache = Cache()
-
-
-  def cleanup(self):
-    """
-    Function: cleanup
-    -----------------
-    Cleanup stuff after grading.
-    """
-    self.cache.clear()
-
 
   def run_dependencies(self, problem, response):
     """
@@ -53,11 +39,11 @@ class Grader:
         for dep in problem["dependencies"]:
           # Get the file and problem number for the dependent query.
           [dep_file, problem_num] = dep.split("|")
-          self.db.run_query(response[dep_file][problem_num].sql)
+          self.db.execute_sql(response[dep_file][problem_num].sql)
 
       # Run setup queries.
       if problem.get("setup"):
-        for q in problem["setup"]: self.db.run_query(q)
+        for q in problem["setup"]: self.db.execute_sql(q)
 
     # If there was an error with the dependent query.
     except mysql.connector.errors.ProgrammingError as e:
@@ -77,7 +63,7 @@ class Grader:
     """
     try:
       if problem.get("teardown"):
-        for q in problem["teardown"]: self.db.run_query(q)
+        for q in problem["teardown"]: self.db.execute_sql(q)
 
     except mysql.connector.errors as e:
       print e # TODO
@@ -122,7 +108,7 @@ class Grader:
           # problem type.
           grader = PROBLEM_TYPES[problem["type"]]
           got_points += grader(self.db, problem, responses[num], \
-                               graded_problem, self.cache).grade()
+                               graded_problem).grade()
 
         # If they didn't do a problem, indicate that it doesn't exist.
         except KeyError as e:

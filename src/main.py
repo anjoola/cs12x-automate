@@ -75,7 +75,7 @@ def setup():
       elif item["type"] == "import":
         dbtools.import_file(assignment, item["file"])
       elif item["type"] == "queries":
-        for q in item["queries"]: db.run_query(q)
+        for q in item["queries"]: db.execute_sql(q)
 
   # Initialize the grading tool.
   grader = Grader(specs, db)
@@ -154,8 +154,7 @@ def teardown():
 
   # Run teardown queries.
   if specs.get("teardown"):
-    for query in specs["teardown"]: db.run_query(query)
-  grader.cleanup()
+    for query in specs["teardown"]: db.execute_sql(query)
 
   # Close connection with the database
   db.close_db_connection()

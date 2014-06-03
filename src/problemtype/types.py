@@ -16,8 +16,7 @@ class ProblemType(object):
   a static class.
   """
 
-  def __init__(self, db=None, specs=None, response=None, output=None,
-               cache=None):
+  def __init__(self, db=None, specs=None, response=None, output=None):
     # The database connection.
     self.db = db
 
@@ -29,10 +28,6 @@ class ProblemType(object):
 
     # The graded problem output.
     self.output = output
-
-    # Reference to the cache to store results of query runs to avoid having to
-    # run the same query multiple times.
-    self.cache = cache
 
     # The number of points the student has gotten on this question. They start
     # out with the maximum number of points, and points get deducted as the
@@ -104,7 +99,7 @@ class ProblemType(object):
       except mysql.connector.errors.Error as e:
         self.output["errors"].append(repr(MySQLError(e)))
         lost_points += test["points"]
-        if test.get("teardown"): self.db.run_query(test["teardown"])
+        if test.get("teardown"): self.db.execute_sql(test["teardown"])
 
       self.got_points -= lost_points
       graded_test["got_points"] = test["points"] - lost_points

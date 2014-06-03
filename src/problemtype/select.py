@@ -16,11 +16,11 @@ class Select(ProblemType):
     deductions = 0
     test_points = test["points"]
 
-    expected = self.cache.get(self.db.run_query, test["query"], \
-                              test.get("setup"), test.get("teardown"))
+    expected = self.db.execute_sql(test["query"], test.get("setup"), \
+                                   test.get("teardown"), True)
     try:
-      actual = self.db.run_query(self.response.sql, test.get("setup"), \
-                                 test.get("teardown"))
+      actual = self.db.execute_sql(self.response.sql, test.get("setup"), \
+                                   test.get("teardown"), True)
     except mysql.connector.errors.ProgrammingError as e:
       raise
 
