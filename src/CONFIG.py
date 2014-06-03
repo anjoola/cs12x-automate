@@ -4,7 +4,6 @@ Module: CONFIG
 Contains configuration parameters for the grading tool.
 """
 import secret
-
 from errors import *
 
 # Verbose output. Set to True for all logging statements.
@@ -15,21 +14,17 @@ ERROR = True
 
 # ----------------------------- Database Details ----------------------------- #
 
-# The following 5 fields must be modified in the secret.py file.
-# Database username.
-USER = secret.USER
+# The first 3 fields must be modified in the secret.py file.
 
-# Database password.
-PASS = secret.PASS
+# Database login information. Must be a dictionary with the username as the
+# key and the password as the value.
+LOGIN = secret.LOGIN
 
 # Database host.
 HOST = secret.HOST
 
 # Database port.
 PORT = secret.PORT
-
-# Database name.
-DATABASE = secret.DATABASE
 
 # Default database connection timeout (in seconds).
 CONNECTION_TIMEOUT = 10

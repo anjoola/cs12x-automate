@@ -23,7 +23,7 @@ class DBTools:
   # Used to find delimiters in the file.
   DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
 
-  def __init__(self):
+  def __init__(self, user, database):
     # The database connection parameters are specified in the CONFIG.py file.
     # Contains the reference to the database object.
     self.db = None
@@ -40,6 +40,14 @@ class DBTools:
 
     # The savepoints.
     self.savepoints = []
+
+    # The user to connect with. If no user is specified, picks the first user
+    # in the dictionary.
+    self.user = user if user is not None else LOGIN.keys()[0]
+
+    # The name of the database to connect to. If none is specified, use
+    # <user>_db as the default database.
+    self.database = database if database is not None else "%s_db" % user
 
   # --------------------------- Database Utilities --------------------------- #
 
@@ -102,8 +110,9 @@ class DBTools:
     # Close any old connections and make another one with the new setting.
     self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
-    self.db = mysql.connector.connect(user=USER, password=PASS, host=HOST, \
-                                      database=DATABASE, port=PORT, \
+    self.db = mysql.connector.connect(user=self.user, \
+                                      password=LOGIN[self.user], host=HOST, \
+                                      database=self.database, port=PORT, \
                                       connection_timeout=self.timeout, \
                                       autocommit=True)
     self.cursor = self.db.cursor()
@@ -203,6 +212,7 @@ class DBTools:
     """
     new.subtract(old)
 
+    print new.procedures, new.functions, new.views, new.tables
     # Drop all functions and procedures first.
     for proc in new.procedures:
       self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)

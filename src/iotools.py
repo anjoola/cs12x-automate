@@ -4,14 +4,12 @@ Module: iotools
 Functions involving input and output into the system, as well as file-related
 functions.
 """
+import json, os, sys, time
 from datetime import datetime
-import json, os
 from os.path import getmtime
-import sys, time
 
+import dbtools, formatter
 from CONFIG import ASSIGNMENT_DIR, ERROR, VERBOSE
-import dbtools
-import formatter
 from models import Response
 
 def get_students(assignment, after=None):
@@ -45,15 +43,20 @@ def get_students(assignment, after=None):
   return [f.replace("-" + assignment, "") for f in files]
 
 
-def err(string):
+def err(msg, fatal=False):
   """
   Function: err
   -------------
   Outputs to the console if the ERROR flag is on. If the VERBOSE flag is on,
   will also output, no matter what the ERROR flag is set to.
+
+  string: The error message to print.
+  fatal: If True, will immediately terminate the program.
   """
   if VERBOSE or ERROR:
-    print "(ERROR)", string, 
+    print "(ERROR)", msg
+  if fatal:
+    sys.exit(1)
 
 
 def log(string):
