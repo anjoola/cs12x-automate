@@ -3,7 +3,7 @@ Module: dbtools
 ---------------
 Contains helper methods involving the database, its state, and queries.
 """
-import codecs, re, subprocess
+import codecs, os, re, subprocess
 from cStringIO import StringIO
 
 import mysql.connector, sqlparse
@@ -118,8 +118,8 @@ class DBTools:
     """
     Function: get_state
     -------------------
-    Gets the current state of the database, which includes the tables, views,
-    foreign keys, functions, and procedures.
+    Gets the current state of the database, which includes the tables, foreign,
+    keys, views, functions, procedures, and triggers.
 
     returns: A DatabaseState object which contains the current state.
     """
@@ -135,7 +135,7 @@ class DBTools:
       "information_schema.table_constraints WHERE constraint_type='FOREIGN KEY'"
     ).results
 
-    # Get views, functions, and procedures.
+    # Get views, functions, procedures, and triggers.
     state.views = self.execute_sql(
       "SELECT table_name FROM information_schema.tables "
       "WHERE table_type='VIEW'"
@@ -148,6 +148,9 @@ class DBTools:
       "SELECT routine_name FROM information_schema.routines "
       "WHERE routine_type='PROCEDURE'"
     ).results
+    state.triggers = self.execute_sql(
+      "SELECT trigger_name FROM information_schema.triggers"
+    )
 
     return state
 
@@ -199,15 +202,17 @@ class DBTools:
     Functions: reset_state
     ----------------------
     Resets the state of the database from 'new' back to 'old'. This involves
-    removing all functions, views, functions, and procedures that have been
-    newly created.
+    removing all functions, views, functions, procedures, and triggers that
+    have been newly created.
 
     old: The old state of the database to be reverted back to.
     new: The new (current) state of the database.
     """
     new.subtract(old)
 
-    # Drop all functions and procedures first.
+    # Drop all functions procedures, and triggers first.
+    for trig in new.triggers:
+      self.execute_sql("DROP TRIGGER IF EXISTS %s" % trig)
     for proc in new.procedures:
       self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
     for func in new.functions:
@@ -318,17 +323,7 @@ class DBTools:
     return [col[0] for col in self.cursor.description]
 
 
-  def get_schema(self):
-    """
-    Function: get_schema
-    --------------------
-    Gets the schema of the result. Returns a list of tuples, where each tuple is
-    of the form (column_name, type, None, None, None, None, null_ok, flags).
-    """
-    return self.cursor.description
-
-
-  def results(self):
+  def get_results(self):
     """
     Function: results
     -----------------
@@ -343,7 +338,7 @@ class DBTools:
       result.schema = self.get_schema()
       result.col_names = self.get_column_names()
 
-      # Pretty-print output.
+      # Pretty-printed output.
       result.output = prettyprint(result.results, self.get_column_names())
 
       # If there are too many results.
@@ -353,7 +348,17 @@ class DBTools:
     return result
 
 
-  def run_multi(self, queries, cached=False):
+  def get_schema(self):
+    """
+    Function: get_schema
+    --------------------
+    Gets the schema of the result. Returns a list of tuples, where each tuple is
+    of the form (column_name, type, None, None, None, None, null_ok, flags).
+    """
+    return self.cursor.description
+
+
+  def run_multi(self, queries, cached=False): # TODO need a lot of going over
     """
     Function: run_multi
     -------------------
@@ -390,7 +395,7 @@ class DBTools:
           # be cached. Run the query.
           if not query_results or not cached:
             self.cursor.execute(sql) # TODO should be multi=True?
-            query_results = self.results()
+            query_results = self.get_results()
             if cached:
               Cache.put(sql, query_results)
 
@@ -446,6 +451,10 @@ def import_file(assignment, f):
   """
   log("\nImporting file " + f + "...\n")
   filename = ASSIGNMENT_DIR + assignment + "/" + f
+
+  # Make sure the file exists.
+  if not os.path.exists(filename):
+    err("File to import %s does not exist!" % filename, True)
   subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
                   " -p" + PASS + " --delete --local " + DATABASE + " " + \
                   filename)
@@ -458,7 +467,7 @@ def preprocess_sql(sql_file):
   Preprocess the SQL in order to handle the DELIMITER statements.
 
   sql_file: The SQL file to preprocess.
-  returns: The newly-processed string containing SQL.
+  returns: The newly-processed SQL stringL.
   """
   lines = StringIO()
   delimiter = ';'

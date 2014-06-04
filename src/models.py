@@ -14,8 +14,8 @@ class DatabaseState:
   """
   Class: DatabaseState
   --------------------
-  Represents the state of the database, which includes the functions,
-  procedures, tables, foreign keys, and views.
+  Represents the state of the database, which includes the tables, foreign keys,
+  views, functions, procedures, and triggers.
   """
   def __init__(self):
     # A list of tables.
@@ -33,6 +33,9 @@ class DatabaseState:
     # A list of procedures.
     self.procedures = []
 
+    # A list of triggers.
+    self.triggers = []
+
 
   def subtract(self, other):
     """
@@ -45,13 +48,18 @@ class DatabaseState:
     """
 
     def diff(a, b):
-      return [x for x in a if x not in b]
+      # Returns the diff between a and b, if a is non-empty.
+      try:
+        return [x for x in a if x not in b]
+      except TypeError:
+        return []
 
     self.tables = diff(self.tables, other.tables)
     self.foreign_keys = diff(self.foreign_keys, other.foreign_keys)
     self.views = diff(self.views, other.views)
     self.functions = diff(self.functions, other.functions)
     self.procedures = diff(self.procedures, other.procedures)
+    self.triggers = diff(self.triggers, other.triggers)
 
 
 
