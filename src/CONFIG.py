@@ -47,3 +47,6 @@ STYLE_DIR = "../style/"
 
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 100
+
+# The number of decimal places to compare results with.
+PRECISION = 4

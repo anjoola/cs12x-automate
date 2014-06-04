@@ -65,7 +65,7 @@ class StyleError(Error):
   )
 
   DOUBLE_QUOTES = (
-    "DoubleQuoteError", 3, 3,
+    "DoubleQuoteError", 3, 5,
     "Double-quotes instead of single-quotes were used for strings."
   )
 
@@ -76,7 +76,7 @@ class StyleError(Error):
 
   SPACING = (
     "SpacingError", 5, 2,
-    "Did not use spaces after operators."
+    "Did not use spaces after commas."
   )
 
   USED_TABS = (
@@ -138,6 +138,11 @@ class QueryError(Error):
   ORDER_BY = (
     "OrderByError", 1, 0.3,
     "Missing or incorrect ORDER BY statement."
+  )
+
+  NOT_UPDATABLE = (
+    "ViewNotUpdatableError", 2, 0.5,
+    "View is not updatable but should be."
   )
 
   RENAME_VALUE = (

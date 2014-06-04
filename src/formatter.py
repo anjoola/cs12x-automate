@@ -4,14 +4,11 @@ Module: formatter
 Formats the graded output into HTML.
 """
 
-import cgi
+import cgi, json, os, shutil
 from cStringIO import StringIO
-import json
-import os
-import shutil
 
 from CONFIG import ASSIGNMENT_DIR, RESULT_DIR, STYLE_DIR
-from problemtype import *
+from problemtype import PROBLEM_TYPES
 
 def create_path(assignment):
   """
@@ -42,7 +39,7 @@ def e(text):
   """
   return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
-
+############## TODO revamp this entire area
 def format(output, specs):
   """
   Function: format

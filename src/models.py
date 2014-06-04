@@ -95,7 +95,6 @@ class GradedOutput:
       "sql": "",
       
       
-    TODO should check this
   """
   def __init__(self, specs):
     # Dictionary of fields.

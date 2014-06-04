@@ -1,6 +1,7 @@
-from types import *
-
 import re
+
+from errors import QueryError
+from types import ProblemType
 
 # Disallowed keywords for updatable views.
 DISALLOWED_KEYWORDS = [ \
@@ -52,20 +53,37 @@ class View(ProblemType):
 
     # Run the student's create view statement and select from that view to see
     # what is in the view.
-    self.db.execute_sql(self.response.sql)
-    actual = self.db.execute_sql('SELECT * FROM %s' % test["view"])
+    exception = None
+    try:
+      self.db.execute_sql(self.response.sql)
+      actual = self.db.execute_sql('SELECT * FROM %s' % test["view"])
+    except Exception as e: # TODO specific exception
+      # If an exception occurs, run the solution CREATE VIEW query.
+      self.db.execute_sql(test["query"])
+      actual = Result()
 
     # Check if the view is updatable, if necessary. If not, take points off.
-    if test.get('updatable'):
-      # TODO
-      #points -= 0 if self.check_updatable(test, output) 1 otherwise
-      self.check_updatable(test, output)
+    if test.get('updatable') and not self.check_updatable(test, output):
+      output["deductions"].append(QueryError.NOT_UPDATABLE)
+
+    # If we don't need to check that the columsn are ordered in the same way,
+    # then sort each tuple for easier checking.
+    if not test.get("column-order"):
+      expected.results = [sorted(x) for x in expected.results]
+      actual.results = [sorted(x) for x in actual.results]
 
     # If the view does not contain the same rows as the solution select
     # statement, then their query is wrong.
     if len(expected.results) != len(actual.results) or not \
-       self.equals(set(expected.results), set(actual.results)):
-      # TODO check column order?
+       self.equals(expected.results, actual.results):
+      # See if they chose the wrong column order.
+      if test.get("column-order"):
+        eresults = [sorted(x) for x in expected.results]
+        aresults = [sorted(x) for x in actual.results]
+        if eresults == aresults:
+          deductions = 0
+          output["deductions"].append(QueryError.COLUMN_ORDER)
+
       output['expected'] = expected.output
       output['actual'] = actual.output
       return test['points']

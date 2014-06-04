@@ -50,6 +50,8 @@ class AutomationTool:
     ------------------
     Gets the command-line arguments and prints a usage message if needed.
     Figures out the files and students to grade.
+
+    returns: True if the database is to be purged beforehand, False otherwise.
     """
     # Parse command-line arguments.
     parser = argparse.ArgumentParser()
@@ -68,9 +70,14 @@ class AutomationTool:
                                        "a random one in the CONFIG")
     parser.add_argument("--db", help="Database to test on, defaults to "
                                      "<username>_db")
+    parser.add_argument("--purge", action='store_const', const=True,
+                        help="Whether or not to purge the database before"
+                             " grading")
     args = parser.parse_args()
-    (self.assignment, self.files, self.students, after, self.user, self.db) = \
-      (args.assignment, args.files, args.students, args.after, args.user, args.db)
+    (self.assignment, self.files, self.students, after, \
+     self.user, self.db, purge) = \
+        (args.assignment, args.files, args.students, args.after, \
+         args.user, args.db, args.purge)
 
     # If the assignment argument isn't specified, print usage statement.
     if self.assignment is None:
@@ -98,6 +105,8 @@ class AutomationTool:
     # If nothing specified for the students, grade all the students.
     if self.students is None or self.students[0] == "*":
       self.students = iotools.get_students(self.assignment, after)
+
+    return purge is not None
 
 
   def grade_loop(self):
@@ -178,19 +187,24 @@ class AutomationTool:
     formatter.format_student(output, self.specs)
 
 
-  def setup(self):
+  def setup(self, purge):
     """
     Function: setup
     ---------------
     Sets up the grading environment and tools. This includes establishing the
     database connection, reading the specs file, sourcing all dependencies,
     and running setup queries.
+
+    purge: Whether or not to purge the database beforehand.
     """
     # The graded output.
     self.o = GradedOutput(self.specs)
     # Start up the connection with the database.
     self.db = dbtools.DBTools(self.user, self.db)
     self.db.get_db_connection(MAX_TIMEOUT)
+
+    # Purge the database if necessary.
+    if purge: self.db.purge_db()
 
     # Source and import files needed prior to grading and run setup queries.
     if self.specs.get("setup"):
@@ -229,7 +243,7 @@ class AutomationTool:
 
 if __name__ == "__main__":
   a = AutomationTool()
-  a.get_args()
-  a.setup()
+  purge = a.get_args()
+  a.setup(purge)
   a.grade_loop()
   a.teardown()

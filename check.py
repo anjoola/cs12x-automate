@@ -16,8 +16,6 @@ Errors:
   [DO NOT USE TABS] - Tabs should not be used for indentation. Use spaces.
   [LINE TOO LONG] - Lines should not be longer than 80 characters.
   [PUT SPACE AFTER COMMA] - There should be a space after any comma.
-  [PUT SPACE AROUND OPERATORS] - Operators like '+', '-', etc. shoud have spaces
-                                 around them.
   [CODE BEFORE PROBLEM HEADER] - No code should appear before the first problem
                                  header.
   [NO DOUBLE-QUOTED STRINGS] - Strings must be enclosed by SINGLE quotes.
@@ -29,15 +27,11 @@ MAX_LINE_LENGTH = 80
 
 S                   = "[^\>\<\=\(\) \t\n\r\f\v]"
 
-header              = re.compile("-- \[Problem ([0-9])+([a-zA-Z])*\]")
+header              = re.compile("-- \[Problem (([0-9])+([a-zA-Z])*|[a-zA-Z])\]")
 bad_header          = re.compile("-- \[Problem([^\]])*\]")
 comment             = re.compile(r"\s*--.|/\*.|\*/.")
 tabs                = re.compile(r"\t+")
 comma_space         = re.compile(",[^ ][^\n]")
-operator_space      = re.compile(r"(.(\=\=|\<\=|\>\=|\<\>)" + S + ")" + \
-                                 r"|(" + S + "(\=\=|\<\=|\>\=|\<\>).)" + \
-                                 r"|(.(\+|\-|\*|\<|\>|\=)" + S + ")" + \
-                                 r"|(" + S + "(\+|\-|\*|\<|\>|\=).)")
 negative_num        = re.compile(r"\-([0-9]*\.?[0-9]+)")
 count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
 double_quote        = re.compile("\"([^\"])*\"")
@@ -80,10 +74,6 @@ def check_line(line, line_number):
   if not MULTILINE_COMMENT and not comment.search(line):
     if comma_space.search(line):
       print h() + "[PUT SPACE AFTER COMMA]" + f(line)
-    if operator_space.search(line) and not negative_num.search(line) and not \
-       reduce(lambda total, match: count_star.search(match[0]) and total, \
-              operator_space.findall(line), True):
-      print h() + "[PUT SPACE AROUND OPERATORS]" + f(line)
     if double_quote.search(line):
       print h() + "[NO DOUBLE-QUOTED STRINGS]" + f(line)
 

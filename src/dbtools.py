@@ -182,6 +182,16 @@ class DBTools:
     pass
 
 
+  def purge_db(self):
+    """
+    Function: purge_db
+    ------------------
+    Remove everything from the database.
+    """
+    state = self.get_state()
+    self.reset_state(DatabaseState(), state)
+
+
   def release(self, savepoint):
     """
     Function: release
@@ -199,8 +209,8 @@ class DBTools:
 
   def reset_state(self, old, new):
     """
-    Functions: reset_state
-    ----------------------
+    Function: reset_state
+    ---------------------
     Resets the state of the database from 'new' back to 'old'. This involves
     removing all functions, views, functions, procedures, and triggers that
     have been newly created.
@@ -343,7 +353,7 @@ class DBTools:
 
       # If there are too many results.
       if len(result.results) > MAX_NUM_RESULTS:
-        result.results = ["Too many results (%d) to print!" % len(results)]
+        result.results = ["Too many results (%d) to print!" % len(result.results)]
 
     return result
 

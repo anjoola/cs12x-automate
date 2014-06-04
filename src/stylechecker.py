@@ -6,15 +6,11 @@ MAX_LINE_LENGTH = 80
 
 S                   = "[^\>\<\=\(\) \t\n\r\f\v]"
 
-header              = re.compile("-- \[Problem ([0-9])+([a-zA-Z])*\]")
+header              = re.compile("-- \[Problem (([0-9])+([a-zA-Z])*|[a-zA-Z])\]")
 bad_header          = re.compile("-- \[Problem([^\]])*\]")
 comment             = re.compile(r"\s*--.|/\*.|\*/.")
 tabs                = re.compile(r"\t+")
 comma_space         = re.compile(",[^ ][^\n]")
-operator_space      = re.compile(r"(.(\=\=|\<\=|\>\=|\<\>)" + S + ")" + \
-                                 r"|(" + S + "(\=\=|\<\=|\>\=|\<\>).)" + \
-                                 r"|(.(\+|\-|\*|\<|\>|\=)" + S + ")" + \
-                                 r"|(" + S + "(\+|\-|\*|\<|\>|\=).)")
 negative_num        = re.compile(r"\-([0-9]*\.?[0-9]+)")
 count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
 double_quote        = re.compile("\"([^\"])*\"")
@@ -99,10 +95,6 @@ class StyleChecker:
       cls.errors[StyleError.LINE_TOO_LONG] += 1
     if not cls.multiline_comment and not comment.search(line):
       if comma_space.search(line):
-        cls.errors[StyleError.SPACING] += 1
-      if operator_space.search(line) and not negative_num.search(line) and not \
-         reduce(lambda total, match: count_star.search(match[0]) and total, \
-                operator_space.findall(line), True):
         cls.errors[StyleError.SPACING] += 1
       if double_quote.search(line):
         cls.errors[StyleError.DOUBLE_QUOTES] += 1
