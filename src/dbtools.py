@@ -30,10 +30,6 @@ class DBTools:
     # The database cursor.
     self.cursor = None
 
-    # Cache to store results of query runs to avoid having to run the same
-    # query multiple times.
-    self.cache = Cache()
-
     # The current connection timeout limit.
     self.timeout = CONNECTION_TIMEOUT
 
@@ -388,7 +384,7 @@ class DBTools:
         self.cursor.callproc(proc, args)
       else:
         try:
-          query_results = self.cache.get(sql)
+          query_results = Cache.get(sql)
 
           # Results are not to be cached or are not in the cache and needs to
           # be cached. Run the query.
@@ -396,7 +392,7 @@ class DBTools:
             self.cursor.execute(sql) # TODO should be multi=True?
             query_results = self.results()
             if cached:
-              self.cache.put(sql, query_results)
+              Cache.put(sql, query_results)
 
           # TODO only want the last results?
           result = query_results

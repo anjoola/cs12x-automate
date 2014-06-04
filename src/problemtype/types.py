@@ -1,10 +1,9 @@
-import cgi
+import cgi, difflib
 from cStringIO import StringIO
-import difflib
 
 import mysql.connector
 
-from errors import *
+from errors import * # TODO don't import * 
 
 class ProblemType(object):
   """
@@ -32,6 +31,25 @@ class ProblemType(object):
     # out with the maximum number of points, and points get deducted as the
     # tests go on.
     self.got_points = (0 if not self.specs else self.specs["points"])
+
+
+  def get_errors(self, errors, points):
+    """
+    Function: get_errors
+    --------------------
+    Gets the number of points to deduct for a set of QueryErrors.
+
+    errors: The errors.
+    points: The number of points the problem is worth.
+    returns: A tuple of the form (deductions, error list), where deductions
+             is the number of points to take off for the errors in 'error list'.
+    """
+    deductions = 0
+    error_list = []
+    for e in errors:
+      deductions += QueryError.deduction(e, points)
+      error_list.append(QueryError.to_string(e, points))
+    return (deductions if deductions < points else points, error_list)
 
 
   def preprocess(self):
@@ -80,15 +98,11 @@ class ProblemType(object):
         lost_points += self.grade_test(test, graded_test)
 
         # Apply any other deductions.
-        """
-        if graded_test.get("deductions"): # TODO2
-          for deduction in graded_test["deductions"]:
-            # TODO redo errors stuff
-            lost = SQL_DEDUCTIONS[deduction]
-            self.output["errors"].append("[-" + str(lost) + "]" + \
-                                         repr(deduction))
-            lost_points += lost
-        """
+        if graded_test.get("deductions"):
+          (deductions, errors) = self.get_errors(graded_test["deductions"], \
+                                                 test["points"])
+          self.output["errors"] += errors
+          lost_points += deductions
 
       # If their query times out.
       #except timeouts.TimeoutError:

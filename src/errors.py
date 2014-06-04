@@ -4,6 +4,8 @@ Module: errors
 Contains all of the possible errors that can occur in the execution of the
 automation tool.
 """
+from math import ceil
+
 # TODO remove all of this
 def add(lst, error):
   """
@@ -115,34 +117,77 @@ class StyleError(Error):
 
 
 
-"""
-SQL_DEDUCTIONS = {
-  "OrderByError"           : 1,  # Missing or incorrect ORDER BY.
-  "ColumnOrderError"       : 1,  # Wrong column order.
-  "RenameValueError"       : 1,  # Did not rename computed values.
-  "WrongNumsColumnError"   : 0,  # More or fewer columns included.
-  "GroupingSelectError"    : 2   # Selected on a column that was not grouped on.
-}
-"""
-
 class QueryError(Error):
   """
   Class: QueryError
   -----------------
   A query-related error that occurs if something is wrong with the student's
-  query.
+  query. Each error is a tuple of the form
+  (error name, point deduction, proportion, long description), where
+  the 'proportion' is the proportion of the problem's points to take off.
+
+  For example, if 'proportion' is set to 0.5 and the problem is worth 10 points,
+  then 5 points are deducted. If 'proportion' is set to 1, then the number of
+  points deducted is equal to 'point deduction'.
   """
-  COLUMN_ORDER = "ColumnOrderError: Columns are in the wrong order."
+  COLUMN_ORDER = (
+    "ColumnOrderError", 1, 0.3,
+    "Columns are in the wrong order."
+  )
 
-  ORDER_BY = "OrderByError: Missing or incorrect ORDER BY statement."
+  ORDER_BY = (
+    "OrderByError", 1, 0.3,
+    "Missing or incorrect ORDER BY statement."
+  )
 
-  RENAME_VALUE = "RenameValueError: Did not rename computed values."
+  RENAME_VALUE = (
+    "RenameValueError", 1, 0.3,
+    "Did not rename computed values."
+  )
 
-  WRONG_NUM_COLUMNS = "WrongNumColumnsError: More or fewer columns included."
+  WRONG_NUM_COLUMNS = (
+    "WrongNumColumnsError", 0, 0,
+    "More or fewer columns included."
+  )
+
+  @staticmethod
+  def deduction(error, points):
+    """
+    Function: deduction
+    -------------------
+    Gets the number of points to deduct for a specific query error.
+
+    error: The query error.
+    points: The number of points a problem is worth.
+
+    returns: The number of points to deduct.
+    """
+    # Figure out how many points to deduct. If it is an integer number of
+    # points, don't deduct more points than the problem is worth.
+    deduct = ceil(error[2] * points) if error[2] < 1 else max(points, error[1])
+    return int(deduct)
+
+
+  @staticmethod
+  def to_string(error, points):
+    """
+    Function: to_string
+    -------------------
+    Gets the description of an error as a string.
+
+    error: The error to get the description of.
+    points: The number of points a problem is worth.
+
+    returns: The description as a string.
+    """
+    deduct = QueryError.deduction(error, points)
+    return "%s [-%d]: %s" % (error[0], deduct, error[3])
 
 
 
 
+
+################### TODO
 class DatabaseError(Error):
   """
   Class: DatabaseError

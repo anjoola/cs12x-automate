@@ -7,22 +7,22 @@ class Cache:
   A cache to store query results. Is used so that there are fewer requests to
   the database if students have the same exact query.
   """
-  def __init__(self):
-    # The cache. The key is the function arguments and the value contains the
-    # function call details.
-    self.cache = {}
+  # The cache. The key is the SQL query and the value is the results of running
+  # that query.
+  cache = {}
 
-
-  def clear(self):
+  @classmethod
+  def clear(cls):
     """
     Function: clear
     ---------------
     Clears all entries in the cache.
     """
-    self.cache.clear()
+    cls.cache.clear()
 
 
-  def create_key(self, string):
+  @staticmethod
+  def create_key(string):
     """
     Function: create_key
     --------------------
@@ -31,6 +31,9 @@ class Cache:
     two queries result in the same key:
       SELECT MAX( DISTINCT count)   FROM bank;
       SELECT MAX (DISTINCT   count) FROM bank
+
+    string: The string to create a key from.
+    returns: The resulting key.
     """
     key = ""
     prev_char = ""
@@ -44,7 +47,8 @@ class Cache:
     return key
 
 
-  def delete(self, key):
+  @classmethod
+  def delete(cls, key):
     """
     Function: delete
     ----------------
@@ -52,12 +56,13 @@ class Cache:
 
     key: The key for the entry to delete.
     """
-    key = self.create_key(key)
-    if key in self.cache:
-      del self.cache[key]
+    key = Cache.create_key(key)
+    if key in cls.cache:
+      del cls.cache[key]
 
 
-  def get(self, key):
+  @classmethod
+  def get(cls, key):
     """
     Function: get
     -------------
@@ -67,11 +72,12 @@ class Cache:
     key: The key for the entry to get.
     returns: The entry in the cache, None if they key does not exist.
     """
-    key = self.create_key(key)
-    return deepcopy(self.cache[key]) if key in self.cache else None
+    key = Cache.create_key(key)
+    return deepcopy(cls.cache[key]) if key in cls.cache else None
 
 
-  def put(self, key, value):
+  @classmethod
+  def put(cls, key, value):
     """
     Function: put
     -------------
@@ -80,4 +86,4 @@ class Cache:
     key: The key for the entry.
     value: The value to store in the cache.
     """
-    self.cache[self.create_key(key)] = deepcopy(value)
+    cls.cache[Cache.create_key(key)] = deepcopy(value)

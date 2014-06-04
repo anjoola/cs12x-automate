@@ -58,15 +58,15 @@ class Select(ProblemType):
         aresults = sorted(actual.results)
         if aresults == eresults:
           deductions = 0
-          output["deductions"].append("OrderByError")
+          output["deductions"].append(QueryError.ORDER_BY)
 
       # See if they chose the wrong column order.
       if test.get("column-order"):
         eresults = [sorted(x) for x in expected_results]
         aresults = [sorted(x) for x in actual_results]
         if eresults == aresults:
-          deductions = 1 # TODO deductions?
-          output["deductions"].append("ColumnOrderError")
+          deductions = 0
+          output["deductions"].append(QueryError.COLUMN_ORDER)
 
       success = False
 
@@ -74,13 +74,13 @@ class Select(ProblemType):
     if test.get("rename"):
       for col in actual.col_names:
         if col.find("(") + col.find(")") != -2:
-          output["deductions"].append("RenameValueError")
+          output["deductions"].append(QueryError.RENAME_VALUE)
           success = False
           break
 
     # More or fewer columns included.
     if len(expected.col_names) != len(actual.col_names):
-      output["deductions"].append("WrongNumColumnsError")
+      output["deductions"].append(QueryError.WRONG_NUM_COLUMNS)
 
     # TODO selecting something that is not grouped on
 
