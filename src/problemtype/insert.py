@@ -13,22 +13,28 @@ class Insert(ProblemType):
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
 
-    # Create a savepoint and run the student's insert query. Make sure that it
-    # IS an insert statement and is only a single statement (by checking that
-    # after removing the trailing semicolon, there are no more).
+    # Make sure the query IS an insert statement and is only a single statement
+    # (by checking that after removing the trailing semicolon, there are no
+    # more).
     if not (self.response.sql.lower().find("insert") != -1 and \
             self.response.sql.strip().rstrip(";").find(";") == -1):
       # TODO output something that says they attempted somethign OTHER than insert
       return test["points"]
 
+    # If this is a self-contained DELETE test (Which means it will occur within
+    # a transaction and rolled back aftewards).
+    if test.get("rollback"):
+      self.db.start_transaction()
+
+    # Create a savepoint and run the student's insert statement.
+    exception = None
     self.db.savepoint('spt_insert')
     try:
       self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
-                        teardown=test.get("teardown"))
+                        teardown=test.get("teardown")) # TODO is there setup and teardown?
       actual = self.db.execute_sql(table_sql)
-
     except Exception as e:
-      raise e
+      exception = e
     finally:
       self.db.rollback('spt_insert')
       # Make sure the rollback occurred properly.
@@ -39,25 +45,28 @@ class Insert(ProblemType):
       self.db.execute_sql(test["query"], setup=test.get("setup"), \
                        teardown=test.get("teardown"))
       expected = self.db.execute_sql(table_sql)
-
-    except Exception as e:
-      raise e
+    except Exception:
+      pass
     finally:
+      # A self-contained INSERT. Make sure the rollback occurred properly.
       if test.get("rollback"):
-        self.db.rollback('spt_insert')
-        # Make sure the rollback occurred properly.
+        self.db.rollback()
         assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
-      self.db.release('spt_insert')
+
+      # Otherwise, release the savepoint.
+      else:
+        self.db.release('spt_insert')
+
+    # Raise the exception if it occurred.
+    if exception: raise exception
 
     # Compare the results of the test insert versus the actual. If the results
     # are not equal in size, then it is automatically wrong. If the results are
     # not the same, then they are also wrong.
     if len(expected.results) != len(actual.results) or not \
        self.equals(set(expected.results), set(actual.results)):
-      output["expected"] = stringify(list(set(before.results) - \
-                                     set(expected.results)))
-      output["actual"] = stringify(list(set(before.results) - \
-                                   set(expected.results)))
+      output["expected"] = expected.subtract(before).output
+      output["actual"] = actual.subtract(before).output
       return test["points"]
 
     # Otherwise, their insert statement is correct.

@@ -4,9 +4,11 @@ Module: models
 Contains all models that are passed around and used in the automation tool.
 """
 
-from datetime import datetime
 import json
+from datetime import datetime
 from time import strftime
+
+import iotools
 
 # TODO
 class DatabaseState:
@@ -103,11 +105,28 @@ class Result:
     """
     Function: append
     ----------------
-    Appends two results together. The schema and column names will be messed up.
-    """
-    self.results += other.results
-    self.output += other.output
+    Appends two results together. The schema and column names must be the same.
 
+    returns: The newly-modified Result object.
+    """
+    assert(self.col_names == other.col_names)
+    self.results += other.results
+    self.output = iotools.prettyprint(self.results, self.col_names)
+    return self
+
+  def subtract(self, other):
+    """
+    Function: subtract
+    ------------------
+    Subtracts two results from each other. The schema and column name must be
+    the same. Keeps rows from the current Result.
+
+    returns: The newly-modified Result object.
+    """
+    assert(self.col_names == other.col_names)
+    self.results = filter(lambda row: row not in other.results, self.results)
+    self.output = iotools.prettyprint(self.results, self.col_names)
+    return self
 
 class GradedOutput:
   """

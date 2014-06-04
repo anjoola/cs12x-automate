@@ -55,8 +55,9 @@ def deduct(style_errors):
   style_errors.
   """
   deductions = 0
-  for error in list(style_errors):
-    deductions += STYLE_DEDUCTIONS[type(error())]
+  # TODO fix errors
+  #for error in list(style_errors):
+  #  deductions += STYLE_DEDUCTIONS[type(error())]
   return deductions
 
 

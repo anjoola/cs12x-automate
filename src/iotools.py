@@ -8,8 +8,10 @@ import json, os, sys, time
 from datetime import datetime
 from os.path import getmtime
 
+import prettytable
+
 import dbtools, formatter
-from CONFIG import ASSIGNMENT_DIR, ERROR, VERBOSE
+from CONFIG import ASSIGNMENT_DIR, ERROR, MAX_NUM_RESULTS, VERBOSE
 from models import Response
 
 def get_students(assignment, after=None):
@@ -220,3 +222,24 @@ def parse_specs(assignment):
   except ValueError as e:
     err("Could not parse spec file!\n" + str(e))
   sys.exit(1)
+
+
+def prettyprint(results, col_names):
+  """
+  Function: prettyprint
+  ---------------------
+  Gets the pretty-printed version of the results.
+
+  results: The results to pretty-print.
+  col_names: The column names for the results.
+  returns: A string contained the pretty-printed results.
+  """
+  # If the results are too long, don't print it.
+  if len(results) > MAX_NUM_RESULTS:
+    return "Too many results (%d) to print!" % len(results)
+
+  output = prettytable.PrettyTable(col_names)
+  output.align = "l"
+  for row in results:
+    output.add_row(row)
+  return output.get_string()

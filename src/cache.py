@@ -80,4 +80,4 @@ class Cache:
     key: The key for the entry.
     value: The value to store in the cache.
     """
-    self.cache[self.create_key(key)] = value
+    self.cache[self.create_key(key)] = deepcopy(value)

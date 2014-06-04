@@ -40,10 +40,9 @@ class View(ProblemType):
     returns: True if the view is updatable, False otherwise.
     """
     result = self.db.execute_sql(
-      "SELECT is_updtable FROM information_schema.views WHERE "
-      "table_name='%s'" % test['view']
-    ).result
-    print "asdfasdf", result
+      "SELECT is_updatable FROM information_schema.views WHERE "
+      "table_name='%s'" % test["view"]
+    ).results
     return result == "YES"
 
 
@@ -54,7 +53,7 @@ class View(ProblemType):
     # Run the student's create view statement and select from that view to see
     # what is in the view.
     self.db.execute_sql(self.response.sql)
-    actual = self.db.execute_sql('SELECT * FROM %s' % test['view'])
+    actual = self.db.execute_sql('SELECT * FROM %s' % test["view"])
 
     # Check if the view is updatable, if necessary. If not, take points off.
     if test.get('updatable'):
@@ -67,8 +66,8 @@ class View(ProblemType):
     if len(expected.results) != len(actual.results) or not \
        self.equals(set(expected.results), set(actual.results)):
       # TODO check column order?
-      output['expected'] = stringify(expected.results)
-      output['actual'] = stringify(actual.results)
+      output['expected'] = expected.output
+      output['actual'] = actual.output
       return test['points']
 
     # Otherwise, their CREATE VIEW statement is corret.
@@ -77,5 +76,12 @@ class View(ProblemType):
 
 
   def output_test(self, o, test, specs):
-    # TODO
-    pass
+    # Don't output anything if they are successful.
+    if test["success"] or "expected" not in test:
+      return
+
+    # Expected and actual output.
+    o.write("<pre class='results'>")
+    self.generate_diffs(test["expected"].split("\n"), \
+                        test["actual"].split("\n"), o)
+    o.write("</pre>")

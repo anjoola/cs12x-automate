@@ -223,11 +223,11 @@ class UsedTabsError(Error):
     return "UsedTabsError: Tabs were used."
 
 
-class WrongNumColumnError(Error):
+class WrongNumColumnsError(Error):
   """
   Class: WrongNumColumnError
   --------------------------
   Occurs if the students provides more or fewer columns than required.
   """
   def __repr__(self):
-    return "WrongNumColumnError: More or fewer columns included."
+    return "WrongNumColumnsError: More or fewer columns included."

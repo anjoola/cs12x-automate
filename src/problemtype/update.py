@@ -15,49 +15,55 @@ class Update(ProblemType):
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
 
-    # Create a savepoint and run the student's update statement. Make sure that
-    # it IS an update statement and is only a single statement (by checking
-    # that after removing the trailing semicolon, there are no more).
+    # Make sure the query IS an update statement and is only a single statement
+    # (by checking that after removing the trailing semicolon, there are no
+    # more).
     if not (self.response.sql.lower().find("update") != -1 and \
             self.response.sql.strip().rstrip(";").find(";") == -1):
       # TODO output some error thing
       return test["points"]
 
+    # If this is a self-contained UPDATE test (which means it will occur within
+    # a transaction and rolled back afterwards).
+    if test.get("rollback"):
+      self.db.start_transaction()
+
+    # Create a savepoint and run the student's update statement.
+    exception = None
     self.db.savepoint('spt_update')
     try:
       self.db.execute_sql(self.response.sql)
       actual = self.db.execute_sql(table_sql)
-
     except Exception as e: # TODO
-      raise e
+      exception = e
     finally:
+      # Rollback to the savepoint and make sure it occurred properly.
       self.db.rollback('spt_update')
-      # Make sure the rollback occurred properly.
-      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
-    
+      assert(before.output == self.db.execute_sql(table_sql).output)
+
     # Run the solution update statement.
     try:
       self.db.execute_sql(test["query"])
       expected = self.db.execute_sql(table_sql)
-
-    except Exception as e: # TODO
-      raise e
+    except Exception: # TODO
+      pass
     finally:
+      # A self-contained UPDATE. Make sure the rollback occurred properly.
       if test.get("rollback"):
-        self.db.rollback('spt_update')
-        # Make sure the rollback occurred properly.
-        assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
-      self.db.release('spt_update')
+        self.db.rollback()
+        assert(before.output == self.db.execute_sql(table_sql).output)
 
-    # Compare the expected rows changed versus the actual. If the changes are
-    # not equal in size, then it is automatically wrong. If the changes are not
-    # the same, then they are also wrong.
-    if len(expected.results) != len(actual.results) or not \
-       self.equals(set(expected.results), set(actual.results)):
-      output["expected"] = stringify(list(set(before.results) - \
-                                     set(expected.results)))
-      output["actual"] = stringify(list(set(before.results) - \
-                                   set(actual.results)))
+      # Otherwise, release the savepoint.
+      else:
+        self.db.release('spt_update')
+
+    # Raise the exception if it occurred.
+    if exception: raise exception
+
+    # Compare the expected rows changed versus the actual.
+    if expected.output != actual.output:
+      output["expected"] = expected.subtract(before).output
+      output["actual"] = actual.subtract(before).output
       return test["points"]
 
     # Otherwise, their update statement is correct.
@@ -72,6 +78,6 @@ class Update(ProblemType):
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"], \
-                        test["actual"], o)
+    self.generate_diffs(test["expected"].split("\n"), \
+                        test["actual"].split("\n"), o)
     o.write("</pre>")

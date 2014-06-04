@@ -6,11 +6,11 @@ Contains helper methods involving the database, its state, and queries.
 import codecs, re, subprocess
 from cStringIO import StringIO
 
-import mysql.connector, prettytable, sqlparse
+import mysql.connector, sqlparse
 
 from cache import Cache
 from CONFIG import *
-from iotools import err, log
+from iotools import err, log, prettyprint
 from models import DatabaseState, Result
 
 class DBTools:
@@ -19,7 +19,6 @@ class DBTools:
   --------------
   Handles requests to a particular database (as specified in the CONFIG file).
   """
-
   # Used to find delimiters in the file.
   DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
 
@@ -212,7 +211,6 @@ class DBTools:
     """
     new.subtract(old)
 
-    print new.procedures, new.functions, new.views, new.tables
     # Drop all functions and procedures first.
     for proc in new.procedures:
       self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
@@ -334,26 +332,6 @@ class DBTools:
     return self.cursor.description
 
 
-  def prettyprint(self, results):
-    """
-    Function: prettyprint
-    ---------------------
-    Gets the pretty-printed version of the results.
-
-    results: The results to pretty-print.
-    returns: A string contained the pretty-printed results.
-    """
-    # If the results are too long, don't print it.
-    if len(results) > MAX_NUM_RESULTS:
-      return "Too many results (%d) to print!" % len(results)
-
-    output = prettytable.PrettyTable(self.get_column_names())
-    output.align = "l"
-    for row in results:
-      output.add_row(row)
-    return output.get_string()
-
-
   def results(self):
     """
     Function: results
@@ -370,7 +348,7 @@ class DBTools:
       result.col_names = self.get_column_names()
 
       # Pretty-print output.
-      result.output = self.prettyprint(result.results)
+      result.output = prettyprint(result.results, self.get_column_names())
 
       # If there are too many results.
       if len(result.results) > MAX_NUM_RESULTS:
@@ -420,7 +398,8 @@ class DBTools:
             if cached:
               self.cache.put(sql, query_results)
 
-          result.append(query_results)
+          # TODO only want the last results?
+          result = query_results
 
           # TODO should breakdown the sql query so only one statement is executed
           # at at time...

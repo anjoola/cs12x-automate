@@ -81,12 +81,15 @@ class ProblemType(object):
         lost_points += self.grade_test(test, graded_test)
 
         # Apply any other deductions.
+        """
         if graded_test.get("deductions"): # TODO2
           for deduction in graded_test["deductions"]:
+            # TODO redo errors stuff
             lost = SQL_DEDUCTIONS[deduction]
             self.output["errors"].append("[-" + str(lost) + "]" + \
-                                         repr(deduction()))
+                                         repr(deduction))
             lost_points += lost
+        """
 
       # If their query times out.
       #except timeouts.TimeoutError:
