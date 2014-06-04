@@ -91,6 +91,17 @@ ul {
 .borderless {
   vertical-align: top;
 }
+.comment {
+  background: #efefef;
+  border: 1px solid #aaaaaa;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 7px;
+  margin-top: 5px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
 .failed {
   color: red;
   display: inline;
@@ -154,6 +165,7 @@ ul {
   margin-bottom: 7px;
   margin-top: 5px;
   overflow-x: auto;
+  white-space: pre-wrap;
 }
 .title {
   background: #297CC4;

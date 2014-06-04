@@ -75,7 +75,7 @@ class StyleError(Error):
   )
 
   SPACING = (
-    "SpacingError", 5, 2,
+    "SpacingError", 2, 5,
     "Did not use spaces after commas."
   )
 
