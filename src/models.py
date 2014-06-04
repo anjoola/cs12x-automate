@@ -10,7 +10,6 @@ from time import strftime
 
 import iotools
 
-# TODO
 class DatabaseState:
   """
   Class: DatabaseState
@@ -34,6 +33,7 @@ class DatabaseState:
     # A list of procedures.
     self.procedures = []
 
+
   def subtract(self, other):
     """
     Function: subtract
@@ -54,79 +54,6 @@ class DatabaseState:
     self.procedures = diff(self.procedures, other.procedures)
 
 
-class Response:
-  """
-  Class: Response
-  ---------------
-  Represents a student's response to a particular homework problem. The
-  response includes any comments before the SQL and the actual SQL response.
-  """
-  def __init__(self):
-    # Their comments.
-    self.comments = ""
-
-    # The SQL for that problem.
-    self.sql = ""
-
-  def __repr__(self):
-    return self.__str__()
-
-  def __str__(self):
-    return "(" + self.comments + ", " + self.sql + ")"
-
-
-class Result:
-  """
-  Class: Result
-  -------------
-  Represents the result of a query.
-  """
-  def __init__(self):
-    # The schema of the result.
-    self.schema = []
-
-    # The column names of the result.
-    self.col_names = []
-
-    # The actual results.
-    self.results = []
-
-    # Pretty-formatted output to print.
-    self.output = ""
-
-  def __repr__(self):
-    return self.__str__()
-
-  def __str__(self):
-    return "(" + str(self.schema) + ", " + str(self.results) + ", " + \
-      self.output + ")"
-
-  def append(self, other):
-    """
-    Function: append
-    ----------------
-    Appends two results together. The schema and column names must be the same.
-
-    returns: The newly-modified Result object.
-    """
-    assert(self.col_names == other.col_names)
-    self.results += other.results
-    self.output = iotools.prettyprint(self.results, self.col_names)
-    return self
-
-  def subtract(self, other):
-    """
-    Function: subtract
-    ------------------
-    Subtracts two results from each other. The schema and column name must be
-    the same. Keeps rows from the current Result.
-
-    returns: The newly-modified Result object.
-    """
-    assert(self.col_names == other.col_names)
-    self.results = filter(lambda row: row not in other.results, self.results)
-    self.output = iotools.prettyprint(self.results, self.col_names)
-    return self
 
 class GradedOutput:
   """
@@ -186,3 +113,86 @@ class GradedOutput:
     self.fields["end"] = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
     return json.dumps(self.fields, indent=2)
+
+
+
+class Response:
+  """
+  Class: Response
+  ---------------
+  Represents a student's response to a particular homework problem. The
+  response includes any comments before the SQL and the actual SQL response.
+  """
+  def __init__(self):
+    # Their comments.
+    self.comments = ""
+
+    # The SQL for that problem.
+    self.sql = ""
+
+
+  def __repr__(self):
+    return self.__str__()
+
+
+  def __str__(self):
+    return "(" + self.comments + ", " + self.sql + ")"
+
+
+
+class Result:
+  """
+  Class: Result
+  -------------
+  Represents the result of a query.
+  """
+  def __init__(self):
+    # The schema of the result.
+    self.schema = []
+
+    # The column names of the result.
+    self.col_names = []
+
+    # The actual results.
+    self.results = []
+
+    # Pretty-formatted output to print.
+    self.output = ""
+
+
+  def __repr__(self):
+    return self.__str__()
+
+
+  def __str__(self):
+    return "(" + str(self.schema) + ", " + str(self.results) + ", " + \
+      self.output + ")"
+
+
+  def append(self, other):
+    """
+    Function: append
+    ----------------
+    Appends two results together. The schema and column names must be the same.
+
+    returns: The newly-modified Result object.
+    """
+    assert(self.col_names == other.col_names)
+    self.results += other.results
+    self.output = iotools.prettyprint(self.results, self.col_names)
+    return self
+
+
+  def subtract(self, other):
+    """
+    Function: subtract
+    ------------------
+    Subtracts two results from each other. The schema and column name must be
+    the same. Keeps rows from the current Result.
+
+    returns: The newly-modified Result object.
+    """
+    assert(self.col_names == other.col_names)
+    self.results = filter(lambda row: row not in other.results, self.results)
+    self.output = iotools.prettyprint(self.results, self.col_names)
+    return self

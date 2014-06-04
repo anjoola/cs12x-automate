@@ -17,9 +17,9 @@ class Select(ProblemType):
     test_points = test["points"]
 
     # Run the test query and the student's query.
-    expected = self.db.execute_sql(test["query"], test.get("setup"), \
-                                   test.get("teardown"), True)
     try:
+      expected = self.db.execute_sql(test["query"], test.get("setup"), \
+                                     test.get("teardown"), True)
       actual = self.db.execute_sql(self.response.sql, test.get("setup"), \
                                    test.get("teardown"), True)
     except mysql.connector.errors.ProgrammingError as e:

@@ -39,6 +39,9 @@ ASSIGNMENT_DIR = "../assignments/"
 # Directory where results an assignment are stored.
 RESULT_DIR = "_results/"
 
+# Directory within ASSIGNMENT_DIR where the student files are stored.
+STUDENT_DIR = "students/"
+
 # Directory where the stylesheet and Javascripts are.
 STYLE_DIR = "../style/"
 

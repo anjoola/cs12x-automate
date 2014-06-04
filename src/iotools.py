@@ -11,39 +11,10 @@ from os.path import getmtime
 import prettytable
 
 import dbtools, formatter
-from CONFIG import ASSIGNMENT_DIR, ERROR, MAX_NUM_RESULTS, VERBOSE
+from CONFIG import *
 from models import Response
 
-def get_students(assignment, after=None):
-  """
-  Function: get_students
-  ----------------------
-  Gets all the students for a given assignment.
-
-  assignment: The assignment.
-  after: The student to start grading from. Finds all students who've
-         submitted at a time after this student (includes this student).
-  returns: A list of students who've submitted for that assignment.
-  """
-  directory = ASSIGNMENT_DIR + assignment + "/students/"
-  files = [f for f in os.walk(directory).next()[1]
-           if f.endswith("-" + assignment)]
-
-  # If looking for files after a particular person.
-  if after is not None:
-    try:
-      # Only get files modified after the provided time.
-      after = time.mktime(time.strptime(after, "%Y-%m-%d"))
-      files = [f for f in files if getmtime(directory + f) >= after]
-
-    # If the string they entered for the date is incorrect, just skip the date
-    # filtering.
-    except ValueError:
-      err("'after' parameter not formatted correctly (must be YYYY-MM-DD)")
-      pass
-
-  return [f.replace("-" + assignment, "") for f in files]
-
+# --------------------------- Debugging Utilities --------------------------- #
 
 def err(msg, fatal=False):
   """
@@ -68,7 +39,38 @@ def log(string):
   Outputs to the console if the VERBOSE flag is on.
   """
   if VERBOSE:
-    print string, 
+    print string,
+
+# ---------------------------------- Other ---------------------------------- #
+
+def get_students(assignment, after=None):
+  """
+  Function: get_students
+  ----------------------
+  Gets all the students for a given assignment.
+
+  assignment: The assignment.
+  after: The date after which to find submissions. Will find all students
+         who've submitted after this date.
+  returns: A list of students who've submitted for that assignment.
+  """
+  directory = ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR
+  files = [f for f in os.walk(directory).next()[1]
+           if f.endswith("-" + assignment)]
+
+  # If looking for files after a particular date.
+  if after is not None:
+    try:
+      after = time.mktime(time.strptime(after, "%Y-%m-%d"))
+      files = [f for f in files if getmtime(directory + f) >= after]
+
+    # If the string they entered for the date is incorrect, just skip the date
+    # filtering.
+    except ValueError:
+      err("'after' parameter not formatted correctly (must be YYYY-MM-DD)")
+      pass
+
+  return [f.replace("-" + assignment, "") for f in files]
 
 
 def output(json, specs, raw=False):
@@ -83,11 +85,11 @@ def output(json, specs, raw=False):
        otherwise.
   returns: The file where the output was written to.
   """
-  path = ASSIGNMENT_DIR + specs["assignment"] + "/_results/"
+  path = ASSIGNMENT_DIR + specs["assignment"] + "/" + RESULT_DIR
   if not os.path.exists(path):
     os.mkdir(path, 0644)
 
-  if not os.path.exists(path+ "files/"):
+  if not os.path.exists(path + "files/"):
     os.mkdir(path + "files/", 0644)
 
   f = None
@@ -105,7 +107,7 @@ def output(json, specs, raw=False):
   return f
 
 
-def parse_file(f):
+def parse_file(f): # TODO review
   """
   Function: parse_file
   --------------------
@@ -218,10 +220,9 @@ def parse_specs(assignment):
   # If there are any errors finding or loading the spec file, exit.
   # Automation cannot continue until the proper spec file is found.
   except IOError:
-    err("Could not find spec file: " + path)
+    err("Could not find spec file: " + path, True)
   except ValueError as e:
-    err("Could not parse spec file!\n" + str(e))
-  sys.exit(1)
+    err("Could not parse spec file!\n" + str(e), True)
 
 
 def prettyprint(results, col_names):
