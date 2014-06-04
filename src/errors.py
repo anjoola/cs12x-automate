@@ -1,9 +1,10 @@
 """
 Module: errors
 --------------
-Contains all of the possible errors.
+Contains all of the possible errors that can occur in the execution of the
+automation tool.
 """
-
+# TODO remove all of this
 def add(lst, error):
   """
   Function: add
@@ -37,36 +38,109 @@ class Error(Exception):
 
 # -------------------------- Error Implementations -------------------------- #
 
-class BadHeaderError(Error):
+class StyleError(Error):
   """
-  Class: BadHeaderError
-  ---------------------
-  Indicates that a problem header was not formatted correctly.
+  Class: StyleError
+  -----------------
+  A style-related error which occurs if an error occurs with the stylechecker
+  or there is a problem parsing the student's file. Each error is a tuple of
+  the form (error name, point deduction, frequency, long description), where
+  a deduction occurs after an error occurs at a certain frequency.
+
+  If 'frequency' is set to an integer, then a deduction will occur after that
+  many instances of that error. If it is set to a decimal (between 0 and 1),
+  then a deduction will occur after that proportion of lines have that error.
   """
-  def __repr__(self):
-    return "BadHeaderError: Problem header was not formatted correctly."
+  BAD_HEADER = (
+    "BadHeaderError", 0, 1,
+    "Problem header not formatted correctly."
+  )
+
+  CODE_BEFORE_PROBLEM_HEADER = (
+    "CodeBeforeProblemHeaderError", 0, 1,
+    "There is code before a problem header! There will probably be major " + \
+    "point deductions for all problems in this file."
+  )
+
+  DOUBLE_QUOTES = (
+    "DoubleQuoteError", 3, 3,
+    "Double-quotes instead of single-quotes were used for strings."
+  )
+
+  LINE_TOO_LONG = (
+    "LineTooLongError", 0.1, 5,
+    "There are too many lines longer than 80 characters."
+  )
+
+  SPACING = (
+    "SpacingError", 5, 2,
+    "Did not use spaces after operators."
+  )
+
+  USED_TABS = (
+    "UsedTabsError", 0.2, 5,
+    "Tabs instead of spaces were used."
+  )
+
+  @staticmethod
+  def deduction(error, num_occurrences, num_lines):
+    """
+    Function: deduction
+    -------------------
+    Gets the number of points to deduct for a specific style error.
+
+    error: The style error.
+    num_occurrences: The number of times the error has occurred.
+    num_lines: The number of lines in the file to grade.
+
+    returns: The number of points to deduct.
+    """
+    # Get the number of lines the error has to occur in order for a deduction
+    # to happen.
+    times = int(error[1] * num_lines) if error[1] < 1 else error[1]
+    return error[2] if num_occurrences >= times else 0
 
 
-class CodeBeforeHeaderError(Error):
-  """
-  Class: CodeBeforeHeaderError
-  ----------------------------
-  Occurs if there is code before a problem header.
-  """
-  def __repr__(self):
-    return "CodeBeforeHeaderError: There is code before a problem header! " + \
-           "There will probably be major point deductions for all problems" + \
-           " in this file."
+  @staticmethod
+  def to_string(error):
+    """
+    Function: to_string
+    -------------------
+    Gets the description of an error as a string.
+
+    error: The error to get the description of.
+    returns: The description as a string.
+    """
+    return "%s: %s" % (error[0], error[3])
 
 
-class ColumnOrderError(Error):
+
+"""
+SQL_DEDUCTIONS = {
+  "OrderByError"           : 1,  # Missing or incorrect ORDER BY.
+  "ColumnOrderError"       : 1,  # Wrong column order.
+  "RenameValueError"       : 1,  # Did not rename computed values.
+  "WrongNumsColumnError"   : 0,  # More or fewer columns included.
+  "GroupingSelectError"    : 2   # Selected on a column that was not grouped on.
+}
+"""
+
+class QueryError(Error):
   """
-  Class: ColumnOrderError
-  -----------------------
-  Occurs if the query produces results in the wrong column order.
+  Class: QueryError
+  -----------------
+  A query-related error that occurs if something is wrong with the student's
+  query.
   """
-  def __repr__(self):
-    return "ColumnOrderError: Columns are in the wrong order."
+  COLUMN_ORDER = "ColumnOrderError: Columns are in the wrong order."
+
+  ORDER_BY = "OrderByError: Missing or incorrect ORDER BY statement."
+
+  RENAME_VALUE = "RenameValueError: Did not rename computed values."
+
+  WRONG_NUM_COLUMNS = "WrongNumColumnsError: More or fewer columns included."
+
+
 
 
 class DatabaseError(Error):
@@ -97,16 +171,6 @@ class DependencyError(Error):
            "tests after this one will fail."
 
 
-class DoubleQuoteError(Error):
-  """
-  Class: DoubleQuoteError
-  -----------------------
-  Occurs if a SQL string is enclosed by double-quotes instead of single-quotes.
-  """
-  def __repr__(self):
-    return "DoubleQuoteError: Double-quotes were used for a string!"
-
-
 class FileNotFoundError(Error):
   """
   Class: FileNotFoundError
@@ -129,16 +193,6 @@ class GroupingSelectError(Error):
   def __repr__(self):
     return "GroupingSelectError: Selected on a column that was not grouped on."
 
-
-class LineTooLongError(Error):
-  """
-  Class: LineTooLongError
-  -----------------------
-  Occurs if the file has lines that are longer than 80 characters.
-  """
-  def __repr__(self):
-    return "LineTooLongError: There are lines of code longer than 80 " + \
-           "characters."
 
 
 class MissingKeywordError(Error):
@@ -170,15 +224,6 @@ class MySQLError(Error):
     return "MySQL Error " + str(self.value)
 
 
-class OrderByError(Error):
-  """
-  Class: OrderByError
-  -------------------
-  Occurs when the results are not in the right order.
-  """
-  def __repr__(self):
-    return "OrderByError: Missing or incorrect ORDER BY statement."
-
 
 class ParsingError(Error):
   """
@@ -192,42 +237,3 @@ class ParsingError(Error):
   def __repr__(self):
     return "ParsingError: " + self.value
 
-
-class RenameValueError(Error):
-  """
-  Class: RenameValueError
-  -----------------------
-  The query did not rename computed values.
-  """
-  def __repr__(self):
-    return "RenameValueError: Did not rename computed values."
-
-
-class SpaceError(Error):
-  """
-  Class: SpaceError
-  -----------------
-  Occurs if there are no spaces before and after operators or after a comma.
-  """
-  def __repr__(self):
-    return "SpaceError: No spaces after operators!"
-
-
-class UsedTabsError(Error):
-  """
-  Class: UsedTabsError
-  --------------------
-  Occurs if a tabs are used in a file instead of spaces.
-  """
-  def __repr__(self):
-    return "UsedTabsError: Tabs were used."
-
-
-class WrongNumColumnsError(Error):
-  """
-  Class: WrongNumColumnError
-  --------------------------
-  Occurs if the students provides more or fewer columns than required.
-  """
-  def __repr__(self):
-    return "WrongNumColumnsError: More or fewer columns included."

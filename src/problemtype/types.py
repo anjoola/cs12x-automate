@@ -4,7 +4,6 @@ import difflib
 
 import mysql.connector
 
-from CONFIG import SQL_DEDUCTIONS
 from errors import *
 
 class ProblemType(object):

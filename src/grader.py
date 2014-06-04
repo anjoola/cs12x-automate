@@ -1,9 +1,8 @@
 import mysql.connector
 
-from CONFIG import MAX_TIMEOUT, SQL_DEDUCTIONS
-import dbtools
+import dbtools, iotools
+from CONFIG import MAX_TIMEOUT
 from errors import *
-import iotools
 from iotools import log
 from models import Response
 from problemtype import *

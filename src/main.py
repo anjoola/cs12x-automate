@@ -1,12 +1,13 @@
 import argparse, os, sys
 import mysql.connector
 
-import dbtools, formatter, iotools, stylechecker
+import dbtools, formatter, iotools
 from CONFIG import ASSIGNMENT_DIR, MAX_TIMEOUT, LOGIN
 from errors import *
 from grader import Grader
 from iotools import err, log
 from models import *
+from stylechecker import StyleChecker
 
 class AutomationTool:
   """
@@ -159,10 +160,9 @@ class AutomationTool:
         # Run their files through the stylechecker to make sure it is valid. Add
         # the errors to the list of style errors for this file and overall for
         # this student.
-        errors = stylechecker.check(f)
-        for e in errors:
-          add(graded_file["errors"], e())
-          style_errors.add(e)
+        (deductions, style_errors) = StyleChecker.check(f)
+        # TODO have deductions for a single file
+        graded_file["errors"] += style_errors
 
         f.seek(0)
         response[filename] = iotools.parse_file(f)
@@ -174,7 +174,7 @@ class AutomationTool:
 
     # Grade this student, make style deductions, and output the results.
     output["got_points"] = self.grader.grade(response, output)
-    output["got_points"] -= stylechecker.deduct(style_errors)
+    # TODO deduct style errors
     formatter.format_student(output, self.specs)
 
 
