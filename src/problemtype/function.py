@@ -31,11 +31,11 @@ class Function(ProblemType):
       actual = "true" if actual == "1" else "false"
     elif result_type == "int":
       expected = int(expected)
-      actual = int(actual)
+      actual = int(actual) if len(actual) > 0 else 0
     elif result_type == "float":
       factor = 10.0 ** PRECISION
       expected = int(float(expected) * factor) / factor
-      actual = int(float(actual) * factor) / factor
+      actual = int((float(actual) if len(actual) > 0 else 0.0) * factor) / factor
 
     return expected == actual
 
@@ -50,7 +50,7 @@ class Function(ProblemType):
       result = str(result.results[0][0])
     else: result = ""
 
-    output["actual"] = result
+    output["actual"] = result if len(result) > 0 else "NULL"
     output["expected"] = test["expected"]
 
     # Should be all or nothing.

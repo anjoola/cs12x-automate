@@ -95,26 +95,35 @@ class ProblemType(object):
       self.output["tests"].append(graded_test)
 
       try:
-        lost_points += self.grade_test(test, graded_test)
+        # Set a new connection timeout if specified.
+        if test.get("timeout"):
+          self.db.get_db_connection(test["timeout"])
 
-        # Apply any other deductions.
+        # Grade test and apply any other deductions.
+        lost_points += self.grade_test(test, graded_test)
         if graded_test.get("deductions"):
           (deductions, errors) = self.get_errors(graded_test["deductions"], \
                                                  test["points"])
           self.output["errors"] += errors
           lost_points += deductions
 
-      # If their query times out.
-      #except timeouts.TimeoutError:
-      #  self.output["errors"].append("Query timed out.") # TODO errors
-      #  lost_points += test["points"]
-      #  if test.get("teardown"): self.db.run_query(test["teardown"])
+      # TODO have it retry the query first (so all queries are tried at least twice)
+      # If their query times out, restart the connection and output an error.
+      except mysql.connector.errors.OperationalError as e: # TODO own error
+        lost_points += test["points"]
+        self.db.kill_query()
+        self.db.get_db_connection(None, False)
+        # TODO need to have errors appear next to the test (not at the end)
+        self.output["errors"].append("TODO Query timed out.") # TODO errors
 
       # If there was a MySQL error, print out the error that occurred and the
       # code that caused the error.
       except mysql.connector.errors.Error as e:
-        self.output["errors"].append(repr(MySQLError(e)))
         lost_points += test["points"]
+        self.output["errors"].append(repr(MySQLError(e))) # TODO handle
+
+      # Run the teardown query no matter what.
+      finally:
         if test.get("teardown"): self.db.execute_sql(test["teardown"])
 
       self.got_points -= lost_points

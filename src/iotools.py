@@ -145,6 +145,9 @@ def parse_file(f): # TODO review
   # Preprocess the file for DELIMITER statements.
   f = dbtools.preprocess_sql(f)
   for line in f.split("\n"):
+    # Remove tabs.
+    line = line.replace("\t", "    ")
+
     # If in the middle of a block comment.
     if started_block_comment:
       # See if they are now ending the block comment.

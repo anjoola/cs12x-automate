@@ -87,7 +87,7 @@ class Grader:
       if f not in response.keys():
         continue
 
-      log("- " + f + ": ")
+      log("\n  - " + f + ": ")
       (responses, graded_file) = (response[f], output["files"][f])
       got_points = 0
 
@@ -110,7 +110,7 @@ class Grader:
                                graded_problem).grade()
 
         # If they didn't do a problem, indicate that it doesn't exist.
-        except KeyError as e:
+        except KeyError:
           graded_problem["notexist"] = True
 
         # Run teardown queries.
@@ -120,6 +120,5 @@ class Grader:
       # Compute total points for this file.
       graded_file["got_points"] = got_points
       total_points += got_points
-      log("\n")
 
     return total_points

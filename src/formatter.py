@@ -173,9 +173,9 @@ def format_student(output, specs):
           # that
           o.write("<br><i>No comments provided...</i><br>\n")
         else:
-          o.write("<pre>" + problem["comments"] + "</pre>")
+          o.write("<div class='comment'>" + problem["comments"] + "</div>")
       o.write("<b>SQL</b>")
-      o.write("<div class='comments'>" + problem["sql"] + "</div>")
+      o.write("<div class='sql'>" + problem["sql"] + "</div>")
 
       # Test output.
       PROBLEM_TYPES[problem_specs["type"]]().do_output(o, problem["tests"], \

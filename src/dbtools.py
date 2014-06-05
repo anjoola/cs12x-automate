@@ -12,6 +12,7 @@ from cache import Cache
 from CONFIG import *
 from iotools import err, log, prettyprint
 from models import DatabaseState, Result
+from terminator import Terminator
 
 class DBTools:
   """
@@ -44,6 +45,9 @@ class DBTools:
     # <user>_db as the default database.
     self.database = database if database is not None else "%s_db" % user
 
+    # Separate database connection used to terminate queries.
+    self.terminator = Terminator(user, database)
+
   # --------------------------- Database Utilities --------------------------- #
 
   def close_db_connection(self):
@@ -56,10 +60,10 @@ class DBTools:
     if self.db:
       # Consume remaining output.
       for _ in self.cursor: pass
-      self.cursor.close()
 
       # Kill any remaining queries and close the database connection.
       self.kill_query()
+      self.cursor.close()
       self.db.close()
 
 
@@ -82,7 +86,7 @@ class DBTools:
     return self.cursor
 
 
-  def get_db_connection(self, timeout=None):
+  def get_db_connection(self, timeout=None, close=True):
     """
     Function: get_db_connection
     ---------------------------
@@ -91,6 +95,9 @@ class DBTools:
     if there was one.
 
     timeout: The connection timeout.
+    close: Whether or not to close the old database connection beforehand.
+           Should set to False if a timeout occurred just before the call to
+           this function.
     returns: A database connection object.
     """
     if self.db and self.db.is_connected():
@@ -101,17 +108,17 @@ class DBTools:
       if timeout is not None and timeout == self.timeout:
         return self.db
 
-    log("New timeout: %d" % timeout)
     # Close any old connections and make another one with the new setting.
-    self.close_db_connection()
+    if close: self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
+    log("New timeout: %d" % self.timeout)
     self.db = mysql.connector.connect(user=self.user, \
                                       password=LOGIN[self.user], host=HOST, \
                                       database=self.database, port=PORT, \
                                       connection_timeout=self.timeout, \
-                                      autocommit=True)
-    self.cursor = self.db.cursor()
-    return self.db
+                                      autocommit=True) # TODO should be false?? what
+    self.cursor = self.db.cursor(buffered=True)
+    return self
 
 
   def get_state(self):
@@ -159,27 +166,12 @@ class DBTools:
     """
     Function: kill_query
     --------------------
-    Kills the running query.
+    Kills the running query by terminating the connection.
     """
-    """
-    if self.db and self.db.is_connected():
-      try:
-        # Gets the current thread ID of the database connection and attempts
-        # to kill it.
-        thread_id = self.db.connection_id
-        self.db.cmd_process_kill(thread_id)
+    if not self.db or not self.db.is_connected(): return
 
-      except mysql.connector.errors.DatabaseError as e:
-        # If this error is actually because the connection was successfully
-        # terminated.
-        if e.errno == 1927:
-          pass
-        # Otherwise, this is an actual error.
-        else:
-          err("Error while killing query: " + str(e))
-          raise
-    """ # TODO
-    pass
+    self.terminator.terminate(self.db.connection_id)
+    self.savepoints = []
 
 
   def purge_db(self):
@@ -272,7 +264,7 @@ class DBTools:
 
     savepoint: The name of the savepoint.
     """
-    self.execute_sql("SAVEPOINT %s" % savepoint) # TODO error in this query, what to do?
+    self.execute_sql("SAVEPOINT %s" % savepoint) # TODO if error in this query, what to do?
     # If this savepoint name already exists, add and remove it.
     if savepoint in self.savepoints:
       self.savepoints.remove(savepoint)
