@@ -6,6 +6,7 @@ automation tool.
 """
 from math import ceil
 
+
 # TODO remove all of this
 def add(lst, error):
   """
@@ -19,17 +20,6 @@ def add(lst, error):
   lst.append(repr(error))
 
 
-def adds(lst, errors):
-  """
-  Function: adds
-  --------------
-  Adds the string representation of each error in 'errors' to the list of
-  errors 'lst'.
-  """
-  for error in errors:
-    lst.append(repr(error))
-
-
 class Error(Exception):
   """
   Class: Error
@@ -38,7 +28,7 @@ class Error(Exception):
   """
   pass
 
-# -------------------------- Error Implementations -------------------------- #
+# ------------------------------ Grading Errors ----------------------------- #
 
 class StyleError(Error):
   """
@@ -188,11 +178,10 @@ class QueryError(Error):
     deduct = QueryError.deduction(error, points)
     return "%s [-%d]: %s" % (error[0], deduct, error[3])
 
+# ------------------------------- MySQL Errors ------------------------------ #
 
 
 
-
-################### TODO
 class DatabaseError(Error):
   """
   Class: DatabaseError
