@@ -1,5 +1,5 @@
-cs12x-automate
-==============
+CS 121 Automation Tool
+======================
 
 Libraries
 ---------
@@ -63,7 +63,18 @@ Or:
 
 Output
 ------
-TODO
-md or HTML format
+Results of the grading run are outputted in the `_results/` folder of the
+directory strucutre:
 
+    |-- assignments/
+        |-- cs121hw2/
+            |-- _results/
+                |-- files
+                |-- style
+                |-- index.html
+            |-- students/
+            |-- cs121hw2.spec
 
+The output can be viewed in the `index.html` file, which opens up a web view.
+The `files` folder contains all the files necessary for this web view, and
+`style` contains the Javascript and CSS.
