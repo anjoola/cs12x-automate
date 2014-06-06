@@ -10,6 +10,9 @@ class Create(ProblemType):
   """
 
   def grade_test(self, test, output):
+    if test.get("run-query"):
+      self.db.execute_sql(self.response.sql)
+
     output["success"] = "UNDETERMINED"
     return 0
 

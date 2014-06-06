@@ -1,6 +1,7 @@
 import re
 
 from errors import QueryError
+from models import Result
 from types import ProblemType
 
 # Disallowed keywords for updatable views.
@@ -44,7 +45,7 @@ class View(ProblemType):
       "SELECT is_updatable FROM information_schema.views WHERE "
       "table_name='%s'" % test["view"]
     ).results
-    return result == "YES"
+    return result[0][0] == "YES"
 
 
   def grade_test(self, test, output):

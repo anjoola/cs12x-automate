@@ -31,9 +31,6 @@ class AutomationTool:
     # The students to grade.
     self.students = None
 
-    # The database connection.
-    self.db = None
-
     # The specs file.
     self.specs = None
 
@@ -93,10 +90,6 @@ class AutomationTool:
     if self.assignment is None:
       parser.print_help()
       sys.exit(1)
-
-    # Check if the user exists.
-    if not self.user in LOGIN.keys():
-      err("User %s does not exist!" % self.user, True)
 
     # Get the specs, files, and students for this assignment.
     self.specs = iotools.parse_specs(self.assignment)

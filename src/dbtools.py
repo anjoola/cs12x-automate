@@ -46,7 +46,7 @@ class DBTools:
     self.database = database if database is not None else "%s_db" % user
 
     # Separate database connection used to terminate queries.
-    self.terminator = Terminator(user, database)
+    self.terminator = Terminator(self.user, self.database)
 
   # --------------------------- Database Utilities --------------------------- #
 
@@ -212,24 +212,30 @@ class DBTools:
     """
     new.subtract(old)
 
+    def sql(query):
+      try:
+        self.execute_sql(query)
+      except Exception:
+        pass
+
     # Drop all functions procedures, and triggers first.
     for trig in new.triggers:
-      self.execute_sql("DROP TRIGGER IF EXISTS %s" % trig)
+      sql("DROP TRIGGER IF EXISTS %s" % trig)
     for proc in new.procedures:
-      self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
+      sql("DROP PROCEDURE IF EXISTS %s" % proc)
     for func in new.functions:
-      self.execute_sql("DROP FUNCTION IF EXISTS %s" % func)
+      sql("DROP FUNCTION IF EXISTS %s" % func)
 
     # Drop views.
     for view in new.views:
-      self.execute_sql("DROP VIEW IF EXISTS %s" % view)
+      sql("DROP VIEW IF EXISTS %s" % view)
 
     # Drop tables. First must drop foreign keys on the tables in order to be
     # able to drop the tables without any errors.
     for (table, fk) in new.foreign_keys:
-      self.execute_sql("ALTER TABLE %s DROP FOREIGN KEY %s" % (table, fk))
+      sql("ALTER TABLE %s DROP FOREIGN KEY %s" % (table, fk))
     for table in new.tables:
-      self.execute_sql("DROP TABLE %s" % table)
+      sql("DROP TABLE IF EXISTS %s" % table)
 
     # Remove all savepoints.
     self.savepoints = []
@@ -370,12 +376,12 @@ class DBTools:
     [row for row in self.cursor]
 
     # Separate the CALL procedure statements.
-    sql_list = queries.split("CALL")
-    if len(sql_list) > 0:
-      sql_list = \
-          sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
-    else:
-      sql_list = sqlparse.split(queries) # TODO test to see if this actually splits things?
+    #sql_list = queries.split("CALL")
+    #if len(sql_list) > 0:
+    #  sql_list = \
+    #      sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
+    #else:
+    sql_list = sqlparse.split(queries) # TODO test to see if this actually splits things?
 
     result = Result()
     for sql in sql_list:
@@ -383,32 +389,39 @@ class DBTools:
       if len(sql) == 0:
         continue
 
+      # TODO
       # If it is a CALL procedure statement, execute it differently. TODO document numbers
-      if sql.strip().startswith("CALL"):
-        proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
-        args = sql[sql.find("(") + 1:sql.find(")")].split(",")
-        args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
-        self.cursor.callproc(proc, args)
-      else:
-        try:
-          query_results = Cache.get(sql)
+      # TODO don't need to do CALL procedure separately
+      #if sql.strip().startswith("CALL"):
+      #  proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
+      #  args = sql[sql.find("(") + 1:sql.find(")")].split(",")
+      #  args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
+      #  self.cursor.callproc(proc, args)
+      #else:
+      try:
+        query_results = Cache.get(sql)
 
-          # Results are not to be cached or are not in the cache and needs to
-          # be cached. Run the query.
-          if not query_results or not cached:
-            self.cursor.execute(sql) # TODO should be multi=True?
-            query_results = self.get_results()
-            if cached:
-              Cache.put(sql, query_results)
+        # Results are not to be cached or are not in the cache and needs to
+        # be cached. Run the query.
+        if not query_results or not cached:
+          self.cursor.execute(sql) # TODO should be multi=True?
+          query_results = self.get_results()
+          if cached:
+            Cache.put(sql, query_results)
 
-          # TODO only want the last results?
-          result = query_results
+        # TODO only want the last results?
+        result = query_results
 
-          # TODO should breakdown the sql query so only one statement is executed
-          # at at time...
-        except mysql.connector.errors.InterfaceError: # TODO handle this...
-          sys.exit(1) # TODO
-          self.cursor.execute(sql, multi=True)
+        # TODO should breakdown the sql query so only one statement is executed
+        # at at time...
+      except mysql.connector.errors.InterfaceError as e: # TODO handle this...
+        self.cursor.execute(sql, multi=True)
+        query_results = self.get_results()
+        if cached:
+          Cache.put(sql, query_results)
+
+        # TODO only want the last results?
+        result = query_results # TODO TODO don't repeat code
 
     # If no longer in a transaction, remove all savepoints.
     if not self.db.in_transaction:

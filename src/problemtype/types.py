@@ -127,7 +127,8 @@ class ProblemType(object):
         if test.get("teardown"): self.db.execute_sql(test["teardown"])
 
       self.got_points -= lost_points
-      graded_test["got_points"] = test["points"] - lost_points
+      points = test["points"] - lost_points
+      graded_test["got_points"] = points if points > 0 else 0
 
     # Get the total number of points received.
     self.got_points = (self.got_points if self.got_points > 0 else 0)

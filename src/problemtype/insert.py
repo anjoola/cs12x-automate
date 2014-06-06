@@ -31,7 +31,7 @@ class Insert(ProblemType):
     self.db.savepoint('spt_insert')
     try:
       self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
-                        teardown=test.get("teardown")) # TODO is there setup and teardown?
+                          teardown=test.get("teardown")) # TODO is there setup and teardown?
       actual = self.db.execute_sql(table_sql)
     except Exception as e:
       exception = e
