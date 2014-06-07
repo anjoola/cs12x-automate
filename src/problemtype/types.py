@@ -3,7 +3,8 @@ from cStringIO import StringIO
 
 import mysql.connector
 
-from errors import * # TODO don't import * 
+from errors import add, DatabaseError, MissingKeywordError, TimeoutError, \
+                   QueryError
 
 class ProblemType(object):
   """
@@ -107,20 +108,19 @@ class ProblemType(object):
           self.output["errors"] += errors
           lost_points += deductions
 
-      # TODO have it retry the query first (so all queries are tried at least twice)
       # If their query times out, restart the connection and output an error.
-      except mysql.connector.errors.OperationalError as e: # TODO own error
+      # Retry their query first (so all queries are tried at most twice).
+      except TimeoutError as e:
         lost_points += test["points"]
         self.db.kill_query()
         self.db.get_db_connection(None, False)
-        # TODO need to have errors appear next to the test (not at the end)
-        self.output["errors"].append("TODO Query timed out.") # TODO errors
+        add(self.output["errors"], e)
+        # TODO retry query
 
-      # If there was a MySQL error, print out the error that occurred and the
-      # code that caused the error.
-      except mysql.connector.errors.Error as e:
+      # If there was a database error, print out the error that occurred.
+      except DatabaseError as e:
         lost_points += test["points"]
-        self.output["errors"].append(repr(MySQLError(e))) # TODO handle
+        add(self.output["errors"], e)
 
       # Run the teardown query no matter what.
       finally:

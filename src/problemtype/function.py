@@ -1,5 +1,5 @@
 from CONFIG import PRECISION
-from types import *
+from types import ProblemType
 
 class Function(ProblemType):
   """

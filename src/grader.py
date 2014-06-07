@@ -2,7 +2,7 @@ import mysql.connector
 
 import dbtools, iotools
 from CONFIG import MAX_TIMEOUT
-from errors import *
+from errors import add, DatabaseError, DependencyError
 from iotools import log
 from models import Response
 from problemtype import *
@@ -33,23 +33,19 @@ class Grader:
     problem: The problem to run dependencies for.
     response: The student's responses.
     """
-    try:
-      if problem.get("dependencies"):
-        for dep in problem["dependencies"]:
-          # Get the file and problem number for the dependent query.
-          [dep_file, problem_num] = dep.split("|")
+    if problem.get("dependencies"):
+      for dep in problem["dependencies"]:
+        # Get the file and problem number for the dependent query.
+        [dep_file, problem_num] = dep.split("|")
+
+        try:
           self.db.execute_sql(response[dep_file][problem_num].sql)
+        except DatabaseError as e:
+          raise DependencyError(dep_file, problem_num, e)
 
-      # Run setup queries.
-      if problem.get("setup"):
-        for q in problem["setup"]: self.db.execute_sql(q)
-
-    # If there was an error with the dependent query.
-    except mysql.connector.errors.ProgrammingError as e:
-      # TODO graded["errors"] does not exist...
-      add(graded["errors"], DependencyError(problem["dependencies"]))
-      add(graded["errors"], MySQLError(e))
-      raise
+    # Run setup queries.
+    if problem.get("setup"):
+      for q in problem["setup"]: self.db.execute_sql(q)
 
 
   def run_teardown(self, problem):
@@ -64,9 +60,8 @@ class Grader:
       if problem.get("teardown"):
         for q in problem["teardown"]: self.db.execute_sql(q)
 
-    except mysql.connector.errors as e:
-      print e # TODO
-      pass
+    except DatabaseError:
+      raise
 
 
   def grade(self, response, output):
@@ -94,7 +89,12 @@ class Grader:
       # Grade each problem in the assignment.
       problems = self.specs[f]
       for problem in problems:
-        self.run_dependencies(problem, response)
+        try:
+          self.run_dependencies(problem, response)
+        # If there was a problem with the dependent query.
+        except DependencyError as e:
+          add(graded_problem["errors"], e)
+          continue
 
         # Add this graded problem to the list in the graded file.
         num = problem["number"]

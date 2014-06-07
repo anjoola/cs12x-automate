@@ -1,3 +1,4 @@
+from errors import DatabaseError
 from types import *
 
 class Update(ProblemType):
@@ -34,7 +35,7 @@ class Update(ProblemType):
     try:
       self.db.execute_sql(self.response.sql)
       actual = self.db.execute_sql(table_sql)
-    except Exception as e: # TODO
+    except DatabaseError as e:
       exception = e
     finally:
       # Rollback to the savepoint and make sure it occurred properly.
@@ -42,20 +43,17 @@ class Update(ProblemType):
       assert(before.output == self.db.execute_sql(table_sql).output)
 
     # Run the solution update statement.
-    try:
-      self.db.execute_sql(test["query"])
-      expected = self.db.execute_sql(table_sql)
-    except Exception: # TODO
-      pass
-    finally:
-      # A self-contained UPDATE. Make sure the rollback occurred properly.
-      if test.get("rollback"):
-        self.db.rollback()
-        assert(before.output == self.db.execute_sql(table_sql).output)
+    self.db.execute_sql(test["query"])
+    expected = self.db.execute_sql(table_sql)
 
-      # Otherwise, release the savepoint.
-      else:
-        self.db.release('spt_update')
+    # A self-contained UPDATE. Make sure the rollback occurred properly.
+    if test.get("rollback"):
+      self.db.rollback()
+      assert(before.output == self.db.execute_sql(table_sql).output)
+
+    # Otherwise, release the savepoint.
+    else:
+      self.db.release('spt_update')
 
     # Raise the exception if it occurred.
     if exception: raise exception

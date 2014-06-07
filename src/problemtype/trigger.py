@@ -1,3 +1,4 @@
+from errors import DatabaseError
 from types import ProblemType
 
 class Trigger(ProblemType):
@@ -22,7 +23,7 @@ class Trigger(ProblemType):
       self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
                           teardown=test.get("teardown"))
       actual = self.db.execute_sql(test["actual"])
-    except Exception as e:
+    except DatabaseError as e:
       exception = e
     finally:
       self.db.rollback()

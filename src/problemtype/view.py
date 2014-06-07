@@ -1,6 +1,6 @@
 import re
 
-from errors import QueryError
+from errors import DatabaseError, QueryError
 from models import Result
 from types import ProblemType
 
@@ -54,14 +54,14 @@ class View(ProblemType):
 
     # Run the student's create view statement and select from that view to see
     # what is in the view.
-    exception = None
     try:
       self.db.execute_sql(self.response.sql)
       actual = self.db.execute_sql('SELECT * FROM %s' % test["view"])
-    except Exception as e: # TODO specific exception
+    except DatabaseError as e:
       # If an exception occurs, run the solution CREATE VIEW query.
       self.db.execute_sql(test["query"])
       actual = Result()
+      raise e
 
     # Check if the view is updatable, if necessary. If not, take points off.
     if test.get('updatable') and not self.check_updatable(test, output):

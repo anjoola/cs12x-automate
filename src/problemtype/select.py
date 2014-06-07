@@ -1,4 +1,5 @@
-from types import *
+from errors import DatabaseError, QueryError
+from types import ProblemType
 
 class Select(ProblemType):
   """
@@ -22,7 +23,7 @@ class Select(ProblemType):
                                      test.get("teardown"), True)
       actual = self.db.execute_sql(self.response.sql, test.get("setup"), \
                                    test.get("teardown"), True)
-    except mysql.connector.errors.ProgrammingError as e:
+    except DatabaseError:
       raise
 
     # If the results aren't equal in length, then they are automatically wrong.

@@ -1,4 +1,5 @@
-from types import *
+from errors import DatabaseError
+from types import ProblemType
 
 class Procedure(ProblemType):
   """

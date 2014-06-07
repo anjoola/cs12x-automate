@@ -1,4 +1,5 @@
-from types import *
+from errors import DatabaseError
+from types import ProblemType
 
 class Delete(ProblemType):
   """
@@ -36,7 +37,7 @@ class Delete(ProblemType):
     try:
       self.db.execute_sql(self.response.sql)
       actual = self.db.execute_sql(table_sql)
-    except Exception as e:
+    except DatabaseError as e:
       exception = e
     finally:
       self.db.rollback('spt_delete')
@@ -44,20 +45,17 @@ class Delete(ProblemType):
       assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
 
     # Run the solution delete statement.
-    try:
-      self.db.execute_sql(test["query"])
-      expected = self.db.execute_sql(table_sql)
-    except Exception:
-      pass
-    finally:
-      # A self-contained DELETE. Make sure the rollback occurred properly.
-      if test.get("rollback"):
-        self.db.rollback()
-        assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+    self.db.execute_sql(test["query"])
+    expected = self.db.execute_sql(table_sql)
 
-      # Otherwise, release the savepoint.
-      else:
-        self.db.release('spt_delete')
+    # A self-contained DELETE. Make sure the rollback occurred properly.
+    if test.get("rollback"):
+      self.db.rollback()
+      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+
+    # Otherwise, release the savepoint.
+    else:
+      self.db.release('spt_delete')
 
     # Raise the exception if it occurred.
     if exception: raise exception

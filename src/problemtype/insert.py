@@ -1,4 +1,5 @@
-from types import *
+from errors import DatabaseError
+from types import ProblemType
 
 class Insert(ProblemType):
   """
@@ -31,9 +32,9 @@ class Insert(ProblemType):
     self.db.savepoint('spt_insert')
     try:
       self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
-                          teardown=test.get("teardown")) # TODO is there setup and teardown?
+                          teardown=test.get("teardown"))
       actual = self.db.execute_sql(table_sql)
-    except Exception as e:
+    except DatabaseError as e:
       exception = e
     finally:
       self.db.rollback('spt_insert')
@@ -41,21 +42,18 @@ class Insert(ProblemType):
       assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
 
     # Run the solution insert statement.
-    try:
-      self.db.execute_sql(test["query"], setup=test.get("setup"), \
-                       teardown=test.get("teardown"))
-      expected = self.db.execute_sql(table_sql)
-    except Exception:
-      pass
-    finally:
-      # A self-contained INSERT. Make sure the rollback occurred properly.
-      if test.get("rollback"):
-        self.db.rollback()
-        assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+    self.db.execute_sql(test["query"], setup=test.get("setup"), \
+                     teardown=test.get("teardown"))
+    expected = self.db.execute_sql(table_sql)
 
-      # Otherwise, release the savepoint.
-      else:
-        self.db.release('spt_insert')
+    # A self-contained INSERT. Make sure the rollback occurred properly.
+    if test.get("rollback"):
+      self.db.rollback()
+      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+
+    # Otherwise, release the savepoint.
+    else:
+      self.db.release('spt_insert')
 
     # Raise the exception if it occurred.
     if exception: raise exception

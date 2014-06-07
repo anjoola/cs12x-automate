@@ -30,7 +30,4 @@ class Terminator:
 
     thread_id: ID of the connection.
     """
-    try:
-      self.cursor.execute("KILL %d" % thread_id)
-    except Exception:
-      err("Unable to kill %d (was probably already killed)." % thread_id)
+    self.cursor.execute("KILL %d" % thread_id)

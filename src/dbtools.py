@@ -6,10 +6,11 @@ Contains helper methods involving the database, its state, and queries.
 import codecs, os, re, subprocess
 from cStringIO import StringIO
 
-import mysql.connector, sqlparse
+import mysql.connector, mysql.connector.errors, sqlparse
 
 from cache import Cache
 from CONFIG import *
+from errors import DatabaseError, TimeoutError
 from iotools import err, log, prettyprint
 from models import DatabaseState, Result
 from terminator import Terminator
@@ -45,8 +46,13 @@ class DBTools:
     # <user>_db as the default database.
     self.database = database if database is not None else "%s_db" % user
 
-    # Separate database connection used to terminate queries.
-    self.terminator = Terminator(self.user, self.database)
+    # Separate database connection used to terminate queries. If the terminator
+    # cannot start, the grading cannot occur.
+    try:
+      self.terminator = Terminator(self.user, self.database)
+    except mysql.connector.errors.Errors:
+      err("Could not start up terminator connection! Any unruly queries " + \
+          " must be manually killed!")
 
   # --------------------------- Database Utilities --------------------------- #
 
@@ -62,9 +68,12 @@ class DBTools:
       for _ in self.cursor: pass
 
       # Kill any remaining queries and close the database connection.
-      self.kill_query()
-      self.cursor.close()
-      self.db.close()
+      try:
+        self.kill_query()
+        self.cursor.close()
+        self.db.close()
+      except mysql.connector.errors.Error as e:
+        raise DatabaseError(e)
 
 
   def commit(self):
@@ -73,7 +82,10 @@ class DBTools:
     ----------------
     Commits the current transaction. Destroys any savepoints.
     """
-    self.db.commit()
+    try:
+      self.db.commit()
+    except mysql.connector.errors.Errors as e:
+      raise DatabaseError(e)
     self.savepoints = []
 
 
@@ -112,12 +124,15 @@ class DBTools:
     if close: self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
     log("New timeout: %d" % self.timeout)
-    self.db = mysql.connector.connect(user=self.user, \
-                                      password=LOGIN[self.user], host=HOST, \
-                                      database=self.database, port=PORT, \
-                                      connection_timeout=self.timeout, \
-                                      autocommit=True) # TODO should be false?? what
-    self.cursor = self.db.cursor(buffered=True)
+    try:
+      self.db = mysql.connector.connect(user=self.user, \
+                                        password=LOGIN[self.user], host=HOST, \
+                                        database=self.database, port=PORT, \
+                                        connection_timeout=self.timeout, \
+                                        autocommit=True) # TODO should be false?? what
+      self.cursor = self.db.cursor(buffered=True)
+    except mysql.connector.errors.Error as e:
+      raise DatabaseError(e)
     return self
 
 
@@ -131,33 +146,37 @@ class DBTools:
     returns: A DatabaseState object which contains the current state.
     """
     state = DatabaseState()
-
-    # Get tables and their foreign keys.
-    state.tables = self.execute_sql(
-      "SELECT table_name FROM information_schema.tables "
-      "WHERE table_type='BASE TABLE'"
-    ).results
-    state.foreign_keys = self.execute_sql(
-      "SELECT DISTINCT table_name, constraint_name FROM "
-      "information_schema.table_constraints WHERE constraint_type='FOREIGN KEY'"
-    ).results
-
-    # Get views, functions, procedures, and triggers.
-    state.views = self.execute_sql(
-      "SELECT table_name FROM information_schema.tables "
-      "WHERE table_type='VIEW'"
-    ).results
-    state.functions = self.execute_sql(
-      "SELECT routine_name FROM information_schema.routines "
-      "WHERE routine_type='FUNCTION'"
-    ).results
-    state.procedures = self.execute_sql(
-      "SELECT routine_name FROM information_schema.routines "
-      "WHERE routine_type='PROCEDURE'"
-    ).results
-    state.triggers = self.execute_sql(
-      "SELECT trigger_name FROM information_schema.triggers"
-    )
+  
+    try:
+      # Get tables and their foreign keys.
+      state.tables = self.execute_sql(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_type='BASE TABLE'"
+      ).results
+      state.foreign_keys = self.execute_sql(
+        "SELECT DISTINCT table_name, constraint_name FROM "
+        "information_schema.table_constraints WHERE constraint_type='FOREIGN KEY'"
+      ).results
+  
+      # Get views, functions, procedures, and triggers.
+      state.views = self.execute_sql(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_type='VIEW'"
+      ).results
+      state.functions = self.execute_sql(
+        "SELECT routine_name FROM information_schema.routines "
+        "WHERE routine_type='FUNCTION'"
+      ).results
+      state.procedures = self.execute_sql(
+        "SELECT routine_name FROM information_schema.routines "
+        "WHERE routine_type='PROCEDURE'"
+      ).results
+      state.triggers = self.execute_sql(
+        "SELECT trigger_name FROM information_schema.triggers"
+      )
+    except mysql.connector.errors.Error as e:
+      err("Could not get the database state. Future gradings are possibly " + \
+          "affected.")
 
     return state
 
@@ -170,7 +189,11 @@ class DBTools:
     """
     if not self.db or not self.db.is_connected(): return
 
-    self.terminator.terminate(self.db.connection_id)
+    thread_id = self.db.connection_id
+    try:
+      self.terminator.terminate(thread_id)
+    except mysql.connector.errors.Error:
+      err("Unable to kill %d (was probably already killed)." % thread_id)
     self.savepoints = []
 
 
@@ -196,7 +219,10 @@ class DBTools:
       return
 
     self.savepoints.remove(savepoint)
-    self.execute_sql("RELEASE SAVEPOINT %s" % savepoint)
+    try:
+      self.execute_sql("RELEASE SAVEPOINT %s" % savepoint)
+    except mysql.connector.errors.Error:
+      pass
 
 
   def reset_state(self, old, new):
@@ -212,30 +238,27 @@ class DBTools:
     """
     new.subtract(old)
 
-    def sql(query):
-      try:
-        self.execute_sql(query)
-      except Exception:
-        pass
-
-    # Drop all functions procedures, and triggers first.
-    for trig in new.triggers:
-      sql("DROP TRIGGER IF EXISTS %s" % trig)
-    for proc in new.procedures:
-      sql("DROP PROCEDURE IF EXISTS %s" % proc)
-    for func in new.functions:
-      sql("DROP FUNCTION IF EXISTS %s" % func)
-
-    # Drop views.
-    for view in new.views:
-      sql("DROP VIEW IF EXISTS %s" % view)
-
-    # Drop tables. First must drop foreign keys on the tables in order to be
-    # able to drop the tables without any errors.
-    for (table, fk) in new.foreign_keys:
-      sql("ALTER TABLE %s DROP FOREIGN KEY %s" % (table, fk))
-    for table in new.tables:
-      sql("DROP TABLE IF EXISTS %s" % table)
+    try:
+      # Drop all functions procedures, and triggers first.
+      for trig in new.triggers:
+        self.execute_sql("DROP TRIGGER IF EXISTS %s" % trig)
+      for proc in new.procedures:
+        self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
+      for func in new.functions:
+        self.execute_sql("DROP FUNCTION IF EXISTS %s" % func)
+  
+      # Drop views.
+      for view in new.views:
+        self.execute_sql("DROP VIEW IF EXISTS %s" % view)
+  
+      # Drop tables. First must drop foreign keys on the tables in order to be
+      # able to drop the tables without any errors.
+      for (table, fk) in new.foreign_keys:
+        self.execute_sql("ALTER TABLE %s DROP FOREIGN KEY %s" % (table, fk))
+      for table in new.tables:
+        self.execute_sql("DROP TABLE IF EXISTS %s" % table)
+    except mysql.connector.errors.Error:
+      err("Could not reset database state. Possible errors in future grading.")
 
     # Remove all savepoints.
     self.savepoints = []
@@ -258,7 +281,10 @@ class DBTools:
         self.execute_sql("ROLLBACK TO %s" % savepoint)
         self.savepoints = self.savepoints[0:self.savepoints.index(savepoint)+1]
       else:
-        self.db.rollback()
+        try:
+          self.db.rollback()
+        except mysql.connector.errors.Error as e:
+          raise DatabaseError(e)
         self.savepoints = []
 
 
@@ -270,7 +296,11 @@ class DBTools:
 
     savepoint: The name of the savepoint.
     """
-    self.execute_sql("SAVEPOINT %s" % savepoint) # TODO if error in this query, what to do?
+    try:
+      self.execute_sql("SAVEPOINT %s" % savepoint)
+    except mysql.connector.errors.Error:
+      err("Could not create savepoint %s!" % savepoint)
+
     # If this savepoint name already exists, add and remove it.
     if savepoint in self.savepoints:
       self.savepoints.remove(savepoint)
@@ -284,7 +314,10 @@ class DBTools:
     Starts a database transaction, if not already in one.
     """
     if not self.db.in_transaction:
-      self.db.start_transaction()
+      try:
+        self.db.start_transaction()
+      except mysql.connector.errors.Error as e:
+        raise DatabaseError(e)
 
   # ----------------------------- Query Utilities ---------------------------- #
 
@@ -310,10 +343,8 @@ class DBTools:
 
     try:
       result = self.run_multi(sql, cached)
-    except mysql.connector.errors.ProgrammingError:
-      raise
 
-    # Always run the query teardown.
+    # Run the query teardown.
     finally:
       if teardown is not None:
         self.run_multi(teardown)
@@ -366,7 +397,7 @@ class DBTools:
     return self.cursor.description
 
 
-  def run_multi(self, queries, cached=False): # TODO need a lot of going over
+  def run_multi(self, queries, cached=False):
     """
     Function: run_multi
     -------------------
@@ -398,30 +429,36 @@ class DBTools:
       #  args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
       #  self.cursor.callproc(proc, args)
       #else:
-      try:
-        query_results = Cache.get(sql)
 
-        # Results are not to be cached or are not in the cache and needs to
-        # be cached. Run the query.
-        if not query_results or not cached:
-          self.cursor.execute(sql) # TODO should be multi=True?
-          query_results = self.get_results()
-          if cached:
-            Cache.put(sql, query_results)
+      query_results = Cache.get(sql)
 
-        # TODO only want the last results?
-        result = query_results
+      # Results are not to be cached or are not in the cache and needs to
+      # be cached. Run the query.
+      if not query_results or not cached:
+        try:
+          self.cursor.execute(sql)
 
-        # TODO should breakdown the sql query so only one statement is executed
-        # at at time...
-      except mysql.connector.errors.InterfaceError as e: # TODO handle this...
-        self.cursor.execute(sql, multi=True)
+        # If the query times out.
+        except mysql.connector.errors.OperationalError:
+          raise TimeoutError
+
+        # If something is wrong with their query.
+        except mysql.connector.errors.ProgrammingError as e:
+          raise DatabaseError(e)
+
+        # If the query can't be run as a single query, attempt to do it with a
+        # multi-line query.
+        except mysql.connector.errors.Error:
+          try:
+            self.cursor.execute(sql, multi=True)
+          except mysql.connector.errors.Error as e:
+            raise DatabaseError(e)
+
         query_results = self.get_results()
         if cached:
           Cache.put(sql, query_results)
 
-        # TODO only want the last results?
-        result = query_results # TODO TODO don't repeat code
+      result = query_results
 
     # If no longer in a transaction, remove all savepoints.
     if not self.db.in_transaction:
@@ -442,7 +479,12 @@ class DBTools:
     assignment: The assignment name, which is prepended to all the files.
     f: The source file to source.
     """
-    f = codecs.open(ASSIGNMENT_DIR + assignment + "/" + f, "r", "utf-8")
+    try:
+      fname = ASSIGNMENT_DIR + assignment + "/" + f
+      f = codecs.open(fname, "r", "utf-8")
+    except IOError:
+      err("Could not find or open sourced file %s!" % fname, True)
+
     sql_list = sqlparse.split(preprocess_sql(f))
     for sql in sql_list:
       # Skip this line if there is nothing in it.
@@ -470,9 +512,13 @@ def import_file(assignment, f):
   # Make sure the file exists.
   if not os.path.exists(filename):
     err("File to import %s does not exist!" % filename, True)
-  subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
-                  " -p" + PASS + " --delete --local " + DATABASE + " " + \
-                  filename)
+  try:
+    subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
+                    " -p" + PASS + " --delete --local " + DATABASE + " " + \
+                    filename)
+  except OSError:
+    err("Could not import file %s! The 'mysqlimport' library does not exist!", \
+        True)
 
 
 def preprocess_sql(sql_file):

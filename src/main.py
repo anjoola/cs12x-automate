@@ -180,7 +180,7 @@ class AutomationTool:
 
       # If the file does not exist, then they get 0 points.
       except IOError:
-        add(graded_file["errors"], FileNotFoundError(fname))
+        graded_file["errors"] += FileNotFoundError(fname) # TODO
 
     # Grade this student, make style deductions, and output the results.
     output["got_points"] = self.grader.grade(response, output)

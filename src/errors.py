@@ -6,8 +6,17 @@ automation tool.
 """
 from math import ceil
 
+import mysql.connector.errors
 
-# TODO remove all of this
+class Error(Exception):
+  """
+  Class: Error
+  ------------
+  Error class for the automation tool.
+  """
+  pass
+
+
 def add(lst, error):
   """
   Function: add
@@ -18,15 +27,6 @@ def add(lst, error):
   error: The error object.
   """
   lst.append(repr(error))
-
-
-class Error(Exception):
-  """
-  Class: Error
-  ------------
-  Error class for the automation tool.
-  """
-  pass
 
 # ------------------------------ Grading Errors ----------------------------- #
 
@@ -178,59 +178,53 @@ class QueryError(Error):
     deduct = QueryError.deduction(error, points)
     return "%s [-%d]: %s" % (error[0], deduct, error[3])
 
-# ------------------------------- MySQL Errors ------------------------------ #
-
-
+# ----------------------------- Database Errors ----------------------------- #
 
 class DatabaseError(Error):
   """
   Class: DatabaseError
   --------------------
-  Represents an error that occurs with the database connection
+  Represents any error that occurs with the database, either user or client
+  errors as listed in:
+  - TODO
+  -
   """
-  def __init__(self, value):
-    self.value = value
+  def __init__(self, error):
+    # The MySQL error number.
+    self.errno = error.errno
+
+    # The message to print.
+    self.msg = error.msg
+
 
   def __repr__(self):
-    return "Database Error: " + self.value
+    return "DatabaseError (%d): %s" % (self.errno, self.msg)
 
 
-class DependencyError(Error):
+
+class DependencyError(DatabaseError):
   """
   Class: DependencyError
   ----------------------
   Occurs when there is a problem with a dependent query.
   """
-  def __init__(self, problems):
-    self.problems = problems
+  def __init__(self, dep_file, num, error):
+    # The dependent file.
+    self.f = dep_file
+
+    # The problem number in the file.
+    self.num = num
+
+    # The database error that occurred.
+    self.errno = error.errno
+
+    # The message for the database error.
+    self.msg = error.msg
+
 
   def __repr__(self):
-    return "DependencyError: One or more dependent problems (" + \
-           (", ".join(self.problems)) + ") had errors. Most likely all " + \
-           "tests after this one will fail."
-
-
-class FileNotFoundError(Error):
-  """
-  Class: FileNotFoundError
-  ------------------------
-  Occurs when a file cannot be found for grading.
-  """
-  def __init__(self, filename):
-    self.filename = filename
-
-  def __repr__(self):
-    return "FileNotFoundError: File " + self.filename + " could not be found."
-
-
-class GroupingSelectError(Error):
-  """
-  Class: GroupingSelectError
-  --------------------------
-  Occurs when a query selects on a column that was not grouped on.
-  """
-  def __repr__(self):
-    return "GroupingSelectError: Selected on a column that was not grouped on."
+    return "DependencyError (%d): Dependent query from problem %s in file " + \
+           "%s got error \"%s\"." % (self.errno, self.num, self.f, self.msg)
 
 
 
@@ -242,25 +236,44 @@ class MissingKeywordError(Error):
   The value of the error is a list of keywords that were missing.
   """
   def __init__(self, keywords):
+    # The list of keywords that are missing.
     self.keywords = keywords
+
 
   def __repr__(self):
     return "MissingKeywordError: Keyword" + \
-           ("s" if len(self.keywords) > 1 else "") + ": " + \
-           ", ".join(self.keywords)
+           ("s" if len(self.keywords) > 1 else "") + " " + \
+           ", ".join(self.keywords) + " missing from query."
 
 
-class MySQLError(Error):
+
+class TimeoutError(DatabaseError):
   """
-  Class: MySQLError
-  -----------------
-  Represents a MySQL error.
+  Class: TimeoutError
+  -------------------
+  Occurs when a query times out.
   """
-  def __init__(self, value):
-    self.value = value
+  def __repr__(self):
+    return "TimeoutError: Query timed out."
+
+
+
+
+
+
+#### TODO
+class FileNotFoundError(Error):
+  """
+  Class: FileNotFoundError
+  ------------------------
+  Occurs when a file cannot be found for grading.
+  """
+  def __init__(self, filename):
+    self.filename = filename
 
   def __repr__(self):
-    return "MySQL Error " + str(self.value)
+    return "FileNotFoundError: File " + self.filename + " could not be found."
+             
 
 
 
