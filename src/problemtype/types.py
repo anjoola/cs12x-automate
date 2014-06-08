@@ -95,27 +95,29 @@ class ProblemType(object):
       graded_test = {"errors": [], "deductions": [], "success": False}
       self.output["tests"].append(graded_test)
 
-      try:
-        # Set a new connection timeout if specified.
-        if test.get("timeout"):
-          self.db.get_db_connection(test["timeout"])
+      # Set a new connection timeout if specified.
+      if test.get("timeout"):
+        self.db.get_db_connection(test["timeout"])
 
-        # Grade test and apply any other deductions.
+      # Grade the test with the specific handler.
+      try:
         lost_points += self.grade_test(test, graded_test)
-        if graded_test.get("deductions"):
-          (deductions, errors) = self.get_errors(graded_test["deductions"], \
-                                                 test["points"])
-          self.output["errors"] += errors
-          lost_points += deductions
 
       # If their query times out, restart the connection and output an error.
       # Retry their query first (so all queries are tried at most twice).
       except TimeoutError as e:
-        lost_points += test["points"]
         self.db.kill_query()
-        self.db.get_db_connection(None, False)
+        self.db.get_db_connection(test.get("timeout"), False)
         add(self.output["errors"], e)
-        # TODO retry query
+
+        # Retry their query. If it still doesn't work, then give up.
+        try:
+          lost_points += self.grade_test(test, graded_test)
+        except TimeoutError as e:
+          lost_points += test["points"]
+          self.db.kill_query()
+          self.db.get_db_connection(test.get("timeout"), False)
+          continue
 
       # If there was a database error, print out the error that occurred.
       except DatabaseError as e:
@@ -125,6 +127,13 @@ class ProblemType(object):
       # Run the teardown query no matter what.
       finally:
         if test.get("teardown"): self.db.execute_sql(test["teardown"])
+
+      # Apply deductions.
+      if graded_test.get("deductions"):
+        (deductions, errors) = self.get_errors(graded_test["deductions"], \
+                                               test["points"])
+        self.output["errors"] += errors
+        lost_points += deductions
 
       self.got_points -= lost_points
       points = test["points"] - lost_points

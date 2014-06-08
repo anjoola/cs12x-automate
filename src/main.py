@@ -3,7 +3,7 @@ import mysql.connector
 
 import dbtools, formatter, iotools
 from CONFIG import ASSIGNMENT_DIR, CONNECTION_TIMEOUT, MAX_TIMEOUT, LOGIN
-from errors import *
+from errors import FileNotFoundError
 from grader import Grader
 from iotools import err, log
 from models import *
@@ -180,7 +180,7 @@ class AutomationTool:
 
       # If the file does not exist, then they get 0 points.
       except IOError:
-        graded_file["errors"] += FileNotFoundError(fname) # TODO
+        add(graded_file["errors"], FileNotFoundError(fname))
 
     # Grade this student, make style deductions, and output the results.
     output["got_points"] = self.grader.grade(response, output)

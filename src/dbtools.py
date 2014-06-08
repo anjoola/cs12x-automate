@@ -160,8 +160,7 @@ class DBTools:
   
       # Get views, functions, procedures, and triggers.
       state.views = self.execute_sql(
-        "SELECT table_name FROM information_schema.tables "
-        "WHERE table_type='VIEW'"
+        "SELECT table_name FROM information_schema.views"
       ).results
       state.functions = self.execute_sql(
         "SELECT routine_name FROM information_schema.routines "
@@ -173,7 +172,7 @@ class DBTools:
       ).results
       state.triggers = self.execute_sql(
         "SELECT trigger_name FROM information_schema.triggers"
-      )
+      ).results
     except mysql.connector.errors.Error as e:
       err("Could not get the database state. Future gradings are possibly " + \
           "affected.")

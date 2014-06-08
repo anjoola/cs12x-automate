@@ -184,7 +184,7 @@ class Result:
 
     returns: The newly-modified Result object.
     """
-    assert(self.col_names == other.col_names)
+    assert(self.col_names == other.col_names or len(other.col_names) == 0)
     self.results += other.results
     self.output = iotools.prettyprint(self.results, self.col_names)
     return self
@@ -199,7 +199,7 @@ class Result:
 
     returns: The newly-modified Result object.
     """
-    assert(self.col_names == other.col_names)
+    assert(self.col_names == other.col_names or len(other.col_names) == 0)
     self.results = filter(lambda row: row not in other.results, self.results)
     self.output = iotools.prettyprint(self.results, self.col_names)
     return self
