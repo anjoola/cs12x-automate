@@ -10,6 +10,12 @@ The following tools and libraries must be installed prior to running the tool.
 * [prettytable](https://code.google.com/p/prettytable/)
 
 
+Config File
+-----------
+The configuration file can be found in `src/CONFIG.py`. Nothing needs to be
+changed a
+
+
 Directory Structure
 -------------------
 The directory structure of the automation tool is as follows. All files for a
