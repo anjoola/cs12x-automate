@@ -15,7 +15,7 @@ Config File
 The configuration file can be found in `src/CONFIG.py`. Nothing needs to be
 changed unless verbose output is desired or the default directories to save
 things needs to be changed. However, the values in `src/secret.py` _do_ need
-to be changed and should _**no**_ be committed to the repository!
+to be changed and should _**not**_ be committed to the repository!
 
 
 Directory Structure
