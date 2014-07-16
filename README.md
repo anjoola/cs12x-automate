@@ -13,7 +13,9 @@ The following tools and libraries must be installed prior to running the tool.
 Config File
 -----------
 The configuration file can be found in `src/CONFIG.py`. Nothing needs to be
-changed a
+changed unless verbose output is desired or the default directories to save
+things needs to be changed. However, the values in `src/secret.py` _do_ need
+to be changed and should _**no**_ be committed to the repository!
 
 
 Directory Structure
