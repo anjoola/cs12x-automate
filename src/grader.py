@@ -2,7 +2,11 @@ import mysql.connector
 
 import dbtools, iotools
 from CONFIG import MAX_TIMEOUT
-from errors import add, DatabaseError, DependencyError
+from errors import (
+  add,
+  DatabaseError,
+  DependencyError
+)
 from iotools import log
 from models import Response
 from problemtype import *

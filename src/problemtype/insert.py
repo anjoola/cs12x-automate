@@ -1,4 +1,4 @@
-from dbtools import check_valid_query
+from sqltools import check_valid_query
 from errors import DatabaseError
 from types import ProblemType, SuccessType
 

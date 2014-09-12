@@ -4,13 +4,18 @@ Module: iotools
 Functions involving input and output into the system, as well as file-related
 functions.
 """
-import json, os, sys, time
+import json
+import os
+import sys
+import time
 from datetime import datetime
 from os.path import getmtime
 
 import prettytable
 
-import dbtools, formatter
+import dbtools
+import formatter
+import sqltools
 from CONFIG import *
 from models import Response
 
@@ -143,7 +148,7 @@ def parse_file(f): # TODO review
 
   inline_comment = ""
   # Preprocess the file for DELIMITER statements.
-  f = dbtools.preprocess_sql(f)
+  f = sqltools.preprocess_sql(f)
   for line in f.split("\n"):
     # Remove tabs.
     line = line.replace("\t", "    ")
