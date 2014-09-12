@@ -17,6 +17,8 @@ class Select(ProblemType):
     deductions = 0
     test_points = test["points"]
 
+    # TODO make sure it is a select statement
+
     # Run the test query and the student's query.
     try:
       expected = self.db.execute_sql(test["query"], test.get("setup"), \

@@ -28,6 +28,19 @@ def add(lst, error):
   """
   lst.append(repr(error))
 
+
+class FileNotFoundError(Error):
+  """
+  Class: FileNotFoundError
+  ------------------------
+  Occurs when a file cannot be found for grading.
+  """
+  def __init__(self, filename):
+    self.filename = filename
+
+  def __repr__(self):
+    return "FileNotFoundError: File % could not be found." % self.filename
+
 # ------------------------------ Grading Errors ----------------------------- #
 
 class StyleError(Error):
@@ -120,6 +133,12 @@ class QueryError(Error):
   then 5 points are deducted. If 'proportion' is set to 1, then the number of
   points deducted is equal to 'point deduction'.
   """
+  """
+  TODO
+  BAD_QUERY = (
+    "BadQueryError", 0, 0,
+    "Query is bad because it contains unexpected
+  """
   COLUMN_ORDER = (
     "ColumnOrderError", 1, 0.3,
     "Columns are in the wrong order."
@@ -186,8 +205,8 @@ class DatabaseError(Error):
   --------------------
   Represents any error that occurs with the database, either user or client
   errors as listed in:
-  - TODO
-  -
+  - http://dev.mysql.com/doc/refman/5.7/en/error-messages-server.html
+  - http://dev.mysql.com/doc/refman/5.7/en/error-messages-client.html
   """
   def __init__(self, error):
     # The MySQL error number.
@@ -199,6 +218,10 @@ class DatabaseError(Error):
 
   def __repr__(self):
     return "DatabaseError (%d): %s" % (self.errno, self.msg)
+
+
+  def __str__(self):
+    return repr(self)
 
 
 
@@ -253,39 +276,9 @@ class TimeoutError(DatabaseError):
   -------------------
   Occurs when a query times out.
   """
+  def __init__(self):
+    pass
+
+
   def __repr__(self):
     return "TimeoutError: Query timed out."
-
-
-
-
-
-
-#### TODO
-class FileNotFoundError(Error):
-  """
-  Class: FileNotFoundError
-  ------------------------
-  Occurs when a file cannot be found for grading.
-  """
-  def __init__(self, filename):
-    self.filename = filename
-
-  def __repr__(self):
-    return "FileNotFoundError: File " + self.filename + " could not be found."
-             
-
-
-
-class ParsingError(Error):
-  """
-  Class: ParsingError
-  -------------------
-  Represents an error that occurs when parsing a student's file.
-  """
-  def __init__(self, value):
-    self.value = value
-
-  def __repr__(self):
-    return "ParsingError: " + self.value
-

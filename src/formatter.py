@@ -136,7 +136,7 @@ def format_student(output, specs):
   # Create the necessary directories if needed.
   create_path(specs["assignment"])
 
-  # Create output per student, per file. Files are named student-file.html.
+  # Create output per student, per file. Files are named <student>-<file>.html.
   for f in output["files"].values():
     o = StringIO()
     o.write("<link rel='stylesheet' type='text/css' href='../style/css.css'>\n")
