@@ -3,15 +3,24 @@ Module: dbtools
 ---------------
 Contains helper methods involving the database, its state, and queries.
 """
-import codecs, os, re, subprocess
+import codecs
+import os
+import re
+import subprocess
 from cStringIO import StringIO
 
-import mysql.connector, mysql.connector.errors, sqlparse
+import mysql.connector
+import mysql.connector.errors
+import sqlparse
 
 from cache import Cache
 from CONFIG import *
 from errors import DatabaseError, TimeoutError
-from iotools import err, log, prettyprint
+from iotools import (
+  err,
+  log,
+  prettyprint
+)
 from models import DatabaseState, Result
 from terminator import Terminator
 
@@ -125,10 +134,12 @@ class DBTools:
     self.timeout = timeout or CONNECTION_TIMEOUT
     log("New timeout: %d" % self.timeout)
     try:
-      self.db = mysql.connector.connect(user=self.user, \
-                                        password=LOGIN[self.user], host=HOST, \
-                                        database=self.database, port=PORT, \
-                                        connection_timeout=self.timeout, \
+      self.db = mysql.connector.connect(user=self.user,
+                                        password=LOGIN[self.user],
+                                        host=HOST,
+                                        database=self.database,
+                                        port=PORT,
+                                        connection_timeout=self.timeout,
                                         autocommit=True) # TODO should be false?? what
       self.cursor = self.db.cursor(buffered=True)
     except mysql.connector.errors.Error as e:
@@ -405,6 +416,7 @@ class DBTools:
     # Consume old results if needed.
     [row for row in self.cursor]
 
+    # TODO do we still need this?
     # Separate the CALL procedure statements.
     #sql_list = queries.split("CALL")
     #if len(sql_list) > 0:
@@ -493,6 +505,32 @@ class DBTools:
       # to actually be executed.
       for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
     f.close()
+
+
+def check_valid_query(query, query_type):
+  """
+  Function: check_valid_query
+  ---------------------------
+  Check to see that a query is a valid query (i.e. it is not a malicious query).
+  Does this by making sure the query_type is found in the query and that there
+  are no other SQL statements being run. For example, if the query_type is an
+  INSERT statement, makes sure that the 'INSERT' keyword is found in the query.
+
+  This does not work for multi-statement SQL queries, such as CREATE TABLEs.
+
+  Obviously this is not perfect and plenty of statements can get through.
+  However, it should be sufficient unless there are some very evil students.
+
+  query: The query to check.
+  query_type: The query type (e.g. INSERT, DELETE, CREATE TABLE).
+  returns: True if the query is valid, False otherwise.
+  """
+  return not (
+    # Make sure the query type can be found in the query.
+    query.lower().find(query_type.lower()) != -1 and
+    # Make sure there is only one SQL statement.
+    query.strip().rstrip(";").find(";") == -1
+  )
 
 
 def import_file(assignment, f):

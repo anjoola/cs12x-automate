@@ -1,3 +1,4 @@
+from dbtools import check_valid_query
 from errors import DatabaseError, QueryError
 from types import ProblemType, SuccessType
 
@@ -16,6 +17,11 @@ class Select(ProblemType):
     success = True
     deductions = 0
     test_points = test["points"]
+
+    # Make sure the student did not submit a malicious query.
+    if not check_valid_query(self.response.sql, "select"):
+      # TODO output something that says they attempted somethign OTHER than select
+      return test["points"]
 
     # TODO make sure it is a select statement
 

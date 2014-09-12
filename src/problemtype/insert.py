@@ -1,3 +1,4 @@
+from dbtools import check_valid_query
 from errors import DatabaseError
 from types import ProblemType, SuccessType
 
@@ -14,11 +15,8 @@ class Insert(ProblemType):
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
 
-    # Make sure the query IS an insert statement and is only a single statement
-    # (by checking that after removing the trailing semicolon, there are no
-    # more).
-    if not (self.response.sql.lower().find("insert") != -1 and \
-            self.response.sql.strip().rstrip(";").find(";") == -1):
+    # Make sure the student did not submit a malicious query.
+    if not check_valid_query(self.response.sql, "insert"):
       # TODO output something that says they attempted somethign OTHER than insert
       return test["points"]
 

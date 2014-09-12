@@ -1,3 +1,4 @@
+from dbtools import check_valid_query
 from errors import DatabaseError
 from types import ProblemType, SuccessType
 
@@ -18,12 +19,9 @@ class Delete(ProblemType):
     table_sql = ('SELECT * FROM %s' % test['table'])
     before = self.db.execute_sql(table_sql)
 
-    # Make sure the query IS a delete statement and is only a single statement
-    # (by checking that after removing the trailing semicolon, there are no
-    # more).
-    if not (self.response.sql.lower().find("delete") != -1 and \
-            self.response.sql.strip().rstrip(";").find(";") == -1):
-      # TODO output something if it not a delete statement
+     # Make sure the student did not submit a malicious query.
+    if not check_valid_query(self.response.sql, "delete"):
+      # TODO output something that says they attempted somethign OTHER than delete
       return test["points"]
 
     # If this is a self-contained DELETE test (Which means it will occur within
