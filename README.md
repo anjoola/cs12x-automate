@@ -13,9 +13,9 @@ The following tools and libraries must be installed prior to running the tool.
 Config File
 -----------
 The configuration file can be found in `src/CONFIG.py`. Nothing needs to be
-changed unless verbose output is desired or the default directories to save
-things needs to be changed. However, the values in `src/secret.py` _do_ need
-to be changed and should _**not**_ be committed to the repository!
+changed unless verbose output is desired or the directories to save things
+in needs to be changed. However, the values in `src/secret.py` _do_ need
+to be changed but should _**not**_ be committed to the repository!
 
 
 Directory Structure
@@ -47,8 +47,8 @@ After the repository is cloned, it should have the directory structure
 detailed above, except the `assignments` folder needs to be filled in with
 the correct specs and student files!
 
-Running
--------
+Usage
+-----
 
     python main.py --assignment <assignment name>
                    [--files <files to grade>]
@@ -75,6 +75,17 @@ Example usage:
 Or:
 
     python main.py --assignment cs121hw7 --after 2014-03-01
+
+If you wanted to run multiple instances of the grading too, you can do so
+by using different users on the same database:
+
+    python main.py --assignment cs121hw8 --db grading_database_1 --user grader1
+    python main.py --assignment cs121hw8 --db grading_database_1 --user grader2
+
+Or different databases:
+
+    python_main.py --assignment cs121hw8 --db grading_database_1
+    python main.py --assignment cs121hw8 --db grading_database_2
 
 Output
 ------
