@@ -1,5 +1,5 @@
 from errors import DatabaseError
-from types import *
+from types import ProblemType, SuccessType
 
 class Update(ProblemType):
   """
@@ -65,7 +65,7 @@ class Update(ProblemType):
       return test["points"]
 
     # Otherwise, their update statement is correct.
-    output["success"] = True
+    output["success"] = SuccessType.SUCCESS
     return 0
 
 

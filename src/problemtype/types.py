@@ -1,10 +1,27 @@
-import cgi, difflib
+import cgi
+import difflib
 from cStringIO import StringIO
 
 import mysql.connector
 
-from errors import add, DatabaseError, MissingKeywordError, TimeoutError, \
-                   QueryError
+from errors import (
+  add,
+  DatabaseError,
+  MissingKeywordError,
+  TimeoutError,
+  QueryError
+)
+
+class SuccessType(object):
+  """
+  Class: SuccessType
+  ------------------
+  The result of a test (if it is successful).
+  """
+  SUCCESS = True
+  FAILURE = False
+  UNDETERMINED = "UNDETERMINED"
+
 
 class ProblemType(object):
   """
@@ -92,7 +109,11 @@ class ProblemType(object):
     # Run each test for the problem.
     for test in self.specs["tests"]:
       lost_points = 0
-      graded_test = {"errors": [], "deductions": [], "success": False}
+      graded_test = { \
+        "errors": [], \
+        "deductions": [], \
+        "success": SuccessType.FAILURE
+      }
       self.output["tests"].append(graded_test)
 
       # Set a new connection timeout if specified.
@@ -180,7 +201,7 @@ class ProblemType(object):
 
       # TODO fancy javascript?
       # Print whether or not the test was successful.
-      if test["success"] == "UNDETERMINED":
+      if test["success"] == SuccessType.UNDETERMINED:
         o.write("<li><div class='uncertain'>UNDETERMINED")
       elif test["success"]:
         o.write("<li><div class='passed'>PASSED")
@@ -190,7 +211,7 @@ class ProblemType(object):
       # Other test details such as the number of points received, and the
       # description of the test. Only print the number of points if the test is
       # not undetermined.
-      if test["success"] != "UNDETERMINED":
+      if test["success"] != SuccessType.UNDETERMINED:
         o.write(" (" + str(test["got_points"]) + "/" + \
           str(specs["points"]) + " Points)")
       o.write("</div><br>\n")

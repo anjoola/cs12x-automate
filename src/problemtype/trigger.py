@@ -1,5 +1,5 @@
 from errors import DatabaseError
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Trigger(ProblemType):
   """
@@ -47,7 +47,7 @@ class Trigger(ProblemType):
       return test["points"]
 
     # Otherwise, their trigger worked.
-    output["success"] = True
+    output["success"] = SuccessType.SUCCESS
     return 0
 
 

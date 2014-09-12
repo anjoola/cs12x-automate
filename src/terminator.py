@@ -1,6 +1,11 @@
 import mysql.connector
 
-from CONFIG import LOGIN, HOST, PORT, MAX_TIMEOUT
+from CONFIG import (
+  HOST,
+  LOGIN,
+  MAX_TIMEOUT,
+  PORT
+)
 
 class Terminator:
   """
@@ -15,9 +20,11 @@ class Terminator:
   cursor = None
 
   def __init__(self, user, database):
-    self.db = mysql.connector.connect(user=user, \
-                                      password=LOGIN[user], host=HOST, \
-                                      database=database, port=PORT, \
+    self.db = mysql.connector.connect(user=user,
+                                      password=LOGIN[user],
+                                      host=HOST,
+                                      database=database,
+                                      port=PORT,
                                       connection_timeout=MAX_TIMEOUT)
     self.cursor = self.db.cursor(buffered=True)
 

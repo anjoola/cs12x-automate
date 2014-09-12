@@ -1,5 +1,5 @@
 from CONFIG import PRECISION
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Function(ProblemType):
   """
@@ -55,10 +55,10 @@ class Function(ProblemType):
 
     # Should be all or nothing.
     if not self.compare(test["expected"], result, test["type"]):
-      output["success"] = False
+      output["success"] = SuccessType.FAILURE
       return test["points"]
     else:
-      output["success"] = True
+      output["success"] = SuccessType.SUCCESS
       return 0
 
 

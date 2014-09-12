@@ -1,4 +1,4 @@
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Manual(ProblemType):
   """
@@ -9,7 +9,7 @@ class Manual(ProblemType):
   """
 
   def grade_test(self, test, output):
-    output["success"] = "UNDETERMINED"
+    output["success"] = SuccessType.UNDETERMINED
     return 0
 
 

@@ -1,5 +1,5 @@
 from errors import DatabaseError
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Insert(ProblemType):
   """
@@ -68,7 +68,7 @@ class Insert(ProblemType):
       return test["points"]
 
     # Otherwise, their insert statement is correct.
-    output["success"] = True
+    output["success"] = SuccessType.SUCCESS
     return 0
 
 

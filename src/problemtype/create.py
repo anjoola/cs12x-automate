@@ -1,4 +1,4 @@
-from types import ProblemType
+from types import SuccessType, ProblemType
 
 class Create(ProblemType):
   """
@@ -13,7 +13,7 @@ class Create(ProblemType):
     if test.get("run-query"):
       self.db.execute_sql(self.response.sql)
 
-    output["success"] = "UNDETERMINED"
+    output["success"] = SuccessType.UNDETERMINED
     return 0
 
 

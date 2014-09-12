@@ -1,5 +1,5 @@
 from errors import DatabaseError
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Delete(ProblemType):
   """
@@ -70,7 +70,7 @@ class Delete(ProblemType):
       return test["points"]
 
     # Otherwise, their delete statement is correct.
-    output["success"] = True
+    output["success"] = SuccessType.SUCCESS
     return 0
 
 

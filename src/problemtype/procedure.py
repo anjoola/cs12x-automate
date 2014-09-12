@@ -1,5 +1,5 @@
 from errors import DatabaseError
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Procedure(ProblemType):
   """
@@ -26,7 +26,7 @@ class Procedure(ProblemType):
     adds = list(set(after.results) - set(before.results))
     output["adds"] = ("" if len(adds) == 0 else self.db.prettyprint(adds))
 
-    output["success"] = "UNDETERMINED"
+    output["success"] = SuccessType.UNDETERMINED
     # TODO how to handle deductions?
     return 0
 

@@ -1,5 +1,5 @@
 from errors import DatabaseError, QueryError
-from types import ProblemType
+from types import ProblemType, SuccessType
 
 class Select(ProblemType):
   """
@@ -32,7 +32,7 @@ class Select(ProblemType):
     if len(expected.results) != len(actual.results):
       output["expected"] = expected.output
       output["actual"] = actual.output
-      output["success"] = False
+      output["success"] = SuccessType.FAILURE
       return test_points
 
     # If we don't need to check that the results are ordered, then sort the
