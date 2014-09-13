@@ -183,7 +183,7 @@ def format_student(output, specs):
           o.write("<br><i>No comments provided...</i><br>\n")
         else:
           o.write("<div class='comment'>" + problem["comments"] + "</div>")
-      o.write("<b>SQL</b>")
+      o.write("<b>Student's Response</b>")
       o.write("<div class='sql'>" + problem["sql"] + "</div>")
 
       # Test output.

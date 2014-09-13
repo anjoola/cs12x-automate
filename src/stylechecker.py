@@ -40,8 +40,7 @@ class StyleChecker:
     Checks for style violations.
 
     f: The file to check.
-    returns: A tuple of the form (deduction, errors), where deduction is the
-             number of points to take off and errors is a list of errors.
+    returns: A list of style errors.
     """
     cls.errors = collections.defaultdict(int)
     lines = f.readlines()
@@ -52,15 +51,11 @@ class StyleChecker:
       line = lines[i][:-1]
       cls.check_line(line, i + 1)
 
-    # Compute the total number of points to deduct and the list of errors and
-    # their descriptions.
-    deductions = 0
     error_list = []
     for e in cls.errors:
-      deductions += StyleError.deduction(e, cls.errors[e], num_lines)
-      error_list.append(StyleError.to_string(e))
-
-    return (deductions, error_list)
+      string = StyleError.to_string(e, cls.errors[e], num_lines)
+      error_list.append(string)
+    return error_list
 
 
   @classmethod

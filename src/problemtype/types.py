@@ -199,7 +199,6 @@ class ProblemType(object):
         has_printed_test = True
         o.write("<b>Tests</b>\n<ul>\n")
 
-      # TODO fancy javascript?
       # Print whether or not the test was successful.
       if test["success"] == SuccessType.UNDETERMINED:
         o.write("<li><div class='uncertain'>UNDETERMINED")
@@ -343,7 +342,12 @@ class ProblemType(object):
     """
     (ediff, adiff) = self.get_diffs(lst1, lst2)
     (eindex, aindex) = (0, 0)
-    space = " " * (len(ediff[eindex][1]) + 6)
+
+    # Heading for expected and actual
+    o.write("<b>Expected</b>" + \
+            " " * (len(ediff[0][1]) - len("Expected") + 6) + "<b>Actual</b>\n")
+    space = " " * (max(len(ediff[eindex][1]), len("Expected")) + 6)
+
     while eindex < len(ediff):
       (diff_type, evalue) = ediff[eindex]
       # An expected result not found in the actual results.
@@ -368,6 +372,7 @@ class ProblemType(object):
       (_, avalue) = adiff[aindex]
       o.write(space + "<font color='red'>" + self.e(avalue) + "</font>\n")
       aindex += 1
+
 
 def stringify(lst):
   """

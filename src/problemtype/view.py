@@ -32,7 +32,7 @@ class View(ProblemType):
   selects from it to see if it contains the same rows as the solution query.
   """
 
-  def check_updatable(self, test, output):
+  def check_updatable(self, viewname, output):
     """
     Function: check_updatable
     -------------------------
@@ -43,7 +43,7 @@ class View(ProblemType):
     """
     result = self.db.execute_sql(
       "SELECT is_updatable FROM information_schema.views WHERE "
-      "table_name='%s'" % test["view"]
+      "table_name='%s'" % viewname
     ).results
     return result[0][0] == "YES"
 
@@ -54,17 +54,29 @@ class View(ProblemType):
 
     # Run the student's create view statement and select from that view to see
     # what is in the view.
+    viewname = test["view"]
     try:
       self.db.execute_sql(self.response.sql)
-      actual = self.db.execute_sql('SELECT * FROM %s' % test["view"])
     except DatabaseError as e:
-      # If an exception occurs, run the solution CREATE VIEW query.
-      self.db.execute_sql(test["query"])
-      actual = Result()
       raise e
+    try:
+      actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
+    except DatabaseError as e:
+      # If an exception occurs, they must have not named the view correctly.
+      # Attempt to interpret the view name.
+      start_idx = self.response.sql.find("CREATE VIEW ") + len("CREATE VIEW ")
+      end_idx = self.response.sql.find(" AS")
+      viewname = self.response.sql[start_idx:end_idx]
+      try:
+        actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
+      # Give up, some other error.
+      except DatabaseError as e:
+        raise e
+
+      output["deductions"].append(QueryError.INCORRECT_VIEW_NAME)
 
     # Check if the view is updatable, if necessary. If not, take points off.
-    if test.get('updatable') and not self.check_updatable(test, output):
+    if test.get('updatable') and not self.check_updatable(viewname, output):
       output["deductions"].append(QueryError.NOT_UPDATABLE)
 
     # If we don't need to check that the columsn are ordered in the same way,

@@ -23,8 +23,6 @@ class Select(ProblemType):
       # TODO output something that says they attempted somethign OTHER than select
       return test["points"]
 
-    # TODO make sure it is a select statement
-
     # Run the test query and the student's query.
     try:
       expected = self.db.execute_sql(test["query"], test.get("setup"), \

@@ -1,9 +1,19 @@
-import argparse, os, sys
+import argparse
+import os
+import sys
+
 import mysql.connector
 
-import dbtools, formatter, iotools
-from CONFIG import ASSIGNMENT_DIR, CONNECTION_TIMEOUT, MAX_TIMEOUT, LOGIN
-from errors import FileNotFoundError
+import dbtools
+import formatter
+import iotools
+
+from CONFIG import (
+  ASSIGNMENT_DIR,
+  CONNECTION_TIMEOUT,
+  MAX_TIMEOUT
+)
+from errors import add, FileNotFoundError
 from grader import Grader
 from iotools import err, log
 from models import *
@@ -116,7 +126,7 @@ class AutomationTool:
     --------------------
     Run the grading loop. Goes through each student and grades them.
     """
-    log("\n\n========================START GRADING========================\n\n")
+    log("\n\n========================START GRADING========================\n")
     # Get the state of the database before grading.
     state = self.db.get_state()
 
@@ -170,10 +180,9 @@ class AutomationTool:
         # Run their files through the stylechecker to make sure it is valid. Add
         # the errors to the list of style errors for this file and overall for
         # this student.
-        (deductions, style_errors) = StyleChecker.check(f)
-        # TODO have deductions for a single file
-        graded_file["errors"] += style_errors
+        graded_file["errors"] += StyleChecker.check(f)
 
+        # Reset back to the beginning of the file.
         f.seek(0)
         response[filename] = iotools.parse_file(f)
         f.close()
@@ -184,7 +193,6 @@ class AutomationTool:
 
     # Grade this student, make style deductions, and output the results.
     output["got_points"] = self.grader.grade(response, output)
-    # TODO deduct style errors
     formatter.format_student(output, self.specs)
 
 

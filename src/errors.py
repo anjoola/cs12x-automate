@@ -39,7 +39,7 @@ class FileNotFoundError(Error):
     self.filename = filename
 
   def __repr__(self):
-    return "FileNotFoundError: File % could not be found." % self.filename
+    return "FileNotFoundError: File %s could not be found." % self.filename
 
 # ------------------------------ Grading Errors ----------------------------- #
 
@@ -88,35 +88,23 @@ class StyleError(Error):
   )
 
   @staticmethod
-  def deduction(error, num_occurrences, num_lines):
-    """
-    Function: deduction
-    -------------------
-    Gets the number of points to deduct for a specific style error.
-
-    error: The style error.
-    num_occurrences: The number of times the error has occurred.
-    num_lines: The number of lines in the file to grade.
-
-    returns: The number of points to deduct.
-    """
-    # Get the number of lines the error has to occur in order for a deduction
-    # to happen.
-    times = int(error[1] * num_lines) if error[1] < 1 else error[1]
-    return error[2] if num_occurrences >= times else 0
-
-
-  @staticmethod
-  def to_string(error):
+  def to_string(error, num_occurrences, num_lines):
     """
     Function: to_string
     -------------------
     Gets the description of an error as a string.
 
     error: The error to get the description of.
-    returns: The description as a string.
+    returns: The description as a string if a deduction is necessary, otherwise
+             returns None.
     """
-    return "%s: %s" % (error[0], error[3])
+    # Get the number of lines the error has to occur in order for a deduction
+    # to happen.
+    times = int(error[1] * num_lines) if error[1] < 1 else error[1]
+    if num_occurrences >= times:
+      return "%s [-%d suggested]: %s" % (error[0], error[2], error[3])
+    else:
+      return "<i>%s [-0]: %s</i> [Did not occur often]" % (error[0], error[3])
 
 
 
@@ -142,6 +130,11 @@ class QueryError(Error):
   COLUMN_ORDER = (
     "ColumnOrderError", 1, 0.3,
     "Columns are in the wrong order."
+  )
+
+  INCORRECT_VIEW_NAME = (
+    "IncorrectViewNameError", 0, 0,
+    "View was not named correctly."
   )
 
   ORDER_BY = (
