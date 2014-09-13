@@ -6,6 +6,9 @@ a:hover {
   color: #000000;
   cursor: pointer;
 }
+body {
+  margin: 0px;
+}
 h3 {
   color: #1B449E;
   margin-bottom: 10px;
@@ -37,53 +40,121 @@ ul {
 /***************************** Main HTML Elements *****************************/
 
 #container {
-  bottom: 0px;
-  left: 100px;
-  margin: 10px;
-  position: fixed;
-  top: 0px;
+  display: block;
+  position: relative;
+  height: 100%;
+  width: 100%;
 }
-#iframe-middle {
+#contents {
+  display: block;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  z-index: 99998;
+}
+#graded {
+  background: #96D2FA;
+  bottom: 0;
+  display: inline-block;
+  left: 0px;
+  overflow: hidden;
+  position: absolute;
+  right: 502px;
+  top: 35px;
+}
+#hide-raw {
+  background: #FFCC33;
+  bottom: 0px;
+  box-shadow: 2px 2px 1px #CCCCCC;
+  float: right;
+  font-size: 12px;
+  padding: 5px;
+  position: absolute;
+  right: 20px;
+  z-index: 99999;
+}
+#hide-raw:hover {
+  bottom: 2px;
+  cursor: pointer;
+}
+#iframes {
+  display: block;
+}
+#iframe-graded {
+  background: white;
+  border: 0px;
+  height: 100%;
+  width: 100%;
+}
+#iframe-raw {
   background: white;
   border: 0px;
   height: 100%;
   overflow: auto;
   width: 100%;
-}
-#iframe-right {
-  background: white;
-  border: 0px;
-  height: 100%;
-  width: 100%;
-}
-#left {
+}                
+#list {
+  background: black;
+  border-right: 2px solid #444444;
+  color: white;
   float: left;
   height: 100%;
-  width: 100px;
+  overflow: auto;
+  min-width: 130px;
+  z-index: 99999;
 }
-#middle {
+#list-inner {
+  padding: 10px;
+  padding-right: 15px;
+  z-index: 99999;
+}
+#name {
+  color: white;
+  display: inline;
+  font-size: 20px;
+  padding-left: 10px;
+  padding-right: 15px;
+}
+#raw {
   background: #96D2FA;
-  border: 1px solid black;
-  float: left;
-  height: 100%;
-  line-height: 175%;
-  overflow-y: hidden;
-  width: 640px;
-}
-#right {
-  background: #96D2FA;
-  border: 1px solid black;
-  float: left;
-  height: 100%;
-  line-height: 175%;
-  margin-left: -1px;
-  overflow-y: hidden;
+  border-left: 2px solid #AAAAAA;
+  bottom: 0;
+  float: right;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 35px;
   width: 500px;
+}
+#show-raw {
+  background: #FFCC33;
+  bottom: 0px;
+  box-shadow: 2px 2px 1px #CCCCCC;
+  float: right;
+  font-size: 12px;
+  padding: 5px;
+  position: absolute;
+  right: 20px;
+  z-index: 99999;
+}
+#show-raw:hover {
+  bottom: 2px;
+  cursor: pointer;
 }
 #students {
   display: block;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 22px;
+}
+#title {
+  background: #1D578B;
+  box-shadow: 0px 2px 5px #CCCCCC;
+  display: block;
+  height: 35px;
+  position: relative;
+  z-index: 99997;
+}
+#title-inner {
+  padding: 6px;
 }
 
 /*********************************** Others ***********************************/
@@ -107,40 +178,38 @@ ul {
   display: inline;
   font-weight: bold;
 }
+.iframe-container {
+  position: relative;
+  overflow-y: hidden;
+}
 .label {
-  background: #FFFFFF;
-  border-radius: 5px;
+  border-bottom: 3px solid #DDDDDD;
+  color: white;
   cursor: pointer;
   display: inline;
   font-size: 14px;
-  font-weight: bold;
   padding: 4px;
-  padding-top: 2px;
+  padding-top: 0px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 .label-active {
-  background: #FFD675;
+  border-bottom: 3px solid red;
+  font-weight: bold;
 }
 .label:hover {
-  background: #FFD675;
-}
-.links {
-  margin: 3px;
-  margin-top: 0px;
+  border-bottom: 3px solid red;
+  font-weight: bold;
 }
 .name {
   display: inline;
   font-size: 18px;
-  font-weight: bold;
   padding: 5px;
 }
 .passed {
   color: green;
   display: inline;
   font-weight: bold;
-}
-.resizable {
-  overflow: scroll;
-  resize: horizontal;
 }
 .results {
   background: #fefefe;
@@ -163,13 +232,19 @@ ul {
   overflow-x: auto;
   white-space: pre-wrap;
 }
+.student-link {
+  color: white;
+}
+.student-link:hover {
+  color: #96D2FA;
+}
 .student-page {
   background: white;
   padding: 8px;
 }
 .test-specs {
   background: #efefef;
-  border: 1px solid #aaaaaa;
+  border: 1px solid #AAAAAA;
   font-family: Consolas, monospace;
   font-size: 12px;
   padding: 10px;
@@ -178,14 +253,14 @@ ul {
   overflow-x: auto;
   white-space: pre-wrap;
 }
-.title {
-  background: #297CC4;
-  border-bottom: 1px solid black;
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  width: 100%;
+.toast {
+  background: #cccccc;
+  box-shadow: 2px 2px 1px #aaaaaa;
+  font-size: 12px;
+  padding: 5px;
+  position: absolute;
+  right: 20px;
+  z-index: 99999;
 }
 .uncertain {
   color: orange;

@@ -4,10 +4,19 @@ Module: formatter
 Formats the graded output into HTML.
 """
 
-import cgi, json, os, shutil
+import cgi
+import json
+import os
+import shutil
 from cStringIO import StringIO
 
-from CONFIG import ASSIGNMENT_DIR, RESULT_DIR, STYLE_DIR
+from CONFIG import (
+  ASSIGNMENT_DIR,
+  FILE_DIR,
+  RESULT_DIR,
+  STYLE_DIR,
+  STYLE_DIR_BASE
+)
 from problemtype import PROBLEM_TYPES
 
 def create_path(assignment):
@@ -23,12 +32,12 @@ def create_path(assignment):
   path = ASSIGNMENT_DIR + assignment + "/"
   if not os.path.exists(path + RESULT_DIR):
     os.mkdir(path + RESULT_DIR)
-    os.mkdir(path + RESULT_DIR + "files/")
-    os.mkdir(path + RESULT_DIR + "style/")
+    os.mkdir(path + RESULT_DIR + FILE_DIR)
+    os.mkdir(path + RESULT_DIR + STYLE_DIR_BASE)
 
     # Copy over stylesheets and Javascript files.
     for f in os.listdir(STYLE_DIR):
-      shutil.copy(STYLE_DIR + f, path + RESULT_DIR + "style/" + f)
+      shutil.copy(STYLE_DIR + f, path + RESULT_DIR + STYLE_DIR_BASE + f)
 
 
 def e(text):
@@ -39,7 +48,7 @@ def e(text):
   """
   return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
-############## TODO revamp this entire area
+
 def format(output, specs):
   """
   Function: format
@@ -50,7 +59,6 @@ def format(output, specs):
   specs: The specs for the assignment.
   returns: A string containing the HTML.
   """
-
   # Create the necessary directories if needed.
   create_path(specs["assignment"])
 
@@ -61,10 +69,13 @@ def format(output, specs):
   o.write("\n<input type='hidden' id='assignment' value='" + \
           specs["assignment"] + "'>\n")
 
+  o.write("<div id='container'>\n")
+
   # Print out the list of students to the list. Finds this by searching the
   # directory (since we may run the automation tool mutliple times on different
   # sets of students).
-  o.write("<div id='left'>\n<div id='students'>Students</div><br>")
+  o.write("<div id='list'><div id='list-inner'>\n" +
+          "<div id='students'>Students</div><br>\n")
   found_students = []
   for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" + \
                       RESULT_DIR + "files/"):
@@ -74,53 +85,51 @@ def format(output, specs):
 
   # List students out in alphabetical order.
   for student in sorted(found_students):
-    o.write("<a onclick='changeStudent(\"" + student + "\")'>" + student + \
-            "</a><br>\n")
-  o.write("</div>\n")
+    o.write("<a class='student-link' onclick='changeStudent(\"" + student + \
+            "\")'>" + student + "</a><br>\n")
+  o.write("</div></div>\n")
 
-  # Graded output and actual files.
+  # Header with student's name.
+  o.write("<div id='contents'>\n")
   first_student = output["students"][0]["name"]
   first_file = output["files"][0]
-  o.write("<div id='container'>\n")
-  o.write("<div draggable='true' class='resizable' id='middle'>\n" + \
-          "<div class='title' id='name'>" + first_student + "</div>\n")
+  o.write("<div id='title'><div id='title-inner'>" + \
+          "<div id='name'>" + first_student + "</div>\n")
+
+  # Links for each file.
+  for i in range(len(output["files"])):
+    name = output["files"][i]
+    if i == 0:
+      o.write("<div class='label-active label' ")
+    else:
+      o.write("<div class='label' ")
+    o.write("onclick='changeFile(this, \"" + name + "\")'>" + name + "</div>\n")
+  o.write("</div></div>\n")
+
+  o.write("<div id='iframes'>\n")
 
   # Graded files.
-  o.write("<div class='links'>\n")
-  for i in range(len(output["files"])):
-    name = output["files"][i]
-    if i == 0:
-      o.write("<div class='label-active label' ")
-    else:
-      o.write("<div class='label' ")
-    o.write("onclick='changeGradedFile(this, \"" + name + "\")'>" + name + \
-            "</div>\n")
-  o.write("</div>\n<iframe src='files/" + first_student + "-" + first_file + \
-          ".html' name='middle' id='iframe-middle'></iframe></div>\n\n")
+  o.write("<div class='iframe-container' id='graded'>\n")
+  o.write("<div id='show-raw' onclick='showRaw()' style='display:none'>" + \
+          "show raw file</div>")
+  o.write("<div class='toast'>Graded File</div>")
+  o.write("<iframe src='files/" + first_student + "-" + first_file + \
+          ".html' id='iframe-graded'></iframe></div>\n\n")
 
   # Raw files.
-  o.write("<div id='right' draggable='true' class='resizable'>\n")
-  o.write("<div class='title'>Raw Files</div>\n")
-  o.write("<div class='links'>\n")
-  for i in range(len(output["files"])):
-    name = output["files"][i]
-    if i == 0:
-      o.write("<div class='label-active label' ")
-    else:
-      o.write("<div class='label' ")
-    o.write("onclick='changeRawFile(this, \"" + name + "\")'>" + name + \
-            "</div>\n")
-
-  # Get the first file for the first student.
+  o.write("<div class='iframe-container' id='raw'>\n")
+  o.write("<div id='hide-raw' onclick='hideRaw()'>hide raw file</div>")
+  o.write("<div class='toast'>Raw File</div>")
   f = "../students/" + first_student + "-" + specs["assignment"] + "/" + \
       first_file
-  o.write("</div>\n<iframe src='" + f + "' name='right' " + \
-          "id='iframe-right'></iframe></div>")
+  o.write("<iframe src='" + f + "' id='iframe-raw'></iframe></div>\n")
+
+  o.write("</div></div>\n")
+  o.write("</div>\n")
 
   o.write("</div>")
   return o.getvalue()
 
-# TODO TODO add fancy javascript stuff
 
 def format_student(output, specs):
   """
@@ -191,7 +200,7 @@ def format_student(output, specs):
       o.write("</div>")
 
     o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
-    o.write("<br><br></html>")
+    o.write("</html>")
 
     filename = output["name"] + "-" + f["filename"] + ".html"
     out = open(ASSIGNMENT_DIR + specs["assignment"] + "/_results/files/" +

@@ -44,6 +44,10 @@ STUDENT_DIR = "students/"
 
 # Directory where the stylesheet and Javascripts are.
 STYLE_DIR = "../style/"
+STYLE_DIR_BASE = "style/"
+
+# Directory where the output files are stored.
+FILE_DIR = "files/"
 
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 100
