@@ -1,4 +1,4 @@
-from sqltools import check_valid_query
+from sqltools import check_valid_query, find_valid_sql
 from errors import DatabaseError, QueryError
 from types import ProblemType, SuccessType
 
@@ -17,11 +17,14 @@ class Select(ProblemType):
     success = True
     deductions = 0
     test_points = test["points"]
+    sql = self.response.sql
 
-    # Make sure the student did not submit a malicious query.
-    if not check_valid_query(self.response.sql, "select"):
-      # TODO output something that says they attempted somethign OTHER than select
-      return test["points"]
+    # Make sure the student did not submit a malicious query or malformed query.
+    if not check_valid_query(sql, "select"):
+      output["deductions"].append(QueryError.BAD_QUERY)
+      sql = find_valid_sql(sql, "select")
+      if sql is None:
+        return test["points"]
 
     # Run the test query and the student's query.
     try:
@@ -88,8 +91,6 @@ class Select(ProblemType):
     # More or fewer columns included.
     if len(expected.col_names) != len(actual.col_names):
       output["deductions"].append(QueryError.WRONG_NUM_COLUMNS)
-
-    # TODO selecting something that is not grouped on
 
     output["success"] = success
     return deductions

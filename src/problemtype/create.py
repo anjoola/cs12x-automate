@@ -1,22 +1,28 @@
-from types import SuccessType, ProblemType
+from errors import DatabaseError
+from types import ProblemType, SuccessType
 
 class Create(ProblemType):
   """
   Class: Create
   -------------
   Tests a create table statement. Simply executes the CREATE TABLE statements
-  to make sure they have the correct syntax. Outputs the SQL in a nice format
-  that is easy to read for the TAs.
+  to make sure they have the correct syntax.
   """
 
   def grade_test(self, test, output):
     if test.get("run-query"):
-      self.db.execute_sql(self.response.sql)
+      try:
+        self.db.execute_sql(self.response.sql)
+      except DatabaseError:
+        output["success"] = SuccessType.FAILURE
+        raise
 
     output["success"] = SuccessType.UNDETERMINED
     return 0
 
 
   def output_test(self, o, test, specs):
-    pass
-    # TODO
+    o.write("This problem should be <b>manually</b> graded.")
+    if test["success"] == SuccessType.FAILURE:
+      o.write("<br><i>SQL was invalid in some way. Check the errors below " +
+              "more information.</i>")

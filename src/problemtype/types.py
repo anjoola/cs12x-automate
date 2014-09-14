@@ -191,6 +191,10 @@ class ProblemType(object):
     problem_specs: The specs for this problem.
     """
     has_printed_test = False
+    if len(output) != len(problem_specs):
+      print output
+      print "\n\n\n\n"
+      print problem_specs
     for (i, test) in enumerate(output):
       specs = problem_specs[i]
 

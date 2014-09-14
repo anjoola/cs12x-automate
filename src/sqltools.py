@@ -15,9 +15,10 @@ def check_valid_query(query, query_type):
   Function: check_valid_query
   ---------------------------
   Check to see that a query is a valid query (i.e. it is not a malicious query).
-  Does this by making sure the query_type is found in the query and that there
-  are no other SQL statements being run. For example, if the query_type is an
-  INSERT statement, makes sure that the 'INSERT' keyword is found in the query.
+  Does this by making sure the query_type is found in the beginning of the query
+  and that there are no other SQL statements being run. For example, if the
+  query_type is an INSERT statement, makes sure that the 'INSERT' keyword is
+  found in the beginning of query.
 
   This does not work for multi-statement SQL queries, such as CREATE TABLEs.
 
@@ -25,15 +26,32 @@ def check_valid_query(query, query_type):
   However, it should be sufficient unless there are some very evil students.
 
   query: The query to check.
-  query_type: The query type (e.g. INSERT, DELETE, CREATE TABLE).
+  query_type: The query type (e.g. INSERT, DELETE, SELECT).
   returns: True if the query is valid, False otherwise.
   """
   return (
     # Make sure the query type can be found in the query.
-    query.lower().find(query_type.lower()) != -1 and
+    query.lower().strip().find(query_type.lower()) == 0 and
     # Make sure there is only one SQL statement.
-    query.strip().rstrip(";").find(";") == -1
+    query.strip().strip().rstrip(";").find(";") == -1
   )
+
+
+def find_valid_sql(query, query_type):
+  """
+  Function: find_valid_sql
+  ------------------------
+  Finds the valid SQL statement of query_type within a large SQL statement. If
+  it cannot be found, return None.
+
+  query: The query to search within.
+  query_type: The query type (e.g. INSERT, DELETE, SELECT).
+  returns: The query if valid SQL can be found, False otherwise.
+  """
+  if query.lower().strip().find(query_type.lower()) == 0:
+    return query.strip()[0:query.strip().find(";")]
+  else:
+    return None
 
 
 def preprocess_sql(sql_file):

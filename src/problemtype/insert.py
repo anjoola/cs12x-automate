@@ -1,5 +1,5 @@
-from sqltools import check_valid_query
-from errors import DatabaseError
+from sqltools import check_valid_query, find_valid_sql
+from errors import DatabaseError, QueryError
 from types import ProblemType, SuccessType
 
 class Insert(ProblemType):
@@ -14,11 +14,14 @@ class Insert(ProblemType):
     # Get the state of the table before the insert.
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
+    sql = self.response.sql
 
-    # Make sure the student did not submit a malicious query.
-    if not check_valid_query(self.response.sql, "insert"):
-      # TODO output something that says they attempted somethign OTHER than insert
-      return test["points"]
+    # Make sure the student did not submit a malicious query or malformed query.
+    if not check_valid_query(sql, "insert"):
+      output["deductions"].append(QueryError.BAD_QUERY)
+      sql = find_valid_sql(sql, "insert")
+      if sql is None:
+        return test["points"]
 
     # If this is a self-contained DELETE test (Which means it will occur within
     # a transaction and rolled back aftewards).
@@ -29,7 +32,7 @@ class Insert(ProblemType):
     exception = None
     self.db.savepoint('spt_insert')
     try:
-      self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
+      self.db.execute_sql(sql, setup=test.get("setup"), \
                           teardown=test.get("teardown"))
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:

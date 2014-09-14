@@ -15,19 +15,16 @@ class Procedure(ProblemType):
     before = self.db.execute_sql(table_sql)
 
     # Setup queries.
-    if test.get("run-query"): self.db.execute_sql(self.response.sql)
     if test.get("setup"): self.db.execute_sql(test["setup"])
+    if test.get("run-query"): self.db.execute_sql(self.response.sql)
 
-    after = self.db.execute_sql(table_sql, setup=test["query"], 
-      teardown=test.get("teardown"))
+    after = self.db.execute_sql(table_sql,
+                                setup=test["query"], 
+                                teardown=test.get("teardown"))
 
-    subs = list(set(before.results) - set(after.results))
-    output["subs"] = ("" if len(subs) == 0 else self.db.prettyprint(subs))
-    adds = list(set(after.results) - set(before.results))
-    output["adds"] = ("" if len(adds) == 0 else self.db.prettyprint(adds))
-
+    output["subs"] = before.subtract(after).output
+    output["adds"] = after.subtract(before).output
     output["success"] = SuccessType.UNDETERMINED
-    # TODO how to handle deductions?
     return 0
 
 

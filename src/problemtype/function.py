@@ -65,7 +65,14 @@ class Function(ProblemType):
   def output_test(self, o, test, specs):
     # If the test failed, print out the differences.
     if not test["success"] and test.get("expected"):
-      o.write("<b>Expected</b>\n")
-      o.write("<pre>" + self.e(test["expected"]) + "</pre>\n")
-      o.write("<b>Actual</b>\n")
-      o.write("<pre>" + self.e(test["actual"]) + "</pre>\n")
+      expected = self.e(test["expected"])
+      actual = self.e(test["actual"])
+      diff = len(expected) - len("Expected")
+
+      o.write("<pre class='results'>\n")
+      o.write("<b>Expected</b>" + \
+              (" " * ((diff if diff > 0 else 0) + 6)) + "<b>Actual</b>")
+
+      o.write("<br>" + expected + \
+              (" " * ((0 if diff > 0 else abs(diff)) + 6)) + actual + "\n")
+      o.write("</pre>")

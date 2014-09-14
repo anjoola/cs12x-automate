@@ -1,5 +1,5 @@
-from sqltools import check_valid_query
-from errors import DatabaseError
+from sqltools import check_valid_query, find_valid_sql
+from errors import DatabaseError, QueryError
 from types import ProblemType, SuccessType
 
 class Delete(ProblemType):
@@ -18,11 +18,14 @@ class Delete(ProblemType):
     # Get the state of the table before the delete.
     table_sql = ('SELECT * FROM %s' % test['table'])
     before = self.db.execute_sql(table_sql)
+    sql = self.response.sql
 
-     # Make sure the student did not submit a malicious query.
-    if not check_valid_query(self.response.sql, "delete"):
-      # TODO output something that says they attempted somethign OTHER than delete
-      return test["points"]
+    # Make sure the student did not submit a malicious query or malformed query.
+    if not check_valid_query(sql, "delete"):
+      output["deductions"].append(QueryError.BAD_QUERY)
+      sql = find_valid_sql(sql, "delete")
+      if sql is None:
+        return test["points"]
 
     # If this is a self-contained DELETE test (Which means it will occur within
     # a transaction and rolled back aftewards).
@@ -33,7 +36,7 @@ class Delete(ProblemType):
     exception = None
     self.db.savepoint('spt_delete')
     try:
-      self.db.execute_sql(self.response.sql)
+      self.db.execute_sql(sql)
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:
       exception = e

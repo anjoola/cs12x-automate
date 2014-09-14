@@ -178,9 +178,7 @@ def format_student(output, specs):
       if problem_specs.get("comments") and problem:
         o.write("<b>Comments</b>")
         if not problem.get("comments"):
-          # TODO should check specs to see if comments were expected and output
-          # that
-          o.write("<br><i>No comments provided...</i><br>\n")
+          o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
         else:
           o.write("<div class='comment'>" + problem["comments"] + "</div>")
       o.write("<b>Student's Response</b>")

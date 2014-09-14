@@ -13,7 +13,11 @@ from CONFIG import (
   CONNECTION_TIMEOUT,
   MAX_TIMEOUT
 )
-from errors import add, FileNotFoundError
+from errors import (
+  add,
+  DatabaseError,
+  FileNotFoundError
+)
 from grader import Grader
 from iotools import err, log
 from models import *
@@ -208,7 +212,11 @@ class AutomationTool:
     self.o = GradedOutput(self.specs)
     # Start up the connection with the database.
     self.db = dbtools.DBTools(self.user, self.db)
-    self.db.get_db_connection(MAX_TIMEOUT)
+    try:
+      self.db.get_db_connection(MAX_TIMEOUT)
+    except DatabaseError:
+      err("Could not get a database connection! Please check your internet " + \
+          "connection!", True)
 
     # Purge the database if necessary.
     if AutomationTool.purge: self.db.purge_db()
@@ -218,8 +226,8 @@ class AutomationTool:
       for item in self.specs.get("setup"):
         if item["type"] == "dependency" and AutomationTool.dependency:
           self.db.source_file(self.assignment, item["file"])
-        elif item["type"] == "import":
-          dbtools.import_file(self.assignment, item["file"])
+        elif item["type"] == "import" and AutomationTool.dependency:
+          self.db.import_file(self.assignment, item["file"])
         elif item["type"] == "queries":
           for q in item["queries"]: self.db.execute_sql(q)
 

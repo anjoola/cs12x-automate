@@ -15,4 +15,3 @@ class Manual(ProblemType):
 
   def output_test(self, o, test, specs):
     o.write("This problem should be <b>manually</b> graded.")
-    pass

@@ -5,6 +5,7 @@ Contains all models that are passed around and used in the automation tool.
 """
 
 import json
+from copy import deepcopy
 from datetime import datetime
 from time import strftime
 
@@ -185,9 +186,11 @@ class Result:
     returns: The newly-modified Result object.
     """
     assert(self.col_names == other.col_names or len(other.col_names) == 0)
-    self.results += other.results
-    self.output = iotools.prettyprint(self.results, self.col_names)
-    return self
+    new_result = deepcopy(self)
+    new_result.results += other.results
+    new_result.output = iotools.prettyprint(new_result.results,
+                                            new_result.col_names)
+    return new_result
 
 
   def subtract(self, other):
@@ -199,7 +202,18 @@ class Result:
 
     returns: The newly-modified Result object.
     """
+    if len(self.col_names) == 0:
+      return self
+
     assert(self.col_names == other.col_names or len(other.col_names) == 0)
-    self.results = filter(lambda row: row not in other.results, self.results)
-    self.output = iotools.prettyprint(self.results, self.col_names)
-    return self
+    new_result = deepcopy(self)
+    results = filter(lambda row: row not in other.results, new_result.results)
+    if len(results) != 0:
+      new_result.results = results
+      new_result.output = iotools.prettyprint(new_result.results,
+                                              new_result.col_names)
+    # If the result of the subtraction is nothing, then indicate it.
+    else:
+      new_result.results = []
+      new_result.output = ""
+    return new_result

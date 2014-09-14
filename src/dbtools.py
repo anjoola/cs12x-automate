@@ -58,7 +58,7 @@ class DBTools:
       self.terminator = Terminator(self.user, self.database)
     except mysql.connector.errors.Error:
       err("Could not start up terminator connection! Any unruly queries " + \
-          " must be manually killed!")
+          "must be manually killed!")
 
   # --------------------------- Database Utilities --------------------------- #
 
@@ -181,7 +181,7 @@ class DBTools:
       state.triggers = self.execute_sql(
         "SELECT trigger_name FROM information_schema.triggers"
       ).results
-    except mysql.connector.errors.Error as e:
+    except (mysql.connector.errors.Error, DatabaseError, TimeoutError) as e:
       err("Could not get the database state. Future gradings are possibly " + \
           "affected.")
 
@@ -264,7 +264,7 @@ class DBTools:
         self.execute_sql("ALTER TABLE %s DROP FOREIGN KEY %s" % (table, fk))
       for table in new.tables:
         self.execute_sql("DROP TABLE IF EXISTS %s" % table)
-    except mysql.connector.errors.Error:
+    except (mysql.connector.errors.Error, DatabaseError, TimeoutError):
       err("Could not reset database state. Possible errors in future grading.")
 
     # Remove all savepoints.
@@ -456,7 +456,7 @@ class DBTools:
 
         # If the query can't be run as a single query, attempt to do it with a
         # multi-line query.
-        except mysql.connector.errors.Error:
+        except mysql.connector.errors.Error as e:
           try:
             self.cursor.execute(sql, multi=True)
           except mysql.connector.errors.Error as e:
@@ -475,6 +475,31 @@ class DBTools:
     return result
 
   # ----------------------------- File Utilities ----------------------------- #
+
+  def import_file(self, assignment, f):
+    """
+    Function: import_files
+    ----------------------
+    Imports raw data files into the database. This uses the "mysqlimport"
+    command on the terminal. We will have to invoke the command via Python.
+  
+    assignment: The assignment name, which is prepended to all the files.
+    f: The file to import.
+    """
+    log("\nImporting file " + f + "...\n")
+    filename = ASSIGNMENT_DIR + assignment + "/" + f
+
+    # Make sure the file exists.
+    if not os.path.exists(filename):
+      err("File to import %s does not exist!" % filename, True)
+    try:
+      subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + \
+                      self.user + " -p" + LOGIN[self.user] + \
+                      " --delete --local " + self.database + " " + filename)
+    except OSError:
+      err("Could not import file %s! The 'mysqlimport' library does not exist!",
+          True)
+
 
   def source_file(self, assignment, f):
     """
@@ -502,28 +527,3 @@ class DBTools:
       # to actually be executed.
       for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
     f.close()
-
-
-def import_file(assignment, f):
-  """
-  Function: import_files
-  ----------------------
-  Imports raw data files into the database. This uses the "mysqlimport"
-  command on the terminal. We will have to invoke the command via Python.
-
-  assignment: The assignment name, which is prepended to all the files.
-  f: The file to import.
-  """
-  log("\nImporting file " + f + "...\n")
-  filename = ASSIGNMENT_DIR + assignment + "/" + f
-
-  # Make sure the file exists.
-  if not os.path.exists(filename):
-    err("File to import %s does not exist!" % filename, True)
-  try:
-    subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + USER + \
-                    " -p" + PASS + " --delete --local " + DATABASE + " " + \
-                    filename)
-  except OSError:
-    err("Could not import file %s! The 'mysqlimport' library does not exist!", \
-        True)

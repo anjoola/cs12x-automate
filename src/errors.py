@@ -1,7 +1,7 @@
 """
 Module: errors
 --------------
-Contains all of the possible errors that can occur in the execution of the
+Contains all of the possible errors that can occur during the execution of the
 automation tool.
 """
 from math import ceil
@@ -12,7 +12,7 @@ class Error(Exception):
   """
   Class: Error
   ------------
-  Error class for the automation tool.
+  Generic error class for the automation tool.
   """
   pass
 
@@ -121,12 +121,12 @@ class QueryError(Error):
   then 5 points are deducted. If 'proportion' is set to 1, then the number of
   points deducted is equal to 'point deduction'.
   """
-  """
-  TODO
   BAD_QUERY = (
     "BadQueryError", 0, 0,
-    "Query is bad because it contains unexpected
-  """
+    "Query is bad because it contains unexpected SQL or extra stuff after " + \
+    "the SQL."
+  )
+
   COLUMN_ORDER = (
     "ColumnOrderError", 1, 0.3,
     "Columns are in the wrong order."
@@ -210,7 +210,7 @@ class DatabaseError(Error):
 
 
   def __repr__(self):
-    return "DatabaseError (%d): %s" % (self.errno, self.msg)
+    return "DatabaseError (%d): %s." % (self.errno, self.msg)
 
 
   def __str__(self):
@@ -239,8 +239,8 @@ class DependencyError(DatabaseError):
 
 
   def __repr__(self):
-    return "DependencyError (%d): Dependent query from problem %s in file " + \
-           "%s got error \"%s\"." % (self.errno, self.num, self.f, self.msg)
+    return ("DependencyError (%d): Dependent query from problem %s in file " + \
+            "%s got error \"%s\".") % (self.errno, self.num, self.f, self.msg)
 
 
 

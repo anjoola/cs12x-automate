@@ -1,5 +1,5 @@
-from sqltools import check_valid_query
-from errors import DatabaseError
+from sqltools import check_valid_query, find_valid_sql
+from errors import DatabaseError, QueryError
 from types import ProblemType, SuccessType
 
 class Update(ProblemType):
@@ -16,11 +16,14 @@ class Update(ProblemType):
     # Get the state of the table before the update.
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
+    sql = self.response.sql
 
-    # Make sure the student did not submit a malicious query.
-    if not check_valid_query(self.response.sql, "update"):
-      # TODO output something that says they attempted somethign OTHER than update
-      return test["points"]
+    # Make sure the student did not submit a malicious query or malformed query.
+    if not check_valid_query(sql, "update"):
+      output["deductions"].append(QueryError.BAD_QUERY)
+      sql = find_valid_sql(sql, "update")
+      if sql is None:
+        return test["points"]
 
     # If this is a self-contained UPDATE test (which means it will occur within
     # a transaction and rolled back afterwards).
@@ -31,7 +34,7 @@ class Update(ProblemType):
     exception = None
     self.db.savepoint('spt_update')
     try:
-      self.db.execute_sql(self.response.sql)
+      self.db.execute_sql(sql)
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:
       exception = e
