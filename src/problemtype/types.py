@@ -347,10 +347,10 @@ class ProblemType(object):
     (ediff, adiff) = self.get_diffs(lst1, lst2)
     (eindex, aindex) = (0, 0)
 
-    # Heading for expected and actual
+    # Heading for expected and actual.
     o.write("<b>Expected</b>" + \
             " " * (len(ediff[0][1]) - len("Expected") + 6) + "<b>Actual</b>\n")
-    space = " " * (max(len(ediff[eindex][1]), len("Expected")) + 6)
+    space = " " * (max(len(ediff[0][1]), len("Expected")) + 6)
 
     while eindex < len(ediff):
       (diff_type, evalue) = ediff[eindex]

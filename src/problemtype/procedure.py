@@ -1,4 +1,3 @@
-from errors import DatabaseError
 from types import ProblemType, SuccessType
 
 class Procedure(ProblemType):
@@ -17,59 +16,54 @@ class Procedure(ProblemType):
     # Setup queries.
     if test.get("setup"): self.db.execute_sql(test["setup"])
     if test.get("run-query"): self.db.execute_sql(self.response.sql)
-
     after = self.db.execute_sql(table_sql,
                                 setup=test["query"], 
                                 teardown=test.get("teardown"))
 
-    output["subs"] = before.subtract(after).output
-    output["adds"] = after.subtract(before).output
+    output["before"] = before.output
+    output["after"] = after.output
     output["success"] = SuccessType.UNDETERMINED
     return 0
 
 
   def output_test(self, o, test, specs):
-    # If there are no changes in the table, don't print anything out.
-    if not test.get("adds") and not test.get("subs"):
-      return
-
-    # Get table differences before and after the call on the stored procedure.
     o.write("<b>Changes to " + specs["table"] + "</b><br>\n")
     o.write("<pre class='results'>")
-    (subs, adds) = self.get_diffs(test["subs"].split("\n"), \
-      test["adds"].split("\n"))
 
-    (sindex, aindex) = (0, 0)
-    while sindex < len(subs):
-      (diff_type, svalue) = subs[sindex]
-      # A value that was removed.
+    (bdiff, adiff) = self.get_diffs(test["before"].split("\n"),
+                                    test["after"].split("\n"))
+    (bindex, aindex) = (0, 0)
+
+    # Heading for before and after.
+    before_first = "Before" if len(bdiff) == 0 else bdiff[0][1]
+    o.write("<b>Before</b>" + \
+            " " * (len(before_first) - len("Before") + 6) + "<b>After</b>\n")
+    space = " " * (max(len(before_first), len("Before")) + 6)
+
+    while bindex < len(bdiff):
+      (diff_type, evalue) = bdiff[bindex]
+      # Something that was removed compared to before.
       if diff_type == "remove":
-        o.write("<font color='red'>- " + self.e(svalue) + "</font>\n")
-        sindex += 1
+        o.write("<font color='red'>" + self.e(evalue) + "</font>\n")
+        bindex += 1
+        continue
 
-      if aindex >= len(adds):
-        break
-      (diff_type, avalue) = adds[aindex]
-      # Matching values. Only print it out once.
+      (diff_type, avalue) = adiff[aindex]
+      # Unchanged row.
       if diff_type == "":
-        o.write("  " + self.e(svalue) + "\n")
+        o.write("<font color='gray'>" + self.e(evalue + "      " + avalue) + \
+                "</font>\n")
         aindex += 1
-        sindex += 1
-      # A value that was added.
+        bindex += 1
+      # Something that was added compared to before.
       elif diff_type == "add":
-        o.write("<font color='green'>+ " + self.e(avalue) + "</font>\n")
+        o.write(space + "<font color='green'>" + self.e(avalue) + "</font>\n")
         aindex += 1
 
-    # Any remaning subtractions.
-    while sindex < len(subs):
-      (_, svalue) = subs[sindex]
-      o.write("<font color='red'>+ " + self.e(svalue) + "</font>\n")
-      sindex += 1
-
-    # Any remaining additions.
-    while aindex < len(adds):
-      (_, avalue) = adds[aindex]
-      o.write("<font color='green'>+ " + self.e(avalue) + "</font>\n")
+    # Any remaining added rows.
+    while aindex < len(adiff):
+      (_, avalue) = adiff[aindex]
+      o.write(space + "<font color='green'>" + self.e(avalue) + "</font>\n")
       aindex += 1
 
     o.write("</pre>")

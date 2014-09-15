@@ -210,7 +210,7 @@ class DatabaseError(Error):
 
 
   def __repr__(self):
-    return "DatabaseError (%d): %s." % (self.errno, self.msg)
+    return "DatabaseError (%d): %s" % (self.errno, self.msg)
 
 
   def __str__(self):
