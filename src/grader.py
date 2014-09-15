@@ -93,13 +93,6 @@ class Grader:
       # Grade each problem in the assignment.
       problems = self.specs[f]
       for problem in problems:
-        try:
-          self.run_dependencies(problem, response)
-        # If there was a problem with the dependent query.
-        except DependencyError as e:
-          add(graded_problem["errors"], e)
-          continue
-
         # Add this graded problem to the list in the graded file.
         num = problem["number"]
         graded_problem = {"num": num, "tests": [], "errors": [], \
@@ -109,9 +102,17 @@ class Grader:
         try:
           # Call the grade function on the specific class corresponding to this
           # problem type.
-          grader = PROBLEM_TYPES[problem["type"]]
-          got_points += grader(self.db, problem, responses[num], \
-                               graded_problem).grade()
+          grade_fn = PROBLEM_TYPES[problem["type"]]
+          grade_fn = grade_fn(self.db, problem, responses[num], graded_problem)
+          grade_fn.preprocess()
+
+          # Run dependent query.
+          self.run_dependencies(problem, response)
+
+          got_points += grade_fn.grade()
+
+        except DependencyError as e:
+          add(graded_problem["errors"], e)
 
         # If they didn't do a problem, indicate that it doesn't exist.
         except KeyError:

@@ -104,8 +104,6 @@ class ProblemType(object):
 
     returns: The number of points received for this response.
     """
-    self.preprocess()
-
     # Run each test for the problem.
     for test in self.specs["tests"]:
       lost_points = 0
