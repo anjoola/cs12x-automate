@@ -1,3 +1,6 @@
+import datetime
+import time
+
 from sqltools import check_valid_query, find_valid_sql
 from errors import DatabaseError, QueryError
 from types import ProblemType, SuccessType
@@ -53,8 +56,10 @@ class Select(ProblemType):
     # If we don't need to check that the columns are ordered in the same way,
     # then sort each tuple for easier checking.
     if not test.get("column-order"):
-      expected.results = [sorted(x) for x in expected.results]
-      actual.results = [sorted(x) for x in actual.results]
+      expected.results = \
+          [tuple(sorted([str(x) for x in row])) for row in expected.results]
+      actual.results = \
+          [tuple(sorted([str(x) for x in row])) for row in actual.results]
 
     # Compare the student's code to the results.
     if not self.equals(expected.results, actual.results):
@@ -62,18 +67,22 @@ class Select(ProblemType):
       output["actual"] = actual.output
       deductions = test_points
 
-      # Check to see if they forgot to ORDER BY.
+      # Check to see if they forgot to ORDER BY. Convert each row to a string
+      # for easier comparison.
       if test.get("ordered"):
-        eresults = sorted(expected.results)
-        aresults = sorted(actual.results)
+        eresults = sorted([str(x) for x in expected.results])
+        aresults = sorted([str(x) for x in actual.results])
         if aresults == eresults:
           deductions = 0
           output["deductions"].append(QueryError.ORDER_BY)
 
-      # See if they chose the wrong column order.
+      # See if they chose the wrong column order. Convert each column to a
+      # string for easier comparison.
       if test.get("column-order"):
-        eresults = [sorted(x) for x in expected_results]
-        aresults = [sorted(x) for x in actual_results]
+        eresults = \
+            [tuple(sorted([str(x) for x in row])) for row in expected_results]
+        eresults = \
+            [tuple(sorted([str(x) for x in row])) for row in actual_results]
         if eresults == aresults:
           deductions = 0
           output["deductions"].append(QueryError.COLUMN_ORDER)

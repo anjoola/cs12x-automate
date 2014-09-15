@@ -27,6 +27,10 @@ class Procedure(ProblemType):
 
 
   def output_test(self, o, test, specs):
+    # Don't output results if there is nothing to output.
+    if "before" not in test or "after" not in test:
+      return
+
     o.write("<b>Changes to " + specs["table"] + "</b><br>\n")
     o.write("<pre class='results'>")
 
