@@ -21,7 +21,9 @@ Errors:
   [NO DOUBLE-QUOTED STRINGS] - Strings must be enclosed by SINGLE quotes.
 """
 
-import os, sys, re
+import os
+import re
+import sys
 
 MAX_LINE_LENGTH = 80
 

@@ -94,8 +94,8 @@ def output(json, specs, raw=False):
   if not os.path.exists(path):
     os.mkdir(path, 0644)
 
-  if not os.path.exists(path + "files/"):
-    os.mkdir(path + "files/", 0644)
+  if not os.path.exists(path + FILE_DIR):
+    os.mkdir(path + FILE_DIR, 0644)
 
   f = None
   # For the raw, JSON output.
@@ -112,7 +112,7 @@ def output(json, specs, raw=False):
   return f
 
 
-def parse_file(f): # TODO review
+def parse_file(f):
   """
   Function: parse_file
   --------------------
@@ -205,6 +205,7 @@ def parse_file(f): # TODO review
     elif curr != "":
       started_sql = True
       responses[curr].sql += line + "\n"
+      inline_comment = ""
 
   return responses
 

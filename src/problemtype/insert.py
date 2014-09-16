@@ -43,8 +43,7 @@ class Insert(ProblemType):
       assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
 
     # Run the solution insert statement.
-    self.db.execute_sql(test["query"], setup=test.get("setup"), \
-                     teardown=test.get("teardown"))
+    self.db.execute_sql(test["query"])
     expected = self.db.execute_sql(table_sql)
 
     # A self-contained INSERT. Make sure the rollback occurred properly.

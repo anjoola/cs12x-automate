@@ -33,7 +33,7 @@ class Select(ProblemType):
     try:
       expected = self.db.execute_sql(test["query"], test.get("setup"), \
                                      test.get("teardown"), True)
-      actual = self.db.execute_sql(self.response.sql, test.get("setup"), \
+      actual = self.db.execute_sql(sql, test.get("setup"), \
                                    test.get("teardown"), True)
     except DatabaseError:
       raise
@@ -81,7 +81,7 @@ class Select(ProblemType):
       if test.get("column-order"):
         eresults = \
             [tuple(sorted([str(x) for x in row])) for row in expected_results]
-        eresults = \
+        aresults = \
             [tuple(sorted([str(x) for x in row])) for row in actual_results]
         if eresults == aresults:
           deductions = 0
