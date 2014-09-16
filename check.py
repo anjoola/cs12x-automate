@@ -108,6 +108,13 @@ if __name__ == '__main__':
     f.close()
     print "\n", filename
     print "-" * len(filename)
+    # Check for encoding.
+    try:
+      "\n".join(lines).decode('utf-8')
+    except UnicodeDecodeError:
+      print "FILE IS NOT IN UTF-8 ENCODING!"
+      continue
+
     for i in range(len(lines)):
       line = lines[i][:-1]
       check_line(line, i + 1)

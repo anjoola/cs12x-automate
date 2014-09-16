@@ -82,6 +82,12 @@ class StyleError(Error):
     "Did not use spaces after commas."
   )
 
+  WRONG_ENCODING = (
+    "WrongEncodingError", 0, 0,
+    "File has the wrong encoding. Grading has proceeded but might get " +
+    "strange errors."
+  )
+
   USED_TABS = (
     "UsedTabsError", 0.2, 5,
     "Tabs instead of spaces were used."

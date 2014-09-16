@@ -1,4 +1,7 @@
-import collections, os, re, sys
+import collections
+import os
+import re
+import sys
 
 from errors import StyleError
 
@@ -45,6 +48,12 @@ class StyleChecker:
     cls.errors = collections.defaultdict(int)
     lines = f.readlines()
     num_lines = len(lines)
+
+    # Check for encoding.
+    try:
+      "\n".join(lines).decode('utf-8')
+    except UnicodeDecodeError:
+      cls.errors[StyleError.WRONG_ENCODING] += 1
 
     # Check every line.
     for i in range(num_lines):

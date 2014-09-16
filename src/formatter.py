@@ -123,9 +123,8 @@ def format(output, specs):
   o.write("<div class='iframe-container' id='raw'>\n")
   o.write("<div id='hide-raw' onclick='hideRaw()'>hide raw file</div>")
   o.write("<div class='toast'>Raw File</div>")
-  f = "../" + STUDENT_DIR + first_student + "-" + specs["assignment"] + "/" + \
-      first_file
-  o.write("<iframe src='" + f + ".html' id='iframe-raw'></iframe></div>\n")
+  o.write("<iframe src='files/" + first_student + "-" + first_file + \
+          ".raw.html' id='iframe-raw'></iframe></div>\n")
 
   o.write("</div></div>\n")
   o.write("</div>\n")
@@ -134,19 +133,27 @@ def format(output, specs):
   return o.getvalue()
 
 
-def format_raw_file(fname):
+def format_raw_file(fname, student, assignment):
   """
   Function: format_raw_file
   -------------------------
   Creates an HTML version of a SQL file so web browsers won't try to download
   the file.
+
+  fname: The raw filename.
+  specs: The specs for the assignment.
   """
-  out = open(fname + ".html", 'w')
-  infile = open(fname, 'r')
-  contents = infile.read()
-  out.write("<pre style='font-family: Consolas, monospace; " + \
-            "font-size: 12px;'>" + contents + "</pre>")
-  out.close()
+  try:
+    out = open(ASSIGNMENT_DIR + assignment + "/" + RESULT_DIR + "files/" + \
+               student + "-" + fname + ".raw.html", 'w')
+    infile = open(ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR + \
+                  student + "-" + assignment + "/" + fname, 'r')
+    contents = infile.read()
+    out.write("<pre style='font-family: Consolas, monospace; " + \
+              "font-size: 12px;'>" + contents + "</pre>")
+    out.close()
+  except IOError:
+    return
 
 
 def format_student(student, output, specs):
@@ -168,8 +175,7 @@ def format_student(student, output, specs):
   for (fname, f) in output["files"].iteritems():
     # Generate HTML versions of raw files (so it can be displayed on IE and
     # other browsers).
-    format_raw_file(ASSIGNMENT_DIR + specs["assignment"] + "/" + STUDENT_DIR + \
-                    student + "-" + specs["assignment"] + "/" + fname)
+    format_raw_file(fname, student, specs["assignment"])
 
     o = StringIO()
     o.write("<link rel='stylesheet' type='text/css' href='" + \
