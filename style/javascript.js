@@ -10,7 +10,7 @@ function changeStudent(student) {
   var assignment = document.getElementById("assignment").value;
   var file = document.getElementsByClassName("label-active")[0].innerHTML;
   graded.src = "files/" + student + "-" + file + ".html";
-  raw.src = "../students/" + student + "-" + assignment + "/" + file;
+  raw.src = "../students/" + student + "-" + assignment + "/" + file + ".html";
 }
 
 /**
@@ -26,7 +26,7 @@ function changeFile(elem, file) {
 
   var assignment = document.getElementById("assignment").value;
   var raw = document.getElementById("iframe-raw");
-  raw.src = "../students/" + student + "-" + assignment + "/" + file;
+  raw.src = "../students/" + student + "-" + assignment + "/" + file + ".html";
 
   // Change the active label to inactive.
   var active = document.getElementById("title")

@@ -197,7 +197,7 @@ class AutomationTool:
 
     # Grade this student, make style deductions, and output the results.
     output["got_points"] = self.grader.grade(response, output)
-    formatter.format_student(output, self.specs)
+    formatter.format_student(student, output, self.specs)
 
 
   def setup(self):

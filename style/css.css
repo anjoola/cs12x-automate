@@ -59,7 +59,7 @@ ul {
   left: 0px;
   overflow: hidden;
   position: absolute;
-  right: 502px;
+  right: 542px;
   top: 35px;
 }
 #hide-raw {
@@ -124,7 +124,7 @@ ul {
   position: absolute;
   right: 0;
   top: 35px;
-  width: 500px;
+  width: 540px;
 }
 #show-raw {
   background: #FFCC33;

@@ -14,6 +14,7 @@ from CONFIG import (
   ASSIGNMENT_DIR,
   FILE_DIR,
   RESULT_DIR,
+  STUDENT_DIR,
   STYLE_DIR,
   STYLE_DIR_BASE
 )
@@ -64,8 +65,10 @@ def format(output, specs):
 
   o = StringIO()
   o.write("<head><title>CS 121 Automation</title></head>")
-  o.write("<link rel='stylesheet' type='text/css' href='style/css.css'>\n")
-  o.write("<script type='text/javascript' src='style/javascript.js'></script>")
+  o.write("<link rel='stylesheet' type='text/css' href='" + STYLE_DIR_BASE + \
+          "css.css'>\n")
+  o.write("<script type='text/javascript' src='" + STYLE_DIR_BASE + \
+          "javascript.js'></script>")
   o.write("\n<input type='hidden' id='assignment' value='" + \
           specs["assignment"] + "'>\n")
 
@@ -120,9 +123,9 @@ def format(output, specs):
   o.write("<div class='iframe-container' id='raw'>\n")
   o.write("<div id='hide-raw' onclick='hideRaw()'>hide raw file</div>")
   o.write("<div class='toast'>Raw File</div>")
-  f = "../students/" + first_student + "-" + specs["assignment"] + "/" + \
+  f = "../" + STUDENT_DIR + first_student + "-" + specs["assignment"] + "/" + \
       first_file
-  o.write("<iframe src='" + f + "' id='iframe-raw'></iframe></div>\n")
+  o.write("<iframe src='" + f + ".html' id='iframe-raw'></iframe></div>\n")
 
   o.write("</div></div>\n")
   o.write("</div>\n")
@@ -131,13 +134,29 @@ def format(output, specs):
   return o.getvalue()
 
 
-def format_student(output, specs):
+def format_raw_file(fname):
+  """
+  Function: format_raw_file
+  -------------------------
+  Creates an HTML version of a SQL file so web browsers won't try to download
+  the file.
+  """
+  out = open(fname + ".html", 'w')
+  infile = open(fname, 'r')
+  contents = infile.read()
+  out.write("<pre style='font-family: Consolas, monospace; " + \
+            "font-size: 12px;'>" + contents + "</pre>")
+  out.close()
+
+
+def format_student(student, output, specs):
   """
   Function: format_student
   ------------------------
   Outputs the graded output for a particular student. Each student's output
   gets written to its own file.
 
+  student: The student's name.
   output: The student's JSON output.
   specs: The specs for the assignment.
   """
@@ -146,11 +165,17 @@ def format_student(output, specs):
   create_path(specs["assignment"])
 
   # Create output per student, per file. Files are named <student>-<file>.html.
-  for f in output["files"].values():
+  for (fname, f) in output["files"].iteritems():
+    # Generate HTML versions of raw files (so it can be displayed on IE and
+    # other browsers).
+    format_raw_file(ASSIGNMENT_DIR + specs["assignment"] + "/" + STUDENT_DIR + \
+                    student + "-" + specs["assignment"] + "/" + fname)
+
     o = StringIO()
-    o.write("<link rel='stylesheet' type='text/css' href='../style/css.css'>\n")
-    o.write("<script type='text/javascript' src='../style/javascript.js'>" + \
-            "</script>\n")
+    o.write("<link rel='stylesheet' type='text/css' href='" + \
+            STYLE_DIR + "css.css'>\n")
+    o.write("<script type='text/javascript' src='" + STYLE_DIR + \
+            "javascript.js'></script>\n")
     o.write("<html class='student-page'>")
 
     # Print out all errors that have occurred with the file.
