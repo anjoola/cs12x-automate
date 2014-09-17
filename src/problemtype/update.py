@@ -25,10 +25,9 @@ class Update(ProblemType):
       if sql is None:
         return test["points"]
 
-    # If this is a self-contained UPDATE test (which means it will occur within
-    # a transaction and rolled back afterwards).
-    if test.get("rollback"):
-      self.db.start_transaction()
+    # Start a transaction in order to rollback if this is a self-contained
+    # UPDATE test.
+    self.db.start_transaction()
 
     # Create a savepoint and run the student's update statement.
     exception = None
@@ -55,6 +54,7 @@ class Update(ProblemType):
     # Otherwise, release the savepoint.
     else:
       self.db.release('spt_update')
+      self.db.commit()
 
     # Raise the exception if it occurred.
     if exception: raise exception

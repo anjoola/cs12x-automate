@@ -27,7 +27,7 @@ class Grader:
     self.db = db
 
 
-  def run_dependencies(self, problem, response):
+  def run_dependencies(self, problem, response, processed_files):
     """
     Function: run_dependencies
     --------------------------
@@ -36,11 +36,16 @@ class Grader:
 
     problem: The problem to run dependencies for.
     response: The student's responses.
+    processed_files: FIles that have already been processed.
     """
     if problem.get("dependencies"):
       for dep in problem["dependencies"]:
         # Get the file and problem number for the dependent query.
         [dep_file, problem_num] = dep.split("|")
+
+        # Don't run dependencies if the dependent file has already been run.
+        if dep_file in processed_files:
+          return
 
         try:
           self.db.execute_sql(response[dep_file][problem_num].sql)
@@ -62,7 +67,8 @@ class Grader:
     """
     try:
       if problem.get("teardown"):
-        for q in problem["teardown"]: self.db.execute_sql(q)
+        for q in problem["teardown"]:
+          self.db.execute_sql(q)
 
     except DatabaseError:
       raise
@@ -81,6 +87,7 @@ class Grader:
     """
     # Grade the files (that exist) for this student.
     total_points = 0
+    processed_files = []
     for f in self.specs["files"]:
       # Skip this file if it doesn't exist.
       if f not in response.keys():
@@ -107,7 +114,7 @@ class Grader:
           grade_fn.preprocess()
 
           # Run dependent query.
-          self.run_dependencies(problem, response)
+          self.run_dependencies(problem, response, processed_files)
 
           got_points += grade_fn.grade()
 
@@ -118,9 +125,15 @@ class Grader:
         except KeyError:
           graded_problem["notexist"] = True
 
+        except Exception:
+          raise
+
         # Run teardown queries.
-        self.run_teardown(problem)
-        log(".")
+        finally:
+          self.run_teardown(problem)
+          log(".")
+
+      processed_files.append(f)
 
       # Compute total points for this file.
       graded_file["got_points"] = got_points

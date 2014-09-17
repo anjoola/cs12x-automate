@@ -27,10 +27,9 @@ class Delete(ProblemType):
       if sql is None:
         return test["points"]
 
-    # If this is a self-contained DELETE test (Which means it will occur within
-    # a transaction and rolled back aftewards).
-    if test.get("rollback"):
-      self.db.start_transaction()
+    # Start a transaction in order to rollback if this is a self-contained
+    # DELETE test.
+    self.db.start_transaction()
 
     # Create a savepoint and run the student's delete statement.
     exception = None
@@ -57,6 +56,7 @@ class Delete(ProblemType):
     # Otherwise, release the savepoint.
     else:
       self.db.release('spt_delete')
+      self.db.commit()
 
     # Raise the exception if it occurred.
     if exception: raise exception

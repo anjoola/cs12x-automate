@@ -23,10 +23,9 @@ class Insert(ProblemType):
       if sql is None:
         return test["points"]
 
-    # If this is a self-contained DELETE test (Which means it will occur within
-    # a transaction and rolled back aftewards).
-    if test.get("rollback"):
-      self.db.start_transaction()
+    # Start a transaction in order to rollback if this is a self-contained
+    # INSERT test.
+    self.db.start_transaction()
 
     # Create a savepoint and run the student's insert statement.
     exception = None
@@ -54,6 +53,7 @@ class Insert(ProblemType):
     # Otherwise, release the savepoint.
     else:
       self.db.release('spt_insert')
+      self.db.commit()
 
     # Raise the exception if it occurred.
     if exception: raise exception
@@ -61,8 +61,8 @@ class Insert(ProblemType):
     # Compare the results of the test insert versus the actual. If the results
     # are not equal in size, then it is automatically wrong. If the results are
     # not the same, then they are also wrong.
-    if len(expected.results) != len(actual.results) or not \
-       self.equals(set(expected.results), set(actual.results)):
+    if (len(expected.results) != len(actual.results) or not \
+        self.equals(set(expected.results), set(actual.results))):
       output["expected"] = expected.subtract(before).output
       output["actual"] = actual.subtract(before).output
       return test["points"]
@@ -74,7 +74,7 @@ class Insert(ProblemType):
 
   def output_test(self, o, test, specs):
     # Don't output anything if they are successful.
-    if test["success"] or "expected" not in test:
+    if test["success"] == SuccessType.SUCCESS or "expected" not in test:
       return
 
     # Expected and actual output.

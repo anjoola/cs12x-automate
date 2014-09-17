@@ -142,7 +142,6 @@ def parse_file(f):
     # If these are comments at the top of the file, ignore them.
     if curr == "":
       return
-    #if len(line.strip()) > 0: TODO
     line = line + "\n"
     responses[curr].comments += line
 

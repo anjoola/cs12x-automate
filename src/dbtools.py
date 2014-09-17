@@ -90,7 +90,7 @@ class DBTools:
     """
     try:
       self.db.commit()
-    except mysql.connector.errors.Errors as e:
+    except mysql.connector.errors.Error as e:
       raise DatabaseError(e)
     self.savepoints = []
 
@@ -137,7 +137,7 @@ class DBTools:
                                         database=self.database,
                                         port=PORT,
                                         connection_timeout=self.timeout,
-                                        autocommit=True) # TODO should be false?? what
+                                        autocommit=False)
       self.cursor = self.db.cursor(buffered=True)
     except mysql.connector.errors.Error as e:
       raise DatabaseError(e)
@@ -386,10 +386,6 @@ class DBTools:
 
       # Pretty-printed output.
       result.output = prettyprint(result.results, self.get_column_names())
-
-      # If there are too many results.
-      if len(result.results) > MAX_NUM_RESULTS:
-        result.results = ["Too many results (%d) to print!" % len(result.results)]
 
     return result
 

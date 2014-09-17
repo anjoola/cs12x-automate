@@ -204,8 +204,8 @@ class Result:
     """
     if len(self.col_names) == 0:
       return self
-
     assert(self.col_names == other.col_names or len(other.col_names) == 0)
+
     new_result = deepcopy(self)
     results = filter(lambda row: row not in other.results, new_result.results)
     if len(results) != 0:

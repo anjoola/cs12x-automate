@@ -8,15 +8,6 @@ from math import ceil
 
 import mysql.connector.errors
 
-class Error(Exception):
-  """
-  Class: Error
-  ------------
-  Generic error class for the automation tool.
-  """
-  pass
-
-
 def add(lst, error):
   """
   Function: add
@@ -27,6 +18,17 @@ def add(lst, error):
   error: The error object.
   """
   lst.append(repr(error))
+
+
+
+class Error(Exception):
+  """
+  Class: Error
+  ------------
+  Generic error class for the automation tool.
+  """
+  pass
+
 
 
 class FileNotFoundError(Error):
