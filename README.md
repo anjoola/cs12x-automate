@@ -4,8 +4,8 @@ CS 121 Automation Tool
 Libraries
 ---------
 The following tools and libraries must be installed prior to running the tool.
-* [Python 2.6+](https://www.python.org/download/)
-* [Python MySQL Connector](http://dev.mysql.com/downloads/connector/python/)
+* [Python 2.7.6](https://www.python.org/download/)
+* [Python MySQL Connector 1.2.3](http://dev.mysql.com/downloads/connector/python/)
 * [SQL Parser](https://code.google.com/p/python-sqlparse/)
 * [prettytable](https://code.google.com/p/prettytable/)
 
