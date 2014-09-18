@@ -36,7 +36,7 @@ class Grader:
 
     problem: The problem to run dependencies for.
     response: The student's responses.
-    processed_files: FIles that have already been processed.
+    processed_files: Files that have already been processed.
     """
     if problem.get("dependencies"):
       for dep in problem["dependencies"]:

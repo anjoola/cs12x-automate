@@ -125,6 +125,8 @@ class ProblemType(object):
       # If their query times out, restart the connection and output an error.
       # Retry their query first (so all queries are tried at most twice).
       except TimeoutError as e:
+        # TODO
+        print "got timeout error"
         self.db.kill_query()
         self.db.get_db_connection(test.get("timeout"), False)
         add(self.output["errors"], e)
@@ -189,10 +191,6 @@ class ProblemType(object):
     problem_specs: The specs for this problem.
     """
     has_printed_test = False
-    if len(output) != len(problem_specs):
-      print output
-      print "\n\n\n\n"
-      print problem_specs
     for (i, test) in enumerate(output):
       specs = problem_specs[i]
 
@@ -257,8 +255,8 @@ class ProblemType(object):
     ----------------
     Compares two lists of tuples to see if their contents are equal.
     """
-    return [tuple(unicode(x).lower() for x in y) for y in lst1] == \
-           [tuple(unicode(x).lower() for x in y) for y in lst2]
+    return [[unicode(x).lower() for x in y] for y in lst1] == \
+           [[unicode(x).lower() for x in y] for y in lst2]
 
 
   def get_diffs(self, lst1, lst2):
@@ -294,7 +292,6 @@ class ProblemType(object):
     # row coming in.
     close_match = False
 
-    # TODO: This diff stuff doesn't actually work?
     for item in diff:
       # If just a whitespace change, ignore.
       if len(item[2: ].strip()) == 0:

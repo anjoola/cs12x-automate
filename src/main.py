@@ -7,6 +7,7 @@ import mysql.connector
 import dbtools
 import formatter
 import iotools
+import traceback
 
 from CONFIG import (
   ASSIGNMENT_DIR,
@@ -134,12 +135,27 @@ class AutomationTool:
     # Get the state of the database before grading.
     state = self.db.get_state()
 
+    # Keep a list of students that we could not grade.
+    failed_grading = []
+
     # Grade each student.
     if len(self.students) == 0:
       err("No students to grade!")
 
     for student in self.students:
-      self.grade_student(student)
+      try:
+        self.grade_student(student)
+        # If we've managed to grade this student, remove them from the students
+        # that we could not grade.
+        if student in failed_grading:
+          failed_grading.remove(student)
+      except Exception:
+        # Don't try to regrade again if failed once already.
+        if student not in failed_grading:
+          failed_grading.append(student)
+          self.students.append(student)
+          print "\nFailed grading " + student + ", trying one more time.\n"
+          print traceback.print_exc()
 
       # Get the state of the database after the student is graded and reset it
       # to what it was before.
@@ -147,6 +163,10 @@ class AutomationTool:
       self.db.reset_state(state, new_state)
 
     log("\n\n=========================END GRADING=========================\n")
+
+    if len(failed_grading) > 0:
+      print "\nFAILED GRADING:",
+      print ", ".join(failed_grading)
 
 
   def grade_student(self, student):
@@ -251,7 +271,8 @@ class AutomationTool:
 
     # Run teardown queries.
     if self.specs.get("teardown"):
-      for query in self.specs["teardown"]: self.db.execute_sql(query)
+      for query in self.specs["teardown"]:
+        self.db.execute_sql(query)
 
     # Close connection with the database
     self.db.close_db_connection()
@@ -259,7 +280,11 @@ class AutomationTool:
 
 if __name__ == "__main__":
   a = AutomationTool()
-  a.get_args()
-  a.setup()
-  a.grade_loop()
-  a.teardown()
+  try:
+    a.get_args()
+    a.setup()
+    a.grade_loop()
+    a.teardown()
+  except Exception:
+    err("\n\nThe is an error with the tool!\n")
+    traceback.print_exc()

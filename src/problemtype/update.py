@@ -14,7 +14,9 @@ class Update(ProblemType):
 
   def grade_test(self, test, output):
     # Get the state of the table before the update.
-    table_sql = "SELECT * FROM " + test["table"]
+    table_sql = "SELECT " + \
+      (", ".join(test["columns"]) if test.get("columns") else "*") + \
+      " FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
     sql = self.response.sql
 

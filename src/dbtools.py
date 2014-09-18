@@ -201,6 +201,9 @@ class DBTools:
       self.terminator.terminate(thread_id)
     except mysql.connector.errors.Error:
       err("Unable to kill %d (was probably already killed)." % thread_id)
+    # If the terminator doesn't even exist, then this is a problem.
+    except AttributeError:
+      err("Terminator doesn't exist to kill queries!", True)
     self.savepoints = []
 
 
