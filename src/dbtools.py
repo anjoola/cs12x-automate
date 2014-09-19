@@ -507,5 +507,5 @@ class DBTools:
       # Otherwise execute each line. Output must be consumed for the query
       # to actually be executed.
       for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
-      self.cursor.execute("COMMIT")
+      self.commit()
     f.close()

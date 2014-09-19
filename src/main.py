@@ -36,6 +36,9 @@ class AutomationTool:
   # Whether or not to run the dependencies.
   dependency = False
 
+  # Whether or not to output results as raw JSON.
+  raw = False
+
   def __init__(self):
     # The assignment to grade.
     self.assignment = None
@@ -95,11 +98,15 @@ class AutomationTool:
     parser.add_argument("--purge", action="store_const", const=True,
                         help="Whether or not to purge the database before"
                              " grading")
+    parser.add_argument("--raw", action="store_const", const=True,
+                        help="Whether or not to output results as a raw JSON "
+                             "file")
     args = parser.parse_args()
     (self.assignment, self.files, self.students, after, \
-     self.user, self.db, AutomationTool.purge, AutomationTool.dependency) = \
+     self.user, self.db, AutomationTool.purge, AutomationTool.dependency,
+     AutomationTool.raw) = \
         (args.assignment, args.files, args.students, args.after, \
-         args.user, args.db, args.purge, args.deps)
+         args.user, args.db, args.purge, args.deps, args.raw)
 
     # If the assignment argument isn't specified, print usage statement.
     if self.assignment is None:
@@ -156,6 +163,8 @@ class AutomationTool:
           self.students.append(student)
           print "\nFailed grading " + student + ", trying one more time.\n"
           print traceback.print_exc()
+        else:
+          print "\nFailed grading " + student + " again. Giving up.\n"
 
       # Get the state of the database after the student is graded and reset it
       # to what it was before.
@@ -266,7 +275,7 @@ class AutomationTool:
     # Output the results to file, but only if there are students to output.
     json_output = json.loads(self.o.jsonify())
     if json_output["students"]:
-      f = iotools.output(json_output, self.specs)
+      f = iotools.output(json_output, self.specs, self.raw)
       log("\n\n==== RESULTS: " + f.name)
 
     # Run teardown queries.

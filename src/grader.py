@@ -54,7 +54,8 @@ class Grader:
 
     # Run setup queries.
     if problem.get("setup"):
-      for q in problem["setup"]: self.db.execute_sql(q)
+      for q in problem["setup"]:
+        self.db.execute_sql(q)
 
 
   def run_teardown(self, problem):

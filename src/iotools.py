@@ -101,7 +101,7 @@ def output(json, specs, raw=False):
   # For the raw, JSON output.
   if raw:
     f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".json", "w")
-    f.write(json)
+    f.write(str(json))
 
   # A nicely formatted HTML file.
   else:
