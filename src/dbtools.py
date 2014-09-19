@@ -411,31 +411,13 @@ class DBTools:
     """
     # Consume old results if needed.
     [row for row in self.cursor]
-
-    # TODO do we still need this?
-    # Separate the CALL procedure statements.
-    #sql_list = queries.split("CALL")
-    #if len(sql_list) > 0:
-    #  sql_list = \
-    #      sqlparse.split(sql_list[0]) + ["CALL " + x for x in sql_list[1:]]
-    #else:
-    sql_list = sqlparse.split(queries) # TODO test to see if this actually splits things?
+    sql_list = sqlparse.split(queries)
 
     result = Result()
     for sql in sql_list:
       sql = sql.rstrip().rstrip(";")
       if len(sql) == 0:
         continue
-
-      # TODO
-      # If it is a CALL procedure statement, execute it differently. TODO document numbers
-      # TODO don't need to do CALL procedure separately
-      #if sql.strip().startswith("CALL"):
-      #  proc = str(sql[sql.find("CALL") + 5:sql.find("(")]).strip()
-      #  args = sql[sql.find("(") + 1:sql.find(")")].split(",")
-      #  args = tuple([str(arg.strip().rstrip("'").lstrip("'")) for arg in args])
-      #  self.cursor.callproc(proc, args)
-      #else:
 
       query_results = Cache.get(sql)
 
@@ -525,4 +507,5 @@ class DBTools:
       # Otherwise execute each line. Output must be consumed for the query
       # to actually be executed.
       for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
+      self.cursor.execute("COMMIT")
     f.close()

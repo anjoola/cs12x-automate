@@ -48,7 +48,8 @@ class Function(ProblemType):
 
     if result.results and result.results[0]:
       result = str(result.results[0][0])
-    else: result = ""
+    else:
+      result = ""
 
     output["actual"] = result if len(result) > 0 else "NULL"
     output["expected"] = test["expected"]

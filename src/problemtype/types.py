@@ -125,8 +125,7 @@ class ProblemType(object):
       # If their query times out, restart the connection and output an error.
       # Retry their query first (so all queries are tried at most twice).
       except TimeoutError as e:
-        # TODO
-        print "got timeout error"
+        print "[timed out, trying again]"
         self.db.kill_query()
         self.db.get_db_connection(test.get("timeout"), False)
         add(self.output["errors"], e)
@@ -138,6 +137,7 @@ class ProblemType(object):
           lost_points += test["points"]
           self.db.kill_query()
           self.db.get_db_connection(test.get("timeout"), False)
+          self.output["got_points"] = 0
           continue
 
       # If there was a database error, print out the error that occurred.
@@ -147,7 +147,8 @@ class ProblemType(object):
 
       # Run the teardown query no matter what.
       finally:
-        if test.get("teardown"): self.db.execute_sql(test["teardown"])
+        if test.get("teardown"):
+          self.db.execute_sql(test["teardown"])
 
       # Apply deductions.
       if graded_test.get("deductions"):
