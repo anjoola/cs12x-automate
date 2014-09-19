@@ -56,7 +56,7 @@ Usage
                    [--after <grade files submitted after YYYY-MM-DD>]
                    [--user <database username>]
                    [--db <database to use for grading>]
-                   [--deps] [--purge]
+                   [--deps] [--purge] [--raw]
 
 Use `--purge` if the entire database is to be purged prior to grading. This
 should be used between assignments and if there were any errors in grading
@@ -66,6 +66,8 @@ The `--deps` flag is used to run the dependencies for the assignment.
 Dependencies are usually SQL files that create the tables and rows necessary
 for testing. They should only be run once per assignment unless `--purge` is
 used.
+
+Use `--raw` if the output results should be in raw JSON instead of HTML.
 
 Example usage:
 
