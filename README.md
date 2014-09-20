@@ -60,7 +60,8 @@ Usage
 
 Use `--purge` if the entire database is to be purged prior to grading. This
 should be used between assignments and if there were any errors in grading
-prior to this.
+prior to this. Generally if there is some problem grading you should run
+with the `--purge` flag.
 
 The `--deps` flag is used to run the dependencies for the assignment.
 Dependencies are usually SQL files that create the tables and rows necessary
