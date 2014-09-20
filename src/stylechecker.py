@@ -104,8 +104,10 @@ class StyleChecker:
         cls.errors[StyleError.DOUBLE_QUOTES] += 1
   
     # Continue checking for problem header mistakes.
-    if not (cls.has_header or cls.multiline_comment or is_bad_header or \
-      comment.search(line.strip())):
+    if not (cls.has_header or
+            cls.multiline_comment or
+            is_bad_header or
+            comment.search(line.strip())):
       cls.errors[StyleError.CODE_BEFORE_PROBLEM_HEADER] += 1
     if line.strip().startswith("*/") or line.strip().endswith("*/"):
       cls.multiline_comment = False

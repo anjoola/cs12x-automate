@@ -57,7 +57,7 @@ class DBTools:
     try:
       self.terminator = Terminator(self.user, self.database)
     except mysql.connector.errors.Error:
-      err("Could not start up terminator connection! Any unruly queries " + \
+      err("Could not start up terminator connection! Any unruly queries " +
           "must be manually killed!")
 
   # --------------------------- Database Utilities --------------------------- #
@@ -182,7 +182,7 @@ class DBTools:
         "SELECT trigger_name FROM information_schema.triggers"
       ).results
     except (mysql.connector.errors.Error, DatabaseError, TimeoutError) as e:
-      err("Could not get the database state. Future gradings are possibly " + \
+      err("Could not get the database state. Future gradings are possibly " +
           "affected.")
 
     return state
@@ -474,8 +474,8 @@ class DBTools:
     if not os.path.exists(filename):
       err("File to import %s does not exist!" % filename, True)
     try:
-      subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " + \
-                      self.user + " -p" + LOGIN[self.user] + \
+      subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " +
+                      self.user + " -p" + LOGIN[self.user] +
                       " --delete --local " + self.database + " " + filename)
     except OSError:
       err("Could not import file %s! The 'mysqlimport' library does not exist!",

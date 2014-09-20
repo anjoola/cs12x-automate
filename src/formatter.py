@@ -65,11 +65,11 @@ def format(output, specs):
 
   o = StringIO()
   o.write("<head><title>CS 121 Automation</title></head>")
-  o.write("<link rel='stylesheet' type='text/css' href='" + STYLE_DIR_BASE + \
+  o.write("<link rel='stylesheet' type='text/css' href='" + STYLE_DIR_BASE +
           "css.css'>\n")
-  o.write("<script type='text/javascript' src='" + STYLE_DIR_BASE + \
+  o.write("<script type='text/javascript' src='" + STYLE_DIR_BASE +
           "javascript.js'></script>")
-  o.write("\n<input type='hidden' id='assignment' value='" + \
+  o.write("\n<input type='hidden' id='assignment' value='" +
           specs["assignment"] + "'>\n")
 
   o.write("<div id='container'>\n")
@@ -80,7 +80,7 @@ def format(output, specs):
   o.write("<div id='list'><div id='list-inner'>\n" +
           "<div id='students'>Students</div><br>\n")
   found_students = []
-  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" + \
+  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" +
                       RESULT_DIR + "files/"):
     student = f.split("-")[0]
     if student not in found_students:
@@ -88,7 +88,7 @@ def format(output, specs):
 
   # List students out in alphabetical order.
   for student in sorted(found_students):
-    o.write("<a class='student-link' onclick='changeStudent(\"" + student + \
+    o.write("<a class='student-link' onclick='changeStudent(\"" + student +
             "\")'>" + student + "</a><br>\n")
   o.write("</div></div>\n")
 
@@ -96,7 +96,7 @@ def format(output, specs):
   o.write("<div id='contents'>\n")
   first_student = output["students"][0]["name"]
   first_file = output["files"][0]
-  o.write("<div id='title'><div id='title-inner'>" + \
+  o.write("<div id='title'><div id='title-inner'>" +
           "<div id='name'>" + first_student + "</div>\n")
 
   # Links for each file.
@@ -113,17 +113,17 @@ def format(output, specs):
 
   # Graded files.
   o.write("<div class='iframe-container' id='graded'>\n")
-  o.write("<div id='show-raw' onclick='showRaw()' style='display:none'>" + \
+  o.write("<div id='show-raw' onclick='showRaw()' style='display:none'>" +
           "show raw file</div>")
   o.write("<div class='toast'>Graded File</div>")
-  o.write("<iframe src='files/" + first_student + "-" + first_file + \
+  o.write("<iframe src='files/" + first_student + "-" + first_file +
           ".html' id='iframe-graded'></iframe></div>\n\n")
 
   # Raw files.
   o.write("<div class='iframe-container' id='raw'>\n")
   o.write("<div id='hide-raw' onclick='hideRaw()'>hide raw file</div>")
   o.write("<div class='toast'>Raw File</div>")
-  o.write("<iframe src='files/" + first_student + "-" + first_file + \
+  o.write("<iframe src='files/" + first_student + "-" + first_file +
           ".raw.html' id='iframe-raw'></iframe></div>\n")
 
   o.write("</div></div>\n")
@@ -144,12 +144,12 @@ def format_raw_file(fname, student, assignment):
   specs: The specs for the assignment.
   """
   try:
-    out = open(ASSIGNMENT_DIR + assignment + "/" + RESULT_DIR + "files/" + \
+    out = open(ASSIGNMENT_DIR + assignment + "/" + RESULT_DIR + "files/" +
                student + "-" + fname + ".raw.html", 'w')
-    infile = open(ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR + \
+    infile = open(ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR +
                   student + "-" + assignment + "/" + fname, 'r')
     contents = infile.read()
-    out.write("<pre style='font-family: Consolas, monospace; " + \
+    out.write("<pre style='font-family: Consolas, monospace; " +
               "font-size: 12px;'>" + contents + "</pre>")
     out.close()
   except IOError:
@@ -178,9 +178,9 @@ def format_student(student, output, specs):
     format_raw_file(fname, student, specs["assignment"])
 
     o = StringIO()
-    o.write("<link rel='stylesheet' type='text/css' href='" + \
+    o.write("<link rel='stylesheet' type='text/css' href='" +
             STYLE_DIR + "css.css'>\n")
-    o.write("<script type='text/javascript' src='" + STYLE_DIR + \
+    o.write("<script type='text/javascript' src='" + STYLE_DIR +
             "javascript.js'></script>\n")
     o.write("<html class='student-page'>")
 
@@ -194,8 +194,8 @@ def format_student(student, output, specs):
     # Loop through all the problems.
     for (i, problem) in enumerate(f["problems"]):
       problem_specs = specs[f["filename"]][i]
-      o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " + \
-              problem["num"] + " (" + str(problem["got_points"]) + "/" + \
+      o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " +
+              problem["num"] + " (" + str(problem["got_points"]) + "/" +
               str(problem_specs["points"]) + " Points)</h3></a>\n")
 
       o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
@@ -216,7 +216,8 @@ def format_student(student, output, specs):
       o.write("<div class='sql'>" + problem["sql"] + "</div>")
 
       # Test output.
-      PROBLEM_TYPES[problem_specs["type"]]().do_output(o, problem["tests"], \
+      PROBLEM_TYPES[problem_specs["type"]]().do_output(o,
+                                                       problem["tests"],
                                                        problem_specs["tests"])
       # Any errors that have occurred.
       errors = problem["errors"]

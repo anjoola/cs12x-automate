@@ -1,8 +1,8 @@
 import datetime
 import time
 
-from sqltools import check_valid_query, find_valid_sql
 from errors import DatabaseError, QueryError
+from sqltools import check_valid_query, find_valid_sql
 from types import ProblemType, SuccessType
 
 class Select(ProblemType):
@@ -31,10 +31,12 @@ class Select(ProblemType):
 
     # Run the test query and the student's query.
     try:
-      expected = self.db.execute_sql(test["query"], test.get("setup"), \
-                                     test.get("teardown"), True)
-      actual = self.db.execute_sql(sql, test.get("setup"), \
-                                   test.get("teardown"), True)
+      expected = self.db.execute_sql(test["query"],
+                                     test.get("setup"),
+                                     test.get("teardown"))
+      actual = self.db.execute_sql(sql,
+                                   test.get("setup"),
+                                   test.get("teardown"))
     except DatabaseError:
       raise
 
@@ -112,6 +114,7 @@ class Select(ProblemType):
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"].split("\n"), \
-                        test["actual"].split("\n"), o)
+    self.generate_diffs(test["expected"].split("\n"),
+                        test["actual"].split("\n"),
+                        o)
     o.write("</pre>")

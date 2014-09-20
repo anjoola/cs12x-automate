@@ -1,6 +1,7 @@
 import mysql.connector
 
-import dbtools, iotools
+import dbtools
+import iotools
 from CONFIG import MAX_TIMEOUT
 from errors import (
   add,
@@ -103,8 +104,12 @@ class Grader:
       for problem in problems:
         # Add this graded problem to the list in the graded file.
         num = problem["number"]
-        graded_problem = {"num": num, "tests": [], "errors": [], \
-                          "got_points": 0}
+        graded_problem = {
+          "num": num,
+          "tests": [],
+          "errors": [],
+          "got_points": 0
+        }
         graded_file["problems"].append(graded_problem)
 
         try:

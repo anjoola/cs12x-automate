@@ -1,5 +1,5 @@
-from sqltools import check_valid_query, find_valid_sql
 from errors import DatabaseError, QueryError
+from sqltools import check_valid_query, find_valid_sql
 from types import ProblemType, SuccessType
 
 class Insert(ProblemType):
@@ -13,8 +13,8 @@ class Insert(ProblemType):
   def grade_test(self, test, output):
     # Get the state of the table before the insert.
     table_sql = "SELECT " + \
-      (", ".join(test["columns"]) if test.get("columns") else "*") + \
-      " FROM " + test["table"]
+                (", ".join(test["columns"]) if test.get("columns") else "*") + \
+                " FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
     sql = self.response.sql
 
@@ -33,7 +33,8 @@ class Insert(ProblemType):
     exception = None
     self.db.savepoint('spt_insert')
     try:
-      self.db.execute_sql(sql, setup=test.get("setup"), \
+      self.db.execute_sql(sql,
+                          setup=test.get("setup"),
                           teardown=test.get("teardown"))
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:
@@ -63,8 +64,8 @@ class Insert(ProblemType):
     # Compare the results of the test insert versus the actual. If the results
     # are not equal in size, then it is automatically wrong. If the results are
     # not the same, then they are also wrong.
-    if (len(expected.results) != len(actual.results) or not \
-        self.equals(set(expected.results), set(actual.results))):
+    if (len(expected.results) != len(actual.results) or
+        not self.equals(set(expected.results), set(actual.results))):
       output["expected"] = expected.subtract(before).output
       output["actual"] = actual.subtract(before).output
       return test["points"]
@@ -81,6 +82,7 @@ class Insert(ProblemType):
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"].split("\n"), \
-                        test["actual"].split("\n"), o)
+    self.generate_diffs(test["expected"].split("\n"),
+                        test["actual"].split("\n"),
+                        o)
     o.write("</pre>")

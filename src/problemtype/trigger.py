@@ -20,7 +20,8 @@ class Trigger(ProblemType):
 
     exception = None
     try:
-      self.db.execute_sql(self.response.sql, setup=test.get("setup"), \
+      self.db.execute_sql(self.response.sql,
+                          setup=test.get("setup"),
                           teardown=test.get("teardown"))
       actual = self.db.execute_sql(test["actual"])
     except DatabaseError as e:
@@ -40,8 +41,8 @@ class Trigger(ProblemType):
     # Compare the expected versus the actual results. If the results are not
     # equal in size, then it is automatically wrong. If the results are not the
     # same, then they are also wrong.
-    if len(expected.results) != len(actual.results) or not \
-       self.equals(set(expected.results), set(actual.results)):
+    if (len(expected.results) != len(actual.results) or
+        not self.equals(set(expected.results), set(actual.results))):
       output["expected"] = expected.output
       output["actual"] = actual.output
       return test["points"]
@@ -58,6 +59,7 @@ class Trigger(ProblemType):
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"].split("\n"), \
-                        test["actual"].split("\n"), o)
+    self.generate_diffs(test["expected"].split("\n"),
+                        test["actual"].split("\n"),
+                        o)
     o.write("</pre>")

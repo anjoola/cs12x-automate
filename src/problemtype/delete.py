@@ -1,5 +1,5 @@
-from sqltools import check_valid_query, find_valid_sql
 from errors import DatabaseError, QueryError
+from sqltools import check_valid_query, find_valid_sql
 from types import ProblemType, SuccessType
 
 class Delete(ProblemType):
@@ -17,8 +17,8 @@ class Delete(ProblemType):
   def grade_test(self, test, output):
     # Get the state of the table before the delete.
     table_sql = "SELECT " + \
-      (", ".join(test["columns"]) if test.get("columns") else "*") + \
-      " FROM " + test["table"]
+                (", ".join(test["columns"]) if test.get("columns") else "*") + \
+                " FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
     sql = self.response.sql
 
@@ -66,8 +66,8 @@ class Delete(ProblemType):
     # Compare the remaining expected rows versus the actual. If the results are
     # not equal in the size, then it is automatically wrong. If the results are
     # not the same, then they are also wrong.
-    if len(expected.results) != len(actual.results) or not \
-       self.equals(set(expected.results), set(actual.results)):
+    if (len(expected.results) != len(actual.results) or
+        not self.equals(set(expected.results), set(actual.results))):
       output["expected"] = before.subtract(expected).output
       output["actual"] = before.subtract(actual).output
       return test["points"]
@@ -84,6 +84,7 @@ class Delete(ProblemType):
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"].split("\n"), \
-                        test["actual"].split("\n"), o)
+    self.generate_diffs(test["expected"].split("\n"),
+                        test["actual"].split("\n"),
+                        o)
     o.write("</pre>")

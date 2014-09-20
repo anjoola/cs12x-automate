@@ -69,33 +69,6 @@ class GradedOutput:
   Class: GradedOutput
   -------------------
   Contains the graded output. Has functions to convert such output into JSON.
-  Contains the following fields: TODO this needs to change.....
-    {
-      "start": "",
-      "end": "",
-      "students": [...]
-    }
-  Each student is of the form:
-    {
-      "name": "",
-      "files": [...]
-    }
-  Each file is of the form:
-    {
-      "filename": ""
-      "got_points": 0,
-      "errors": [""],
-      "problems": [...]
-    }
-  Each problem is of the form:
-    {
-      "num": "",
-      "num_points": 0,
-      "errors": [],
-      "got_points" 0,
-      "sql": "",
-      
-      
   """
   def __init__(self, specs):
     # Dictionary of fields.

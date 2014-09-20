@@ -65,7 +65,7 @@ class StyleError(Error):
 
   CODE_BEFORE_PROBLEM_HEADER = (
     "CodeBeforeProblemHeaderError", 0, 1,
-    "There is code before a problem header! There will probably be major " + \
+    "There is code before a problem header! There will probably be major " +
     "point deductions for all problems in this file."
   )
 
@@ -131,7 +131,7 @@ class QueryError(Error):
   """
   BAD_QUERY = (
     "BadQueryError", 0, 0,
-    "Query is bad because it is empty, contains unexpected SQL or extra " + \
+    "Query is bad because it is empty, contains unexpected SQL or extra " +
     "stuff after the SQL."
   )
 
@@ -247,7 +247,7 @@ class DependencyError(DatabaseError):
 
 
   def __repr__(self):
-    return ("DependencyError (%d): Dependent query from problem %s in file " + \
+    return ("DependencyError (%d): Dependent query from problem %s in file " +
             "%s got error \"%s\".") % (self.errno, self.num, self.f, self.msg)
 
 

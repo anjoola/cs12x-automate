@@ -102,11 +102,11 @@ class AutomationTool:
                         help="Whether or not to output results as a raw JSON "
                              "file")
     args = parser.parse_args()
-    (self.assignment, self.files, self.students, after, \
-     self.user, self.db, AutomationTool.purge, AutomationTool.dependency,
-     AutomationTool.raw) = \
-        (args.assignment, args.files, args.students, args.after, \
-         args.user, args.db, args.purge, args.deps, args.raw)
+    (self.assignment, self.files, self.students, after,
+     self.user, self.db, AutomationTool.purge,
+     AutomationTool.dependency, AutomationTool.raw) = (
+        args.assignment, args.files, args.students, args.after,
+        args.user, args.db, args.purge, args.deps, args.raw)
 
     # If the assignment argument isn't specified, print usage statement.
     if self.assignment is None:
@@ -203,8 +203,12 @@ class AutomationTool:
     style_errors = set()
     for filename in self.files:
       # Add this file to the graded output.
-      graded_file = {"filename": filename, "problems": [], "errors": [], \
-                     "got_points": 0}
+      graded_file = {
+        "filename": filename,
+        "problems": [],
+        "errors": [],
+        "got_points": 0
+      }
       output["files"][filename] = graded_file
       fname = path + filename
 
@@ -244,7 +248,7 @@ class AutomationTool:
     try:
       self.db.get_db_connection(MAX_TIMEOUT)
     except DatabaseError:
-      err("Could not get a database connection! Please check your internet " + \
+      err("Could not get a database connection! Please check your internet " +
           "connection!", True)
 
     # Purge the database if necessary.

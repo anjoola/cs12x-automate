@@ -80,8 +80,10 @@ def check_line(line, line_number):
       print h() + "[NO DOUBLE-QUOTED STRINGS]" + f(line)
 
   # Continue checking for problem header mistakes.
-  if not (HAS_HEADER or MULTILINE_COMMENT or is_bad_header or \
-    comment.search(line.strip())):
+  if not (HAS_HEADER or
+          MULTILINE_COMMENT or
+          is_bad_header or
+          comment.search(line.strip())):
     print h() + "[CODE BEFORE PROBLEM HEADER]" + f(line)
   if line.strip().startswith("*/") or line.strip().endswith("*/"):
     MULTILINE_COMMENT = False

@@ -5,8 +5,8 @@ from models import Result
 from types import ProblemType
 
 # Disallowed keywords for updatable views.
-DISALLOWED_KEYWORDS = [ \
-  "SUM(", "MIN(", "MAX(", "COUNT(", \
+DISALLOWED_KEYWORDS = [
+  "SUM(", "MIN(", "MAX(", "COUNT(",
   "DISTINCT ", "GROUP BY", " HAVING ", " UNION "
 ]
 
@@ -14,10 +14,10 @@ DISALLOWED_KEYWORDS = [ \
 # updatable if the tables can be processed with the MERGE command, but there
 # are no such tables in this class.
 # Really, only "JOIN" is necessary, this is just for illustrative purposes.
-DISALLOWED_JOINS = [ \
-  "JOIN", "CROSS JOIN", "INNER JOIN", "STRAIGHT_JOIN", "NATURAL JOIN", \
-  "LEFT JOIN", "LEFT OUTER JOIN", "NATURAL LEFT OUTER JOIN", \
-  "RIGHT JOIN", "RIGHT OUTER JOIN", "NATURAL RIGHT OUTER JOIN", \
+DISALLOWED_JOINS = [
+  "JOIN", "CROSS JOIN", "INNER JOIN", "STRAIGHT_JOIN", "NATURAL JOIN",
+  "LEFT JOIN", "LEFT OUTER JOIN", "NATURAL LEFT OUTER JOIN",
+  "RIGHT JOIN", "RIGHT OUTER JOIN", "NATURAL RIGHT OUTER JOIN",
   "OUTER JOIN", "LEFT OUTER JOIN", "RIGHT OUTER JOIN"
 ]
 
@@ -87,8 +87,8 @@ class View(ProblemType):
 
     # If the view does not contain the same rows as the solution select
     # statement, then their query is wrong.
-    if len(expected.results) != len(actual.results) or not \
-       self.equals(expected.results, actual.results):
+    if (len(expected.results) != len(actual.results) or
+        not self.equals(expected.results, actual.results)):
       # See if they chose the wrong column order.
       if test.get("column-order"):
         eresults = [sorted(x) for x in expected.results]
@@ -113,6 +113,7 @@ class View(ProblemType):
 
     # Expected and actual output.
     o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"].split("\n"), \
-                        test["actual"].split("\n"), o)
+    self.generate_diffs(test["expected"].split("\n"),
+                        test["actual"].split("\n"),
+                        o)
     o.write("</pre>")

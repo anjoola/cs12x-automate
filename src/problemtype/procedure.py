@@ -40,7 +40,7 @@ class Procedure(ProblemType):
 
     # Heading for before and after.
     before_first = "Before" if len(bdiff) == 0 else bdiff[0][1]
-    o.write("<b>Before</b>" + \
+    o.write("<b>Before</b>" +
             " " * (len(before_first) - len("Before") + 6) + "<b>After</b>\n")
     space = " " * (max(len(before_first), len("Before")) + 6)
 
@@ -55,7 +55,7 @@ class Procedure(ProblemType):
       (diff_type, avalue) = adiff[aindex]
       # Unchanged row.
       if diff_type == "":
-        o.write("<font color='gray'>" + self.e(evalue + "      " + avalue) + \
+        o.write("<font color='gray'>" + self.e(evalue + "      " + avalue) +
                 "</font>\n")
         aindex += 1
         bindex += 1

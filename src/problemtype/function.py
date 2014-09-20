@@ -71,9 +71,9 @@ class Function(ProblemType):
       diff = len(expected) - len("Expected")
 
       o.write("<pre class='results'>\n")
-      o.write("<b>Expected</b>" + \
+      o.write("<b>Expected</b>" +
               (" " * ((diff if diff > 0 else 0) + 6)) + "<b>Actual</b>")
 
-      o.write("<br>" + expected + \
+      o.write("<br>" + expected +
               (" " * ((0 if diff > 0 else abs(diff)) + 6)) + actual + "\n")
       o.write("</pre>")
