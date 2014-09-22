@@ -98,15 +98,18 @@ class AutomationTool:
     parser.add_argument("--purge", action="store_const", const=True,
                         help="Whether or not to purge the database before"
                              " grading")
+    parser.add_argument("--hide", action="store_const", const=True,
+                        help="Whether or not to hide solutions from the output,"
+                             " used to generate output for students")
     parser.add_argument("--raw", action="store_const", const=True,
                         help="Whether or not to output results as a raw JSON "
                              "file")
     args = parser.parse_args()
     (self.assignment, self.files, self.students, after,
-     self.user, self.db, AutomationTool.purge,
-     AutomationTool.dependency, AutomationTool.raw) = (
+     self.user, self.db, AutomationTool.purge, AutomationTool.dependency,
+     AutomationTool.hide_solutions, AutomationTool.raw) = (
         args.assignment, args.files, args.students, args.after,
-        args.user, args.db, args.purge, args.deps, args.raw)
+        args.user, args.db, args.purge, args.deps, args.hide, args.raw)
 
     # If the assignment argument isn't specified, print usage statement.
     if self.assignment is None:
@@ -230,7 +233,7 @@ class AutomationTool:
 
     # Grade this student, make style deductions, and output the results.
     output["got_points"] = self.grader.grade(response, output)
-    formatter.format_student(student, output, self.specs)
+    formatter.format_student(student, output, self.specs, self.hide_solutions)
 
 
   def setup(self):

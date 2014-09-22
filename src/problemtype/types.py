@@ -181,7 +181,7 @@ class ProblemType(object):
     raise NotImplementedError("Must be implemented!")
 
 
-  def do_output(self, o, output, problem_specs):
+  def do_output(self, o, output, problem_specs, hide_solutions):
     """
     Function: do_output
     -------------------
@@ -190,41 +190,57 @@ class ProblemType(object):
     o: The HTML output for this problem.
     output: The graded output for all the tests.
     problem_specs: The specs for this problem.
+    hide_solutions: Whether or not to hide solution output.
     """
-    has_printed_test = False
-    for (i, test) in enumerate(output):
-      specs = problem_specs[i]
-
-      # Only print the "Test" header once.
-      if not has_printed_test:
-        has_printed_test = True
-        o.write("<b>Tests</b>\n<ul>\n")
-
-      # Print whether or not the test was successful.
-      if test["success"] == SuccessType.UNDETERMINED:
-        o.write("<li><div class='uncertain'>UNDETERMINED")
-      elif test["success"]:
-        o.write("<li><div class='passed'>PASSED")
+    # Show minimal information if hiding solutions.
+    if hide_solutions:
+      if any([test["success"] == SuccessType.UNDETERMINED for test in output]):
+        o.write("Test results are <div class='uncertain'>UNDETERMINED</div>" +
+                " and require TA input.\n")
+      elif any([test["success"] == SuccessType.FAILURE for test in output]):
+        o.write("Some tests have <div class='failed'>FAILED</div>!\n")
       else:
-        o.write("<li><div class='failed'>FAILED")
+        o.write("All tests <div class='passed'>PASSED</div>!\n")
 
-      # Other test details such as the number of points received, and the
-      # description of the test. Only print the number of points if the test is
-      # not undetermined.
-      if test["success"] != SuccessType.UNDETERMINED:
-        o.write(" (" + str(test.get("got_points", 0)) + "/" +
-                str(specs["points"]) + " Points)")
-      o.write("</div><br>\n")
-      if specs.get("desc"):
-        o.write("<i>" + specs["desc"] + "</i><br>")
-      if specs.get("query"):
-        o.write("<div class='test-specs'>" + specs["query"] + "</div>")
+    # Otherwise show full test output.
+    else:
+      has_printed_test = False
+      for (i, test) in enumerate(output):
+        specs = problem_specs[i]
 
-      # Specific test printouts (different for different problem types).
-      self.output_test(o, test, specs)
+        # Only print the "Test" header once.
+        if not has_printed_test:
+          has_printed_test = True
+          o.write("<b>Tests</b>\n<ul>\n")
 
-      if has_printed_test: o.write("</li>\n")
-    if has_printed_test: o.write("</ul>")
+        # Print whether or not the test was successful.
+        if test["success"] == SuccessType.UNDETERMINED:
+          o.write("<li><div class='uncertain'>UNDETERMINED")
+        elif test["success"]:
+          o.write("<li><div class='passed'>PASSED")
+        else:
+          o.write("<li><div class='failed'>FAILED")
+
+        # Other test details such as the number of points received, and the
+        # description of the test. Only print the number of points if the test is
+        # not undetermined.
+        if test["success"] != SuccessType.UNDETERMINED:
+          o.write(" (" + str(test.get("got_points", 0)) + "/" +
+                  str(specs["points"]) + " Points)")
+        o.write("</div><br>\n")
+        if specs.get("desc"):
+          o.write("<i>" + specs["desc"] + "</i><br>")
+        if specs.get("query"):
+          o.write("<div class='test-specs'>" + specs["query"] + "</div>")
+
+        # Specific test printouts (different for different problem types).
+        self.output_test(o, test, specs)
+
+        if has_printed_test:
+          o.write("</li>\n")
+
+      if has_printed_test:
+        o.write("</ul>")
 
 
   def output_test(self, o, test, specs):

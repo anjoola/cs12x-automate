@@ -49,6 +49,9 @@ STYLE_DIR_BASE = "style/"
 # Directory where the output files are stored.
 FILE_DIR = "files/"
 
+# Directory where the output files for the students are stored.
+STUDENT_OUTPUT_DIR = "student_output/"
+
 # Maximum number of results to print out.
 MAX_NUM_RESULTS = 50
 

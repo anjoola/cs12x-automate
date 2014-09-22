@@ -15,6 +15,7 @@ from CONFIG import (
   FILE_DIR,
   RESULT_DIR,
   STUDENT_DIR,
+  STUDENT_OUTPUT_DIR,
   STYLE_DIR,
   STYLE_DIR_BASE
 )
@@ -34,6 +35,7 @@ def create_path(assignment):
   if not os.path.exists(path + RESULT_DIR):
     os.mkdir(path + RESULT_DIR)
     os.mkdir(path + RESULT_DIR + FILE_DIR)
+    os.mkdir(path + RESULT_DIR + STUDENT_OUTPUT_DIR)
     os.mkdir(path + RESULT_DIR + STYLE_DIR_BASE)
 
     # Copy over stylesheets and Javascript files.
@@ -158,7 +160,7 @@ def format_raw_file(fname, student, assignment):
     return
 
 
-def format_student(student, output, specs):
+def format_student(student, output, specs, hide_solutions):
   """
   Function: format_student
   ------------------------
@@ -168,10 +170,19 @@ def format_student(student, output, specs):
   student: The student's name.
   output: The student's JSON output.
   specs: The specs for the assignment.
+  hide_solutions: Whether or not to hide solution output.
   """
 
   # Create the necessary directories if needed.
   create_path(specs["assignment"])
+
+  # Put styling inline if hiding solutions.
+  if hide_solutions:
+    o = StringIO()
+    o.write("<style type='text/css'>\n")
+    css = open(STYLE_DIR + "css.css", 'r')
+    o.write(css.read())
+    o.write("</style>")
 
   # Create output per student, per file. Files are named <student>-<file>.html.
   for (fname, f) in output["files"].iteritems():
@@ -179,16 +190,24 @@ def format_student(student, output, specs):
     # other browsers).
     format_raw_file(fname, student, specs["assignment"])
 
-    o = StringIO()
-    o.write("<link rel='stylesheet' type='text/css' href='" +
-            STYLE_DIR + "css.css'>\n")
-    o.write("<script type='text/javascript' src='" + STYLE_DIR +
-            "javascript.js'></script>\n")
+    if not hide_solutions:
+      o = StringIO()
+      o.write("<link rel='stylesheet' type='text/css' href='" +
+              STYLE_DIR + "css.css'>\n")
+      o.write("<script type='text/javascript' src='" + STYLE_DIR +
+              "javascript.js'></script>\n")
     o.write("<html class='student-page'>")
+
+    if hide_solutions:
+      o.write("<h2>" + fname + "</h2>")
 
     # Print out all errors that have occurred with the file.
     if f.get("errors"):
-      o.write("<h2>File Errors</h2><ul>")
+      if hide_solutions:
+        o.write("<h3>File Errors</h3><ul>")
+      else:
+        o.write("<h2>File Errors</h2><ul>")
+
       for error in f["errors"]:
         o.write("<li>" + error + "</li>")
       o.write("</ul>")
@@ -196,11 +215,15 @@ def format_student(student, output, specs):
     # Loop through all the problems.
     for (i, problem) in enumerate(f["problems"]):
       problem_specs = specs[f["filename"]][i]
-      o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " +
-              problem["num"] + " (" + str(problem["got_points"]) + "/" +
-              str(problem_specs["points"]) + " Points)</h3></a>\n")
+      if hide_solutions:
+        o.write("<h3>Problem " + problem["num"] + "</h3>\n")
+        o.write("<div id=\"" + problem["num"] + "\">")
+      else:
+        o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " +
+                problem["num"] + " (" + str(problem["got_points"]) + "/" +
+                str(problem_specs["points"]) + " Points)</h3></a>\n")
+        o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
 
-      o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
       # If the student did not submit an answer for this problem.
       if problem.get("notexist"):
         o.write("<i>Did not submit a response for this question!</i>")
@@ -214,28 +237,45 @@ def format_student(student, output, specs):
           o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
         else:
           o.write("<div class='comment'>" + problem["comments"] + "</div>")
-      o.write("<b>Student's Response</b>")
+      if hide_solutions:
+        o.write("<b>Response</b>")
+      else:
+        o.write("<b>Student's Response</b>")
       o.write("<div class='sql'>" + problem["sql"] + "</div>")
 
       # Test output.
       PROBLEM_TYPES[problem_specs["type"]]().do_output(o,
                                                        problem["tests"],
-                                                       problem_specs["tests"])
-      # Any errors that have occurred.
-      errors = problem["errors"]
-      if len(errors) > 0:
-        o.write("\n<b>Errors</b>\n<br><ul>")
-        for error in errors:
-          o.write("<li>" + str(error) + "</li>\n")
-        o.write("</ul>")
+                                                       problem_specs["tests"],
+                                                       hide_solutions)
+
+      # Any errors that have occurred. Hide them if hiding solutions since
+      # some errors may display solution queries.
+      if not hide_solutions:
+        errors = problem["errors"]
+        if len(errors) > 0:
+          o.write("\n<b>Errors</b>\n<br><ul>")
+          for error in errors:
+            o.write("<li>" + str(error) + "</li>\n")
+          o.write("</ul>")
 
       o.write("</div>")
 
-    o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
+    if not hide_solutions:
+      o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
+      o.write("</html>")
+
+      filename = output["name"] + "-" + f["filename"] + ".html"
+      out = open(ASSIGNMENT_DIR + specs["assignment"] + "/" + RESULT_DIR +
+                 FILE_DIR + filename, "w")
+      out.write(o.getvalue())
+      out.close()
+
+  if hide_solutions:
     o.write("</html>")
 
-    filename = output["name"] + "-" + f["filename"] + ".html"
-    out = open(ASSIGNMENT_DIR + specs["assignment"] + "/_results/files/" +
-               filename, "w")
+    filename = output["name"] + ".html"
+    out = open(ASSIGNMENT_DIR + specs["assignment"] + "/" + RESULT_DIR +
+               STUDENT_OUTPUT_DIR + filename, "w")
     out.write(o.getvalue())
     out.close()
