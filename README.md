@@ -28,19 +28,21 @@ particular assignment should be in the corresponding folder (for example, the
             |-- students/
                 |-- agong-cs121hw2/
                 |-- mqian-cs121hw2/
+                    |-- file1.sql
+                    |-- file2.sql
             |-- cs121hw2.spec
             |-- make-banking.sql
             |-- make-library.sql
             |-- make-university.sql
-        |-- cs121hw3
+        |-- cs121hw3/
     |-- src/
         |-- *.py
     |-- style/
 
 The specifications for the assignment must be in a file called
 `<assignment name>.spec`. Each student's submission should be in a separate
-folder of the form `<username>-<assignment name>`. Any resource files should
-be in the assignment's base directory.
+folder of the form `<username>-<assignment name>`. Any dependent SQL files
+should be in the assignment's base directory.
 
 After the repository is cloned, it should have the directory structure
 detailed above, except the `assignments` folder needs to be filled in with
@@ -55,22 +57,27 @@ Usage
                    [--after <grade files submitted after YYYY-MM-DD>]
                    [--user <database username>]
                    [--db <database to use for grading>]
-                   [--deps] [--purge] [--raw] [--hide]
+                   [--deps]
+                   [--purge]
+                   [--raw]
+                   [--hide]
 
-Use `--purge` if the entire database is to be purged prior to grading. This
+Use `--purge` if the entire database is to be purged prior to grading
+(this will drop every table, procedure, function, trigger, etc.). This
 should be used between assignments and if there were any errors in grading
 prior to this. Generally if there is some problem grading you should run
 with the `--purge` flag.
 
 The `--deps` flag is used to run the dependencies for the assignment.
-Dependencies are usually SQL files that create the tables and rows necessary
+Dependencies are SQL files that create the tables and rows necessary
 for testing. They should only be run once per assignment unless `--purge` is
 used.
 
 Use `--raw` if the output results should be in raw JSON instead of HTML.
 
 Use `--hide` if generating output for students to use (so solutions and
-point values are hidden).
+point values are hidden). Student output can be found in the
+`_results/student_output` folder in the respective assignment folder.
 
 Example usage:
 
@@ -101,6 +108,7 @@ directory structure:
         |-- cs121hw2/
             |-- _results/
                 |-- files
+                |-- student_output
                 |-- style
                 |-- index.html
             |-- students/
@@ -108,4 +116,5 @@ directory structure:
 
 The output can be viewed in the `index.html` file, which opens up a web view.
 The `files` folder contains all the files necessary for this web view, and
-`style` contains the Javascript and CSS.
+`style` contains the Javascript and CSS. The `student_output` folder
+contains the files that can be given to the students for them to look at.
