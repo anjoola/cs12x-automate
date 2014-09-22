@@ -243,12 +243,15 @@ def prettyprint(results, col_names):
   col_names: The column names for the results.
   returns: A string contained the pretty-printed results.
   """
-  # If the results are too long, don't print it.
-  if len(results) > MAX_NUM_RESULTS:
-    return "Too many results (%d) to print!" % len(results)
-
   output = prettytable.PrettyTable(col_names)
   output.align = "l"
-  for row in results:
+  for row in results[:MAX_NUM_RESULTS]:
     output.add_row(row)
-  return output.get_string()
+  output = output.get_string()
+
+  # If the results are too long, don't print all of it.
+  if len(results) > MAX_NUM_RESULTS:
+    output += \
+      "\nToo many results, did not print %d!" % (len(results) - MAX_NUM_RESULTS)
+
+  return output

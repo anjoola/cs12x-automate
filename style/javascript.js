@@ -67,7 +67,7 @@ function showRaw() {
   toggle.style.display = "block";
 
   raw = document.getElementById("raw");
-  raw.style.display = "block";
+  raw.style.display = "";
 
   graded = document.getElementById("graded");
   graded.style.width = "";

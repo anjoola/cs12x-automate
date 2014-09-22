@@ -64,9 +64,11 @@ def format(output, specs):
   create_path(specs["assignment"])
 
   o = StringIO()
-  o.write("<head><title>CS 121 Automation</title></head>")
+  o.write("<head><title>CS 121 Automation</title></head>\n")
   o.write("<link rel='stylesheet' type='text/css' href='" + STYLE_DIR_BASE +
           "css.css'>\n")
+  o.write("<link rel='stylesheet' type='text/css' href='" + STYLE_DIR_BASE +
+          "hide-raw.css' media='screen and (max-width: 900px)'>\n")
   o.write("<script type='text/javascript' src='" + STYLE_DIR_BASE +
           "javascript.js'></script>")
   o.write("\n<input type='hidden' id='assignment' value='" +

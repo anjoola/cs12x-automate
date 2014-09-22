@@ -200,10 +200,7 @@ def split(raw_sql):
 
     return -1
 
-  # Make sure the DELIMITER statements have been handled.
   sql = raw_sql.strip()
-  assert("delimiter" not in sql.lower())
-
   sql_list = []
   while len(sql) > 0:
     found_sql = False

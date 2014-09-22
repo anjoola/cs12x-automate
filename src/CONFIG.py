@@ -50,7 +50,7 @@ STYLE_DIR_BASE = "style/"
 FILE_DIR = "files/"
 
 # Maximum number of results to print out.
-MAX_NUM_RESULTS = 100
+MAX_NUM_RESULTS = 50
 
 # The number of decimal places to compare results with.
 PRECISION = 4

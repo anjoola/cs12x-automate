@@ -212,7 +212,7 @@ class ProblemType(object):
       # description of the test. Only print the number of points if the test is
       # not undetermined.
       if test["success"] != SuccessType.UNDETERMINED:
-        o.write(" (" + str(test["got_points"]) + "/" +
+        o.write(" (" + str(test.get("got_points", 0)) + "/" +
                 str(specs["points"]) + " Points)")
       o.write("</div><br>\n")
       if specs.get("desc"):

@@ -1,0 +1,12 @@
+#graded {
+  width: 100%;
+}
+#hide-raw {
+  display: none;
+}
+#raw {
+  display: none;
+}
+#show-raw {
+  display: none;
+}
