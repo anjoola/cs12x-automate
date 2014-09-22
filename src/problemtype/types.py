@@ -282,10 +282,14 @@ class ProblemType(object):
       """
       return string == " " or string == "-" or string == "+"
 
-    # Get the diffs.
+    # Get the diffs. We want to do a lowercase comparison.
     (one, two) = ([], [])
     diff = difflib.ndiff([x.lower() for x in lst1],
                          [x.lower() for x in lst2], is_line_junk)
+    # Need to keep a dictionary of the lowercase results vs. the original
+    # because we want to output in the original case.
+    case_dict = dict([(x.lower(), x) for x in lst1] +
+                     [(x.lower(), x) for x in lst2])
 
     # True if last added to "one".
     last_added = True
@@ -301,15 +305,15 @@ class ProblemType(object):
       # If the previous thing was a close match.
       if close_match and item.startswith("+"):
         close_match = False
-        two.append(("", item.replace("+ ", "")))
+        two.append(("", case_dict[item[2:]]))
       # A subtraction; goes in the "one" list.
       elif item.startswith("-"):
         last_added = True
-        one.append(("remove", item.replace("- ", "")))
+        one.append(("remove", case_dict[item[2:]]))
       # An addition, goes in the "two" list.
       elif item.startswith("+"):
         last_added = False
-        two.append(("add", item.replace("+ ", "")))
+        two.append(("add", case_dict[item[2:]]))
       # Similar lines, but not the same. Don't count them as the same line.
       elif item.find("?") != -1 and item.find("^") != -1:
         continue
@@ -317,15 +321,15 @@ class ProblemType(object):
       # added or removed.
       elif item.find("?") != -1:
         if not last_added:
-          one[len(one)-1] = ("", one[len(one)-1][1])
-          two[len(two)-1] = ("", two[len(two)-1][1])
+          one[len(one) - 1] = ("", one[len(one) - 1][1])
+          two[len(two) - 1] = ("", two[len(two) - 1][1])
         else:
-          one[len(one)-1] = ("", one[len(one)-1][1])
+          one[len(one) - 1] = ("", one[len(one) - 1][1])
           close_match = True
       # If the lines match completely.
       else:
-        one.append(("", item[2:]))
-        two.append(("", item[2:]))
+        one.append(("", case_dict[item[2:]]))
+        two.append(("", case_dict[item[2:]]))
 
     return (one, two)
 

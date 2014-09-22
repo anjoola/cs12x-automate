@@ -247,11 +247,12 @@ def prettyprint(results, col_names):
   output.align = "l"
   for row in results[:MAX_NUM_RESULTS]:
     output.add_row(row)
-  output = output.get_string()
 
   # If the results are too long, don't print all of it.
-  if len(results) > MAX_NUM_RESULTS:
-    output += \
-      "\nToo many results, did not print %d!" % (len(results) - MAX_NUM_RESULTS)
+  if len(results) > MAX_NUM_RESULTS and len(col_names) >= 1:
+    output.add_row((' ', ) * len(col_names))
+    ellipsis = ('..(%d more)..' % (len(results) - MAX_NUM_RESULTS),) + \
+               ('...',) * (len(col_names) - 1)
+    output.add_row(ellipsis)
 
-  return output
+  return output.get_string()
