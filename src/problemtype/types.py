@@ -107,9 +107,9 @@ class ProblemType(object):
     # Run each test for the problem.
     for test in self.specs["tests"]:
       lost_points = 0
-      graded_test = { \
-        "errors": [], \
-        "deductions": [], \
+      graded_test = {
+        "errors": [],
+        "deductions": [],
         "success": SuccessType.FAILURE
       }
       self.output["tests"].append(graded_test)
@@ -152,7 +152,7 @@ class ProblemType(object):
 
       # Apply deductions.
       if graded_test.get("deductions"):
-        (deductions, errors) = self.get_errors(graded_test["deductions"], \
+        (deductions, errors) = self.get_errors(graded_test["deductions"],
                                                test["points"])
         self.output["errors"] += errors
         lost_points += deductions
@@ -212,8 +212,8 @@ class ProblemType(object):
       # description of the test. Only print the number of points if the test is
       # not undetermined.
       if test["success"] != SuccessType.UNDETERMINED:
-        o.write(" (" + str(test["got_points"]) + "/" + \
-          str(specs["points"]) + " Points)")
+        o.write(" (" + str(test["got_points"]) + "/" +
+                str(specs["points"]) + " Points)")
       o.write("</div><br>\n")
       if specs.get("desc"):
         o.write("<i>" + specs["desc"] + "</i><br>")
@@ -256,8 +256,8 @@ class ProblemType(object):
     ----------------
     Compares two lists of tuples to see if their contents are equal.
     """
-    return [[unicode(x).lower() for x in y] for y in lst1] == \
-           [[unicode(x).lower() for x in y] for y in lst2]
+    return ([[unicode(x).lower() for x in y] for y in lst1] ==
+            [[unicode(x).lower() for x in y] for y in lst2])
 
 
   def get_diffs(self, lst1, lst2):
@@ -284,8 +284,8 @@ class ProblemType(object):
 
     # Get the diffs.
     (one, two) = ([], [])
-    diff = difflib.ndiff([x.lower() for x in lst1], \
-      [x.lower() for x in lst2], is_line_junk)
+    diff = difflib.ndiff([x.lower() for x in lst1],
+                         [x.lower() for x in lst2], is_line_junk)
 
     # True if last added to "one".
     last_added = True
@@ -344,7 +344,7 @@ class ProblemType(object):
     (eindex, aindex) = (0, 0)
 
     # Heading for expected and actual.
-    o.write("<b>Expected</b>" + \
+    o.write("<b>Expected</b>" +
             " " * (len(ediff[0][1]) - len("Expected") + 6) + "<b>Actual</b>\n")
     space = " " * (max(len(ediff[0][1]), len("Expected")) + 6)
 

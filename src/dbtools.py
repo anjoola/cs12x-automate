@@ -9,7 +9,6 @@ import subprocess
 
 import mysql.connector
 import mysql.connector.errors
-import sqlparse
 
 from cache import Cache
 from CONFIG import *
@@ -20,7 +19,7 @@ from iotools import (
   prettyprint
 )
 from models import DatabaseState, Result
-from sqltools import preprocess_sql
+from sqltools import preprocess_sql, split
 from terminator import Terminator
 
 class DBTools:
@@ -181,7 +180,7 @@ class DBTools:
       state.triggers = self.execute_sql(
         "SELECT trigger_name FROM information_schema.triggers"
       ).results
-    except (mysql.connector.errors.Error, DatabaseError, TimeoutError) as e:
+    except (mysql.connector.errors.Error, DatabaseError, TimeoutError):
       err("Could not get the database state. Future gradings are possibly " +
           "affected.")
 
@@ -323,6 +322,7 @@ class DBTools:
     ---------------------------
     Starts a database transaction, if not already in one.
     """
+    self.db.commit()
     if not self.db.in_transaction:
       try:
         self.db.start_transaction()
@@ -411,7 +411,7 @@ class DBTools:
     """
     # Consume old results if needed.
     [row for row in self.cursor]
-    sql_list = sqlparse.split(queries)
+    sql_list = split(queries)
 
     result = Result()
     for sql in sql_list:
@@ -499,7 +499,7 @@ class DBTools:
     except IOError:
       err("Could not find or open sourced file %s!" % fname, True)
 
-    sql_list = sqlparse.split(preprocess_sql(f))
+    sql_list = split(preprocess_sql(f))
     for sql in sql_list:
       # Skip this line if there is nothing in it.
       if len(sql.strip()) == 0:

@@ -162,7 +162,7 @@ class AutomationTool:
           failed_grading.append(student)
           self.students.append(student)
           print "\nFailed grading " + student + ", trying one more time.\n"
-          print traceback.print_exc()
+          traceback.print_exc()
         else:
           print "\nFailed grading " + student + " again. Giving up.\n"
 
@@ -249,7 +249,8 @@ class AutomationTool:
       self.db.get_db_connection(MAX_TIMEOUT)
     except DatabaseError:
       err("Could not get a database connection! Please check your internet " +
-          "connection!", True)
+          "connection!",
+          True)
 
     # Purge the database if necessary.
     if AutomationTool.purge: self.db.purge_db()
