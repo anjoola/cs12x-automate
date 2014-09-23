@@ -69,6 +69,7 @@ class GradedOutput:
   Class: GradedOutput
   -------------------
   Contains the graded output. Has functions to convert such output into JSON.
+  Format of the output can be found in the wiki.
   """
   def __init__(self, specs):
     # Dictionary of fields.

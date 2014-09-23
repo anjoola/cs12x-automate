@@ -62,37 +62,31 @@ class StyleError(Error):
     "BadHeaderError", 0, 1,
     "Problem header not formatted correctly."
   )
-
   CODE_BEFORE_PROBLEM_HEADER = (
     "CodeBeforeProblemHeaderError", 0, 1,
     "There is code before a problem header! There will probably be major " +
     "point deductions for all problems in this file."
   )
-
   DOUBLE_QUOTES = (
     "DoubleQuoteError", 3, 5,
     "Double-quotes instead of single-quotes were used for strings."
   )
-
   LINE_TOO_LONG = (
     "LineTooLongError", 0.1, 5,
     "There are too many lines longer than 80 characters."
   )
-
   SPACING = (
     "SpacingError", 2, 5,
     "Did not use spaces after commas."
   )
-
+  USED_TABS = (
+    "UsedTabsError", 0.2, 5,
+    "Tabs instead of spaces were used."
+  )
   WRONG_ENCODING = (
     "WrongEncodingError", 0, 0,
     "File has the wrong encoding. Grading has proceeded but might get " +
     "strange errors."
-  )
-
-  USED_TABS = (
-    "UsedTabsError", 0.2, 5,
-    "Tabs instead of spaces were used."
   )
 
   @staticmethod
@@ -103,6 +97,7 @@ class StyleError(Error):
     Gets the description of an error as a string.
 
     error: The error to get the description of.
+    num_occurrences: The number of times this error has appeared.
     returns: The description as a string if a deduction is necessary, otherwise
              returns None.
     """
@@ -134,32 +129,26 @@ class QueryError(Error):
     "Query is bad because it is empty, contains unexpected SQL or extra " +
     "stuff after the SQL."
   )
-
   COLUMN_ORDER = (
     "ColumnOrderError", 1, 0.3,
     "Columns are in the wrong order."
   )
-
   INCORRECT_VIEW_NAME = (
     "IncorrectViewNameError", 0, 0,
     "View was not named correctly."
   )
-
-  ORDER_BY = (
-    "OrderByError", 1, 0.3,
-    "Missing or incorrect ORDER BY statement."
-  )
-
   NOT_UPDATABLE = (
     "ViewNotUpdatableError", 2, 0.5,
     "View is not updatable but should be."
   )
-
+  ORDER_BY = (
+    "OrderByError", 1, 0.3,
+    "Missing or incorrect ORDER BY statement."
+  )
   RENAME_VALUE = (
     "RenameValueError", 1, 0.3,
     "Did not rename computed values."
   )
-
   WRONG_NUM_COLUMNS = (
     "WrongNumColumnsError", 0, 0,
     "More or fewer columns included."

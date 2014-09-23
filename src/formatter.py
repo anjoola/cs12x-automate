@@ -72,7 +72,7 @@ def format(output, specs):
   o.write("<link rel='stylesheet' type='text/css' href='" + STYLE_DIR_BASE +
           "hide-raw.css' media='screen and (max-width: 900px)'>\n")
   o.write("<script type='text/javascript' src='" + STYLE_DIR_BASE +
-          "javascript.js'></script>")
+          "javascript.js'></script>\n")
   o.write("\n<input type='hidden' id='assignment' value='" +
           specs["assignment"] + "'>\n")
 
@@ -196,7 +196,7 @@ def format_student(student, output, specs, hide_solutions):
               STYLE_DIR + "css.css'>\n")
       o.write("<script type='text/javascript' src='" + STYLE_DIR +
               "javascript.js'></script>\n")
-    o.write("<html class='student-page'>")
+    o.write("<html class='student-page'>\n")
 
     if hide_solutions:
       o.write("<h2>" + fname + "</h2>")
@@ -243,7 +243,7 @@ def format_student(student, output, specs, hide_solutions):
         o.write("<b>Student's Response</b>")
       o.write("<div class='sql'>" + problem["sql"] + "</div>")
 
-      # Test output.
+      # Do test output.
       PROBLEM_TYPES[problem_specs["type"]]().do_output(o,
                                                        problem["tests"],
                                                        problem_specs["tests"],

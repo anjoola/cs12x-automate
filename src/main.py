@@ -30,11 +30,11 @@ class AutomationTool:
   ---------------------
   The automation tool. Is able to parse the arguments and grade all the files.
   """
-  # Whether or not to purge the database before running the automation tool.
-  purge = False
-
   # Whether or not to run the dependencies.
   dependency = False
+
+  # Whether or not to purge the database before running the automation tool.
+  purge = False
 
   # Whether or not to output results as raw JSON.
   raw = False
@@ -43,26 +43,26 @@ class AutomationTool:
     # The assignment to grade.
     self.assignment = None
 
+    # The database to use, and later, the database connection.
+    self.db = None
+
     # The files to grade.
     self.files = None
-
-    # The students to grade.
-    self.students = None
-
-    # The specs file.
-    self.specs = None
-
-    # The graded output.
-    self.o = None
 
     # The grading tool.
     self.grader = None
 
+    # The graded output.
+    self.o = None
+
+    # The specs file.
+    self.specs = None
+
+    # The students to grade.
+    self.students = None
+
     # The username for the database connection.
     self.user = None
-
-    # The database to use, and later, the database connection.
-    self.db = None
 
 
   def get_args(self):

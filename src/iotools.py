@@ -56,7 +56,7 @@ def get_students(assignment, after=None):
 
   assignment: The assignment.
   after: The date after which to find submissions. Will find all students
-         who've submitted after this date.
+         who've submitted after this date. This must be of the form YYYY-MM-DD.
   returns: A list of students who've submitted for that assignment.
   """
   directory = ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR
@@ -194,6 +194,7 @@ def parse_file(f):
     elif started_sql and line.strip().startswith("--"):
       inline_comment += line + "\n"
 
+    # SQL code.
     elif started_sql:
       responses[curr].sql += inline_comment
       inline_comment = ""
@@ -248,7 +249,8 @@ def prettyprint(results, col_names):
   for row in results[:MAX_NUM_RESULTS]:
     output.add_row(row)
 
-  # If the results are too long, don't print all of it.
+  # If the results are too long, don't print all of it. Instead, put ellipses
+  # and indicate the number of rows that are missing.
   if len(results) > MAX_NUM_RESULTS and len(col_names) >= 1:
     output.add_row((' ', ) * len(col_names))
     ellipsis = ('..(%d more)..' % (len(results) - MAX_NUM_RESULTS),) + \
