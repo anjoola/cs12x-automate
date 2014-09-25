@@ -4,26 +4,6 @@ from errors import DatabaseError, QueryError
 from models import Result
 from types import ProblemType
 
-# Disallowed keywords for updatable views.
-DISALLOWED_KEYWORDS = [
-  "SUM(", "MIN(", "MAX(", "COUNT(",
-  "DISTINCT ", "GROUP BY", " HAVING ", " UNION "
-]
-
-# Disallowed joins for updatable tables. Technically multi-table views can be
-# updatable if the tables can be processed with the MERGE command, but there
-# are no such tables in this class.
-# Really, only "JOIN" is necessary, this is just for illustrative purposes.
-DISALLOWED_JOINS = [
-  "JOIN", "CROSS JOIN", "INNER JOIN", "STRAIGHT_JOIN", "NATURAL JOIN",
-  "LEFT JOIN", "LEFT OUTER JOIN", "NATURAL LEFT OUTER JOIN",
-  "RIGHT JOIN", "RIGHT OUTER JOIN", "NATURAL RIGHT OUTER JOIN",
-  "OUTER JOIN", "LEFT OUTER JOIN", "RIGHT OUTER JOIN"
-]
-
-# Regular expression matching a column and not a literal value.
-COL_RE = re.compile('[A-Za-z_]([A-Za-z_0-9])*')
-
 class View(ProblemType):
   """
   Class: View

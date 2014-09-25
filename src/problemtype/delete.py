@@ -61,7 +61,8 @@ class Delete(ProblemType):
       self.db.commit()
 
     # Raise the exception if it occurred.
-    if exception: raise exception
+    if exception:
+      raise exception
 
     # Compare the remaining expected rows versus the actual. If the results are
     # not equal in the size, then it is automatically wrong. If the results are

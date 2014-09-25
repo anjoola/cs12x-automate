@@ -7,12 +7,6 @@ Contains tools to help with parsing and checking SQL.
 import re
 from cStringIO import StringIO
 
-# Used to determine where comments are.
-COMMENTS = {
-  "/*": "*/",
-  "--": "\\n"
-}
-
 # Used to find delimiters in the file.
 DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
 
@@ -109,6 +103,12 @@ def split(raw_sql):
     ----------------------
     Finds a SQL keyword within a statement as long as it is not enclosed
     by quotes.
+
+    sql: The SQL to search within.
+    keyword: The keyword to search for.
+    start_idx: Where to start searching for the keyword.
+
+    returns: The starting index of the keyword.
     """
     quotes = []
     comment_type = None
@@ -169,7 +169,10 @@ def split(raw_sql):
     Function: get_start_idx
     -----------------------
     Checks if this SQL statement starts with this keyword, ignoring comments.
-    Returns the starting index of the keyword if found, otherwise returns -1.
+
+    sql: The SQL to search.
+    keyword: The keyword to search for.
+    returns: THe starting index of the keyword if found, -1 otherwise.
     """
     start_idx = 0
     while start_idx < len(sql):

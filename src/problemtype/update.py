@@ -59,7 +59,8 @@ class Update(ProblemType):
       self.db.commit()
 
     # Raise the exception if it occurred.
-    if exception: raise exception
+    if exception:
+      raise exception
 
     # Compare the expected rows changed versus the actual.
     if expected.output != actual.output:
