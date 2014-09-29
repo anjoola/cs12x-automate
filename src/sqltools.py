@@ -65,6 +65,10 @@ def check_valid_query(query, query_type):
   query_type: The query type (e.g. INSERT, DELETE, SELECT).
   returns: True if the query is valid, False otherwise.
   """
+  return True
+  # TODO: This is turned off because students like to put code before their
+  #       answer, causing this function to return false negatives. Really,
+  #       this function needs to be improved.
   return (
     # Make sure the query type can be found in the query.
     query.lower().strip().find(query_type.lower()) == 0 and
