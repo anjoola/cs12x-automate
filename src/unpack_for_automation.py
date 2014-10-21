@@ -29,6 +29,8 @@ def load_spec_file(spec_filename):
 
 
 def process_submission(moodle_filename, files_to_extract, warnings):
+    initial_warnings = len(warnings)
+
     moodle_parts = moodle_filename.split('_')
     if len(moodle_parts) != 3:
         raise SubmissionError(moodle_filename, 'Can\'t parse Moodle archive ' \
@@ -112,7 +114,10 @@ def process_submission(moodle_filename, files_to_extract, warnings):
     else:
         raise SubmissionError(moodle_filename, 'Unrecognized archive format')
 
-    print('Successfully processed submission:  %s' % moodle_filename)
+    if len(warnings) == initial_warnings:
+        print('Successfully processed submission:  %s' % moodle_filename)
+    else:
+        print('Encountered WARNINGS on submission:  %s' % moodle_filename)
 
 
 def extract_tar_member(moodle_filename, archive, fname, target_path):
@@ -174,6 +179,7 @@ if __name__ == '__main__':
 
     print('Files to extract from submissions:  %s' % \
         (', '.join(files_to_extract)))
+    print
 
     moodle_filenames = sys.stdin.readlines()
     moodle_filenames = set(moodle_filenames)
