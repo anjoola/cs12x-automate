@@ -252,7 +252,7 @@ class AutomationTool:
       self.db.get_db_connection(MAX_TIMEOUT)
     except DatabaseError:
       err("Could not get a database connection! Please check your internet " +
-          "connection!",
+          "connection and database connection information!",
           True)
 
     # Purge the database if necessary.
