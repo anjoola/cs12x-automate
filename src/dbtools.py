@@ -288,7 +288,12 @@ class DBTools:
       # Roll back to the named savepoint. All savepoints created after this
       # savepoint are deleted.
       if savepoint and savepoint in self.savepoints:
-        self.execute_sql("ROLLBACK TO %s" % savepoint)
+        # If rolling back a savepoint failed, then a commit must have occurred
+        # at some point. Rollback as far as we can just to be safe.
+        try:
+          self.execute_sql("ROLLBACK TO %s" % savepoint)
+        except:
+          self.db.rollback()
         self.savepoints = self.savepoints[0:self.savepoints.index(savepoint)+1]
       else:
         try:

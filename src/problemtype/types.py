@@ -364,9 +364,10 @@ class ProblemType(object):
     (eindex, aindex) = (0, 0)
 
     # Heading for expected and actual.
+    expected_length = len("Expected") if len(ediff) == 0 else len(ediff[0][1])
     o.write("<b>Expected</b>" +
-            " " * (len(ediff[0][1]) - len("Expected") + 6) + "<b>Actual</b>\n")
-    space = " " * (max(len(ediff[0][1]), len("Expected")) + 6)
+            " " * (expected_length - len("Expected") + 6) + "<b>Actual</b>\n")
+    space = " " * (max(expected_length, len("Expected")) + 6)
 
     while eindex < len(ediff):
       (diff_type, evalue) = ediff[eindex]
