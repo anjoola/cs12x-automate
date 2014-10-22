@@ -70,7 +70,7 @@ class DBTools:
     """
     if self.db:
       # Consume remaining output.
-      for _ in self.cursor: pass
+      #for _ in self.cursor: pass
 
       # Kill any remaining queries and close the database connection.
       try:
@@ -126,7 +126,8 @@ class DBTools:
         return self.db
 
     # Close any old connections and make another one with the new setting.
-    if close: self.close_db_connection()
+    if close:
+      self.close_db_connection()
     self.timeout = timeout or CONNECTION_TIMEOUT
     log("New timeout: %d" % self.timeout)
     try:
