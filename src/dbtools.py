@@ -49,7 +49,7 @@ class DBTools:
 
     # The name of the database to connect to. If none is specified, use
     # <user>_db as the default database.
-    self.database = database if database is not None else "%s_db" % user
+    self.database = database if database is not None else "%s_db" % self.user
 
     # Separate database connection used to terminate queries. If the terminator
     # cannot start, the grading cannot occur.
