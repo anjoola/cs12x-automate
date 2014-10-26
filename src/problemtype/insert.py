@@ -66,7 +66,7 @@ class Insert(ProblemType):
     # are not equal in size, then it is automatically wrong. If the results are
     # not the same, then they are also wrong.
     if (len(expected.results) != len(actual.results) or
-        not self.equals(set(expected.results), set(actual.results))):
+        not self.equals(set(expected.results), set(actual.results), check_order=False)):
       output["expected"] = expected.subtract(before).output
       output["actual"] = actual.subtract(before).output
       return test["points"]

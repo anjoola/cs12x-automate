@@ -3,6 +3,7 @@
  *
  * @param student The student to change to.
  */
+var previous = "";
 function changeStudent(student) {
   document.getElementById("name").innerHTML = student;
   var graded = document.getElementById("iframe-graded");
@@ -11,6 +12,15 @@ function changeStudent(student) {
   var file = document.getElementsByClassName("label-active")[0].innerHTML;
   graded.src = "files/" + student + "-" + file + ".html";
   raw.src = "files/" + student + "-" + file + ".raw.html";
+
+  // Change link color.
+  if (previous != "") {
+    var prevlink = document.getElementById(previous);
+    prevlink.style.color = "white";
+  }
+  var link = document.getElementById(student);
+  link.style.color = "orange";
+  previous = student;
 }
 
 /**
@@ -67,7 +77,7 @@ function showRaw() {
   toggle.style.display = "block";
 
   raw = document.getElementById("raw");
-  raw.style.display = "";
+  raw.style.display = "block";
 
   graded = document.getElementById("graded");
   graded.style.width = "";

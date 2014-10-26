@@ -266,14 +266,22 @@ class ProblemType(object):
     return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
-  def equals(self, lst1, lst2):
+  def equals(self, lst1, lst2, check_order=True):
     """
     Function: equals
     ----------------
     Compares two lists of tuples to see if their contents are equal.
+
+    lst1: The first list.
+    lst2: The second list.
+    check_order: Whether or not to check for the order of the elements.
     """
-    return ([[unicode(x).lower() for x in y] for y in lst1] ==
-            [[unicode(x).lower() for x in y] for y in lst2])
+    if check_order:
+      return ([[unicode(x).lower() for x in y] for y in lst1] ==
+              [[unicode(x).lower() for x in y] for y in lst2])
+    else:
+      return ([[unicode(x).lower() for x in y] for y in sorted(lst1)] ==
+              [[unicode(x).lower() for x in y] for y in sorted(lst2)])
 
 
   def get_diffs(self, lst1, lst2):

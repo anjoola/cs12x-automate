@@ -52,7 +52,22 @@ def e(text):
   return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
-def format(output, specs):
+def generate_student_list(specs):
+  """
+  Function: generate_student_list
+  -------------------------------
+  Generates the list of students that have already been graded.
+  """
+  students = []
+  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" +
+                      RESULT_DIR + "files/"):
+    student = f.split("-")[0]
+    if student not in students:
+      students.append(student)
+  return students
+
+
+def format(output, specs, studentlst=None):
   """
   Function: format
   ----------------
@@ -60,6 +75,8 @@ def format(output, specs):
 
   output: The graded JSON output.
   specs: The specs for the assignment.
+  student_list: The list of students that have already been graded. If set to
+                None, then generates this list by a directory search.
   returns: A string containing the HTML.
   """
   # Create the necessary directories if needed.
@@ -79,21 +96,16 @@ def format(output, specs):
   o.write("<div id='container'>\n")
 
   # Print out the list of students to the list. Finds this by searching the
-  # directory (since we may run the automation tool mutliple times on different
+  # directory (since we may run the automation tool multiple times on different
   # sets of students).
   o.write("<div id='list'><div id='list-inner'>\n" +
           "<div id='students'>Students</div><br>\n")
-  found_students = []
-  for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" +
-                      RESULT_DIR + "files/"):
-    student = f.split("-")[0]
-    if student not in found_students:
-      found_students.append(student)
+  students = generate_student_list(specs) if studentlst is None else studentlst
 
   # List students out in alphabetical order.
-  for student in sorted(found_students):
+  for student in sorted(students):
     o.write("<a class='student-link' onclick='changeStudent(\"" + student +
-            "\")'>" + student + "</a><br>\n")
+            "\")' id=\"" + student + "\">" + student + "</a><br>\n")
   o.write("</div></div>\n")
 
   # Header with student's name.

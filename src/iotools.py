@@ -19,6 +19,8 @@ import sqltools
 from CONFIG import *
 from models import Response
 
+PROBLEM_HEADER = "-- [Problem "
+
 # --------------------------- Debugging Utilities --------------------------- #
 
 def err(msg, fatal=False):
@@ -168,9 +170,10 @@ def parse_file(f):
       continue
 
     # Indicator denoting the start of an response.
-    elif line.strip().startswith("-- [Problem ") and line.strip().endswith("]"):
+    elif (line.strip().startswith(PROBLEM_HEADER) and
+          "]" in line and line.index("]") > line.index(PROBLEM_HEADER)):
       started_sql = False
-      curr = line.replace("-- [Problem ", "").replace("]", "")
+      curr = line[line.index(PROBLEM_HEADER) + len(PROBLEM_HEADER):line.index("]")]
       curr = curr.strip()
       # This is a new problem, so create an empty response to with no comments.
       responses[curr] = Response()
@@ -244,6 +247,20 @@ def prettyprint(results, col_names):
   col_names: The column names for the results.
   returns: A string contained the pretty-printed results.
   """
+  # Make sure the column names are different. If not, add an underscore after
+  # the duplicate ones so prettytable does not complain.
+  if len(set(col_names)) != len(col_names):
+    setcn = set(col_names)
+    bad = [col for col in col_names if col not in setcn or setcn.remove(col)]
+    new_cols = []
+    for col in col_names:
+      if col in bad:
+        new_cols.append(col + "_")
+        bad.remove(col)
+      else:
+        new_cols.append(col)
+    col_names = new_cols
+
   output = prettytable.PrettyTable(col_names)
   output.align = "l"
   for row in results[:MAX_NUM_RESULTS]:
