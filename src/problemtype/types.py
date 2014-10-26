@@ -231,7 +231,9 @@ class ProblemType(object):
         if specs.get("desc"):
           o.write("<i>" + specs["desc"] + "</i><br>")
         if specs.get("query"):
-          o.write("<div class='test-specs'>" + specs["query"] + "</div>")
+          o.write("<div class='test-specs' contenteditable='true' " +
+                  "onclick='document.execCommand(\"selectAll\", false,null)'>" +
+                  specs["query"] + "</div>")
 
         # Specific test printouts (different for different problem types).
         self.output_test(o, test, specs)
