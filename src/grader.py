@@ -113,6 +113,11 @@ class Grader:
         graded_file["problems"].append(graded_problem)
 
         try:
+          # Check to see if the response is actually blank. (They included the
+          # problem header but did not put anything below).
+          if len(responses[num].sql.strip()) == 0:
+            raise KeyError
+
           # Call the grade function on the specific class corresponding to this
           # problem type.
           grade_fn = PROBLEM_TYPES[problem["type"]]

@@ -243,7 +243,7 @@ def format_student(student, output, specs, hide_solutions):
         continue
 
       # Print out comments if the specs ask for it.
-      if problem_specs.get("comments") and problem:
+      if problem and (problem.get("comments") or problem_specs.get("comments")):
         o.write("<b>Comments</b>")
         if not problem.get("comments"):
           o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
