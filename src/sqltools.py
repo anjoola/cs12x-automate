@@ -273,7 +273,7 @@ def parse_create(sql):
       started_table = True
     end_create = re.search("\)\s*;", line)
     if end_create and started_table:
-      line = line[:end_create + len(end_create)]
+      line = line[:line.find(end_create.group()) + len(end_create.group())]
       sql_lines.append(line)
       started_table = False
     if started_table:
@@ -306,7 +306,7 @@ def parse_func_and_proc(full_sql, is_procedure=False):
       full_sql.upper().index(check_keyword):
       full_sql.upper().index("BEGIN")])
     sql = full_sql[full_sql.upper().index("BEGIN"):].strip()
-  if check_or_keyword in full_sql.upper() and "BEGIN" in full_sql.upper():
+  elif check_or_keyword in full_sql.upper() and "BEGIN" in full_sql.upper():
     sql_lines.append(full_sql[
       full_sql.upper().index(check_or_keyword):
       full_sql.upper().index("BEGIN")])
