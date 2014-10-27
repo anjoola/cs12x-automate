@@ -303,5 +303,5 @@ if __name__ == "__main__":
     a.grade_loop()
     a.teardown()
   except Exception:
-    err("\n\nThe is an error with the tool!\n")
+    err("\n\nThere is an error with the tool!\n")
     traceback.print_exc()

@@ -1,3 +1,4 @@
+from errors import QueryError
 from types import ProblemType, SuccessType
 
 class Procedure(ProblemType):
@@ -17,6 +18,13 @@ class Procedure(ProblemType):
     if test.get("setup"):
       self.db.execute_sql(test["setup"])
     if test.get("run-query"):
+      try:
+        valid_sql = sqltools.parse_func_and_proc(self.response.sql,
+                                                 is_procedure=True)
+      # If there is something wrong with their CREATE PROCEDURE statement.
+      except:
+        output["deductions"].append(QueryError.MALFORMD_CREATE_STATEMENT)
+        return test["points"]
       self.db.execute_sql(self.response.sql)
     after = self.db.execute_sql(table_sql,
                                 setup=test["query"], 

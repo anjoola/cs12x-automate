@@ -1,5 +1,8 @@
 from CONFIG import PRECISION
+from errors import QueryError
 from types import ProblemType, SuccessType
+
+import sqltools
 
 class Function(ProblemType):
   """
@@ -42,8 +45,13 @@ class Function(ProblemType):
 
   def grade_test(self, test, output):
     if test.get("run-query"):
-      self.db.execute_sql(self.response.sql)
-
+      try:
+        valid_sql = sqltools.parse_func_and_proc(self.response.sql)
+      # If there is something wrong with their CREATE FUNCTION statement.
+      except:
+        output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
+        return test["points"]
+      self.db.execute_sql(valid_sql)
     result = self.db.execute_sql(test["query"], teardown=test.get("teardown"))
 
     if result.results and result.results[0]:

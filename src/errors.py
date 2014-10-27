@@ -137,6 +137,10 @@ class QueryError(Error):
     "IncorrectViewNameError", 0, 0,
     "View was not named correctly."
   )
+  MALFORMED_CREATE_STATEMENT = (
+    "MalformedCreateStatementError", 0, 0,
+    "CREATE statement not formatted correctly."
+  )
   NOT_UPDATABLE = (
     "ViewNotUpdatableError", 2, 0.5,
     "View is not updatable but should be."

@@ -38,6 +38,15 @@ class DatabaseState:
     self.triggers = []
 
 
+  def __repr__(self):
+    return "Tables: " + str(self.tables) + "\n" + \
+           "Foreign Keys: " + str(self.foreign_keys) + "\n" + \
+           "Views: " + str(self.views) + "\n" + \
+           "Functions: " + str(self.functions) + "\n" + \
+           "Procedures: " + str(self.procedures) + "\n" + \
+           "Triggers: " + str(self.triggers)
+
+
   def subtract(self, other):
     """
     Function: subtract

@@ -8,7 +8,7 @@ import re
 from cStringIO import StringIO
 
 # Used to find delimiters in the file.
-DELIMITER_RE = re.compile(r"^\s*delimiter\s+([^\s]+)\s*$", re.I)
+DELIMITER_RE = re.compile(r"^\s*delimiter\s*([^\s]+)\s*$", re.I)
 
 # Dictionary of keywords of the form <start keyword> : <end keyword>. If
 # <end keyword> is empty, then this kind of statement ends with a semicolon.
@@ -42,6 +42,17 @@ KEYWORDS_DICT = {
   "UPDATE": "",
 }
 KEYWORDS = KEYWORDS_DICT.keys()
+
+# Control keywords. Used to figure out where a function begins and ends.
+CTRL_KEYWORDS = [
+  ("CASE", "END CASE"),
+  ("IF", "END IF"),
+  ("WHILE", "END WHILE"),
+  ("BEGIN", "END")
+]
+CTRL_KEYWORDS_IGNORE = [
+  "ELSEIF"
+]
 
 # Types of quotes.
 QUOTES = ['\'', '\"']
@@ -226,6 +237,58 @@ def split(raw_sql):
       break
 
   return sql_list
+
+
+def parse_func_and_proc(full_sql, is_procedure=False):
+  """
+  Function: parse_func_and_proc
+  -----------------------------
+  Parses functions and procedures such that only the CREATE statement is
+  extracted (no unnecessary or random SELECT statements, for example).
+
+  full_sql: The statement to parse.
+  is_procedure: True if this is for a procedure, False if for a function.
+  """
+  sql_lines = []
+  stack = []
+
+  # Make sure this is actually a CREATE PROCEDURE or CREATE FUNCTION statement.
+  check_keyword = "CREATE PROCEDURE" if is_procedure else "CREATE FUNCTION"
+  if check_keyword in full_sql.upper() and "BEGIN" in full_sql.upper():
+    sql_lines.append(full_sql[
+      full_sql.upper().index(check_keyword):
+      full_sql.upper().index("BEGIN")])
+    sql = full_sql[full_sql.upper().index("BEGIN"):].strip()
+  else:
+    raise Exception
+
+  # Go through each line.
+  for line in sql.split("\n"):
+    for (open, close) in CTRL_KEYWORDS:
+      # A close "parenthesis".
+      if re.search('(\\W|^)%s(\\W|$)' % close, line, re.IGNORECASE):
+        to_pop = stack[-1]
+        if to_pop != open:
+          raise Exception
+        stack.pop()
+        break
+
+      # An open "parenthesis".
+      elif re.search('(\\W|^)%s(\\W|$)' % open, line, re.IGNORECASE):
+        stack.append(open)
+        break
+    sql_lines.append(line + "\n")
+
+    # If there are no more open "parenthesis", then we have reached the end of
+    # the procedure or function.
+    if not stack:
+      break
+
+  # If they are unbalanced at this point, the function or procedure definition
+  # was never terminated.
+  if stack:
+    raise Exception
+  return "".join(sql_lines)
 
 
 def preprocess_sql(sql_file):
