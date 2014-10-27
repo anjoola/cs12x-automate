@@ -263,7 +263,7 @@ def parse_func_and_proc(full_sql, is_procedure=False):
     raise Exception
 
   # Go through each line.
-  for line in sql.split("\n"):
+  for line in remove_comments(sql).split("\n"):
     for (open, close) in CTRL_KEYWORDS:
       # A close "parenthesis".
       if re.search('(\\W|^)%s(\\W|$)' % close, line, re.IGNORECASE):
@@ -315,3 +315,26 @@ def preprocess_sql(sql_file):
     lines.write(line)
 
   return lines.getvalue()
+
+
+def remove_comments(in_sql):
+  """
+  Function: remove_comments
+  -------------------------
+  Removes comments from SQL.
+  """
+  sql = []
+  in_block_comment = False
+  for line in in_sql.split("\n"):
+    if "/*" in line and not in_block_comment:
+      line = line[0:line.index("/*")]
+      in_block_comment = True
+    if in_block_comment and "*/" in line:
+      line = line[line.index("*/") + 2:]
+      in_block_comment = False
+    if "--" in line:
+      line = line[0:line.index("--")]
+    elif in_block_comment:
+      continue
+    sql.append(line)
+  return "\n".join(sql)
