@@ -17,10 +17,14 @@ KEYWORDS_DICT = {
   "CALL": "",
   "COMMIT": "",
   "CREATE FUNCTION": "END",
+  "CREATE OR REPLACE FUNCTION": "END",
   "CREATE INDEX": "",
+  "CREATE OR REPLACE PROCEDURE": "END",
   "CREATE PROCEDURE": "END",
   "CREATE TABLE" : ");",
+  "CREATE OR REPLACE TRIGGER": "END",
   "CREATE TRIGGER": "END",
+  "CREATE OR REPLACE VIEW": "",
   "CREATE VIEW": "",
   "DELETE": "",
   "DO": "",
@@ -38,6 +42,7 @@ KEYWORDS_DICT = {
   "ROLLBACK": "",
   "SAVEPOINT": "",
   "SELECT": "",
+  "SET": "",
   "START TRANSACTION": "",
   "UPDATE": "",
 }
@@ -76,7 +81,7 @@ def check_valid_query(query, query_type):
   query_type: The query type (e.g. INSERT, DELETE, SELECT).
   returns: True if the query is valid, False otherwise.
   """
-  return True
+  return query_type.upper() in query.upper()
   # TODO: This is turned off because students like to put code before their
   #       answer, causing this function to return false negatives. Really,
   #       this function needs to be improved.
@@ -252,11 +257,12 @@ def parse_create(sql):
   sql_lines = []
   started_table = False
   for line in remove_comments(sql).split("\n"):
-    if "CREATE TABLE" in line:
-      line = line[line.index("CREATE TABLE"):]
+    if "CREATE TABLE" in line.upper():
+      line = line[line.upper().index("CREATE TABLE"):]
       started_table = True
-    if ");" in line and started_table:
-      line = line[:line.index(");") + 2]
+    end_create = re.search("\)\s*;", line)
+    if end_create and started_table:
+      line = line[:end_create + len(end_create)]
       sql_lines.append(line)
       started_table = False
     if started_table:
@@ -282,11 +288,17 @@ def parse_func_and_proc(full_sql, is_procedure=False):
 
   # Make sure this is actually a CREATE PROCEDURE or CREATE FUNCTION statement.
   check_keyword = "CREATE PROCEDURE" if is_procedure else "CREATE FUNCTION"
+  check_or_keyword = "CREATE OR REPLACE PROCEDURE" \
+                     if is_procedure else "CREATE OR REPLACE FUNCTION"
   if check_keyword in full_sql.upper() and "BEGIN" in full_sql.upper():
     sql_lines.append(full_sql[
       full_sql.upper().index(check_keyword):
       full_sql.upper().index("BEGIN")])
     sql = full_sql[full_sql.upper().index("BEGIN"):].strip()
+  if check_or_keyword in full_sql.upper() and "BEGIN" in full_sql.upper():
+    sql_lines.append(full_sql[
+      full_sql.upper().index(check_or_keyword):
+      full_sql.upper().index("BEGIN")])
   else:
     raise Exception
 

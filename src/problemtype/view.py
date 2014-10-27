@@ -2,6 +2,7 @@ import re
 
 from errors import DatabaseError, QueryError
 from models import Result
+from sqltools import check_valid_query, find_valid_sql
 from types import ProblemType
 
 class View(ProblemType):
@@ -29,6 +30,16 @@ class View(ProblemType):
 
 
   def grade_test(self, test, output):
+    # See if they actually put a CREATE VIEw statement.
+    sql = self.response.sql
+    if not (check_valid_query(sql, "create view") and
+            check_valid_query(sql, "create or replace view")):
+      output["deductions"].append(QueryError.BAD_QUERY)
+      sql = find_valid_sql(sql, "select") or \
+            find_valid_sql(sql, "create or replace view")
+      if sql is None:
+        return test["points"]
+
     # Get the rows that are expected.
     expected = self.db.execute_sql(test['select'])
 
@@ -36,7 +47,7 @@ class View(ProblemType):
     # what is in the view.
     viewname = test["view"]
     try:
-      self.db.execute_sql(self.response.sql)
+      self.db.execute_sql(sql)
     except DatabaseError as e:
       raise e
     try:
@@ -44,8 +55,13 @@ class View(ProblemType):
     except DatabaseError as e:
       # If an exception occurs, they must have not named the view correctly.
       # Attempt to interpret the view name.
-      start_idx = self.response.sql.find("CREATE VIEW ") + len("CREATE VIEW ")
-      end_idx = self.response.sql.find(" AS")
+      start_idx = self.response.sql.upper().find("CREATE VIEW ") + \
+                  len("CREATE VIEW ")
+      if start_idx == -1:
+        start_idx = self.response.sql.upper().find("CREATE OR REPLACE VIEW ") +\
+                    len("CREATE OR REPLACE VIEW ")
+
+      end_idx = self.response.sql.upper().find(" AS")
       viewname = self.response.sql[start_idx:end_idx]
       try:
         actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
