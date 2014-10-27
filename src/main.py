@@ -147,6 +147,8 @@ class AutomationTool:
 
     # Keep a list of students that we could not grade.
     failed_grading = []
+    possibly_failed = False
+    possibly_failed_grading = []
 
     # Grade each student.
     if len(self.students) == 0:
@@ -171,14 +173,24 @@ class AutomationTool:
 
       # Get the state of the database after the student is graded and reset it
       # to what it was before.
-      new_state = self.db.get_state()
-      self.db.reset_state(state, new_state)
+      try:
+        new_state = self.db.get_state()
+        self.db.reset_state(state, new_state)
+      except:
+        possibly_failed = True
+        err("Could not get the database state. Future gradings are possibly " +
+          "affected.")
+      if possibly_failed and student not in possibly_failed_grading:
+        possibly_failed_grading.append(student)
 
     log("\n\n=========================END GRADING=========================\n")
 
     if len(failed_grading) > 0:
       print "\nFAILED GRADING:",
       print ", ".join(failed_grading)
+    if len(possibly_failed_grading) > 0:
+      print "\nPOSSIBLY FAILED (could not get the database state):",
+      print ", ".join(possibly_failed_grading)
 
 
   def grade_student(self, student):

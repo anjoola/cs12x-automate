@@ -70,15 +70,16 @@ class DBTools:
     """
     if self.db:
       # Consume remaining output.
-      #for _ in self.cursor: pass
+      for _ in self.cursor: pass
 
       # Kill any remaining queries and close the database connection.
       try:
         self.kill_query()
         self.cursor.close()
         self.db.close()
+      # Can't do anything if there is a database error.
       except mysql.connector.errors.Error as e:
-        raise DatabaseError(e)
+        pass
 
 
   def commit(self):
@@ -182,8 +183,7 @@ class DBTools:
         "SELECT trigger_name FROM information_schema.triggers"
       ).results
     except (mysql.connector.errors.Error, DatabaseError, TimeoutError):
-      err("Could not get the database state. Future gradings are possibly " +
-          "affected.")
+      raise
 
     return state
 

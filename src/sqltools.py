@@ -93,7 +93,7 @@ def check_valid_query(query, query_type):
   )
 
 
-def find_valid_sql(query, query_type):
+def find_valid_sql(query, query_type, ignore_irrelevant=False):
   """
   Function: find_valid_sql
   ------------------------
@@ -102,11 +102,18 @@ def find_valid_sql(query, query_type):
 
   query: The query to search within.
   query_type: The query type (e.g. INSERT, DELETE, SELECT).
+  ignore_irrelevant: True if should ignore non-relevant SQL, False otherwise.
   returns: The query if valid SQL can be found, False otherwise.
   """
   if query.lower().strip().find((query_type + " ").lower()) != -1:
     semicolon_pos = \
       query.strip().find(";", query.lower().find((query_type + " ").lower()))
+
+    # Remove irrelevant SQL if specified.
+    #if ignore_irrelevant:
+    #  query = query[query.upper().find(query_type.upper() + " "):]
+    #  semicolon_pos = \
+    #    query.strip().find(";", query.lower().find((query_type + " ").lower()))
     if semicolon_pos == -1:
       return query.strip()
     return query.strip()[0:semicolon_pos]

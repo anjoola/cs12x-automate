@@ -35,8 +35,9 @@ class View(ProblemType):
     if not (check_valid_query(sql, "create view") or
             check_valid_query(sql, "create or replace view")):
       output["deductions"].append(QueryError.BAD_QUERY)
-      sql = find_valid_sql(sql, "create view") or \
-            find_valid_sql(sql, "create or replace view")
+      # Don't want any extra statements before or after a CREATE VIEW.
+      sql = find_valid_sql(sql, "create view", True) or \
+            find_valid_sql(sql, "create or replace view", True)
       if sql is None:
         return test["points"]
 
