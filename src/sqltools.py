@@ -104,10 +104,12 @@ def find_valid_sql(query, query_type):
   query_type: The query type (e.g. INSERT, DELETE, SELECT).
   returns: The query if valid SQL can be found, False otherwise.
   """
-  if query.lower().strip().find(query_type.lower()) == 0:
-    if query.strip().find(";") == -1:
+  if query.lower().strip().find((query_type + " ").lower()) != -1:
+    semicolon_pos = \
+      query.strip().find(";", query.lower().find((query_type + " ").lower()))
+    if semicolon_pos == -1:
       return query.strip()
-    return query.strip()[0:query.strip().find(";")]
+    return query.strip()[0:semicolon_pos]
   else:
     return None
 

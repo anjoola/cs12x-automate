@@ -49,7 +49,7 @@ def e(text):
   -----------
   Escapes text so it can be outputted as HTML.
   """
-  return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
+  return cgi.escape(text)
 
 
 def generate_student_list(specs):
@@ -248,7 +248,7 @@ def format_student(student, output, specs, hide_solutions):
         if not problem.get("comments"):
           o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
         else:
-          o.write("<div class='comment'>" + problem["comments"] + "</div>")
+          o.write("<div class='comment'>" + e(problem["comments"]) + "</div>")
       if hide_solutions:
         o.write("<b>Response</b>")
       else:
