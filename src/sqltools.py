@@ -239,6 +239,33 @@ def split(raw_sql):
   return sql_list
 
 
+def parse_create(sql):
+  """
+  Function: parse_create
+  ----------------------
+  Parses a CREATE TABLE statement and only runs those (instead of random INSERT
+  statements that students should not be including).
+
+  full_sql: The statement to parse.
+  returns: Only the CREATE TABLE statement(s).
+  """
+  sql_lines = []
+  started_table = False
+  for line in remove_comments(sql).split("\n"):
+    if "CREATE TABLE" in line:
+      line = line[line.index("CREATE TABLE"):]
+      started_table = True
+    if ");" in line and started_table:
+      line = line[:line.index(");") + 2]
+      sql_lines.append(line)
+      started_table = False
+    if started_table:
+      sql_lines.append(line)
+    else:
+      continue
+  return "\n".join(sql_lines)
+
+
 def parse_func_and_proc(full_sql, is_procedure=False):
   """
   Function: parse_func_and_proc
@@ -248,6 +275,7 @@ def parse_func_and_proc(full_sql, is_procedure=False):
 
   full_sql: The statement to parse.
   is_procedure: True if this is for a procedure, False if for a function.
+  returns: Only the function or procedure statement.
   """
   sql_lines = []
   stack = []

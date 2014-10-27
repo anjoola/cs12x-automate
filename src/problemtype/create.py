@@ -1,5 +1,6 @@
 from errors import DatabaseError
 from types import ProblemType, SuccessType
+from sqltools import parse_create
 
 class Create(ProblemType):
   """
@@ -12,7 +13,7 @@ class Create(ProblemType):
   def grade_test(self, test, output):
     if test.get("run-query"):
       try:
-        self.db.execute_sql(self.response.sql)
+        self.db.execute_sql(parse_create(self.response.sql))
       except DatabaseError:
         output["success"] = SuccessType.FAILURE
         raise
