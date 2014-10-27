@@ -22,9 +22,9 @@ class Select(ProblemType):
     # Make sure the student did not submit a malicious query or malformed query.
     if not check_valid_query(sql, "select"):
       output["deductions"].append(QueryError.BAD_QUERY)
-      sql = find_valid_sql(sql, "select")
-      if sql is None:
-        return test["points"]
+    sql = find_valid_sql(sql, "select")
+    if sql is None:
+      return test["points"]
 
     # Run the test query and the student's query.
     try:

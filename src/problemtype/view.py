@@ -32,10 +32,10 @@ class View(ProblemType):
   def grade_test(self, test, output):
     # See if they actually put a CREATE VIEw statement.
     sql = self.response.sql
-    if not (check_valid_query(sql, "create view") and
+    if not (check_valid_query(sql, "create view") or
             check_valid_query(sql, "create or replace view")):
       output["deductions"].append(QueryError.BAD_QUERY)
-      sql = find_valid_sql(sql, "select") or \
+      sql = find_valid_sql(sql, "create view") or \
             find_valid_sql(sql, "create or replace view")
       if sql is None:
         return test["points"]

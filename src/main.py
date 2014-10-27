@@ -189,6 +189,8 @@ class AutomationTool:
 
     student: The student's name.
     """
+    log("\n\n" + student + ":")
+
     # Check to see that this student exists. If not, skip this student.
     path = ASSIGNMENT_DIR + self.assignment + "/students/" + student + "-" + \
            self.assignment + "/"
@@ -196,7 +198,6 @@ class AutomationTool:
       err("Student " + student + " does not exist or did not submit!")
       return
 
-    log("\n\n" + student + ":")
     # Graded output for this particular student. Add it to the overall output.
     output = {"name": student, "files": {}, "got_points": 0}
     self.o.fields["students"].append(output)

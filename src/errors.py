@@ -126,8 +126,8 @@ class QueryError(Error):
   """
   BAD_QUERY = (
     "BadQueryError", 0, 0,
-    "Query is bad because it is empty, contains unexpected SQL or extra " +
-    "stuff after the SQL."
+    "Query might be bad because it is empty, contains unexpected SQL or " +
+    "extra stuff before or after the SQL."
   )
   COLUMN_ORDER = (
     "ColumnOrderError", 1, 0.3,

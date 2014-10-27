@@ -255,7 +255,7 @@ def format_student(student, output, specs, hide_solutions):
         o.write("<b>Student's Response</b>")
       o.write("<div class='sql' contenteditable='true' " +
               "onclick='document.execCommand(\"selectAll\", false, null)'>" +
-              problem["sql"] + "</div>")
+              e(problem["sql"]) + "</div>")
 
       # Do test output.
       PROBLEM_TYPES[problem_specs["type"]]().do_output(o,

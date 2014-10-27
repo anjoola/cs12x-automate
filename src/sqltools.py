@@ -72,7 +72,7 @@ def check_valid_query(query, query_type):
   query_type is an INSERT statement, makes sure that the 'INSERT' keyword is
   found in the beginning of query.
 
-  This does not work for multi-statement SQL queries, such as CREATE TABLEs.
+  This does not work for multi-statement SQL queries, such as CREATE PROCEDURE.
 
   Obviously this is not perfect and plenty of statements can get through.
   However, it should be sufficient unless there are some very evil students.
@@ -81,7 +81,7 @@ def check_valid_query(query, query_type):
   query_type: The query type (e.g. INSERT, DELETE, SELECT).
   returns: True if the query is valid, False otherwise.
   """
-  return query_type.upper() in query.upper()
+  return query_type.upper() in query.upper() and query.count(";") <= 1
   # TODO: This is turned off because students like to put code before their
   #       answer, causing this function to return false negatives. Really,
   #       this function needs to be improved.
@@ -105,6 +105,8 @@ def find_valid_sql(query, query_type):
   returns: The query if valid SQL can be found, False otherwise.
   """
   if query.lower().strip().find(query_type.lower()) == 0:
+    if query.strip().find(";") == -1:
+      return query.strip()
     return query.strip()[0:query.strip().find(";")]
   else:
     return None

@@ -19,7 +19,7 @@ import sqltools
 from CONFIG import *
 from models import Response
 
-PROBLEM_HEADER = "-- [Problem "
+PROBLEM_HEADER = "-- [Problem ".lower()
 
 # --------------------------- Debugging Utilities --------------------------- #
 
@@ -170,10 +170,11 @@ def parse_file(f):
       continue
 
     # Indicator denoting the start of an response.
-    elif (line.strip().startswith(PROBLEM_HEADER) and
-          "]" in line and line.index("]") > line.index(PROBLEM_HEADER)):
+    elif (line.strip().lower().startswith(PROBLEM_HEADER) and
+          "]" in line and line.index("]") > line.lower().index(PROBLEM_HEADER)):
       started_sql = False
-      curr = line[line.index(PROBLEM_HEADER) + len(PROBLEM_HEADER):line.index("]")]
+      curr = line[line.lower().index(PROBLEM_HEADER) + len(PROBLEM_HEADER):
+                  line.index("]")]
       curr = curr.strip()
       # This is a new problem, so create an empty response to with no comments.
       responses[curr] = Response()
