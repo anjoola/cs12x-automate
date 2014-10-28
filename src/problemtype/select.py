@@ -13,11 +13,38 @@ class Select(ProblemType):
       - Whether or not derived relations are renamed
   """
 
+  def check_view(self, sql):
+    """
+    Function: check_view
+    --------------------
+    Check to see if the student tried to create a view for the select statement.
+    Returns (view_sql, select_sql), where view_sql is the SQL for the view
+    and select_sql is the SQL for the SELECT statement. view_sql is blank if
+    they did not create a view.
+    """
+    if (sql.upper().strip().startswith("CREATE VIEW") or \
+        sql.upper().strip().startswith("CREATE OR REPLACE VIEW")):
+      view_sql = sql[0:sql.find(";") + 1]
+      sql = sql[sql.find(";") + 1:]
+      return (view_sql, sql)
+
+    elif (sql.upper().strip().startswith("DROP VIEW") and \
+          ("CREATE VIEW" in sql.upper() or \
+           "CREATE OR REPLACE VIEW" in sql.upper())):
+      view_sql = sql[0:sql.find(";", sql.upper().find("CREATE")) + 1]
+      sql = sql[sql.find(";", sql.upper().find("CREATE")) + 1:]
+      return (view_sql, sql)
+
+    return ("", sql)
+
+
   def grade_test(self, test, output):
     success = True
     deductions = 0
     test_points = test["points"]
-    sql = self.response.sql
+
+    # See if they suck and did a CREATE VIEW statement.
+    (view_sql, sql) = self.check_view(self.response.sql)
 
     # Make sure the student did not submit a malicious query or malformed query.
     if not check_valid_query(sql, "select"):
@@ -28,6 +55,8 @@ class Select(ProblemType):
 
     # Run the test query and the student's query.
     try:
+      if len(view_sql.strip()) > 0:
+        self.db.execute_sql(view_sql)
       expected = self.db.execute_sql(test["query"],
                                      test.get("setup"),
                                      test.get("teardown"))
