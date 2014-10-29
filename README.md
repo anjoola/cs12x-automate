@@ -54,6 +54,7 @@ Usage
     python main.py --assignment <assignment name>
                    [--files <files to grade>]
                    [--students <students to grade>]
+                   [--except <list of students to skip>]
                    [--after <grade files submitted after YYYY-MM-DD>]
                    [--user <database username>]
                    [--db <database to use for grading>]
@@ -70,8 +71,8 @@ with the `--purge` flag.
 
 The `--deps` flag is used to run the dependencies for the assignment.
 Dependencies are SQL files that create the tables and rows necessary
-for testing. They should only be run once per assignment unless `--purge` is
-used.
+for testing. They should only be run once per assignment unless `--purge`
+is used.
 
 Use `--raw` if the output results should be in raw JSON instead of HTML.
 
