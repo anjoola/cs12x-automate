@@ -54,7 +54,7 @@ Usage
     python main.py --assignment <assignment name>
                    [--files <files to grade>]
                    [--students <students to grade>]
-                   [--except <list of students to skip>]
+                   [--exclude <list of students to skip>]
                    [--after <grade files submitted after YYYY-MM-DD>]
                    [--user <database username>]
                    [--db <database to use for grading>]
