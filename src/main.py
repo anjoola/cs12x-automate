@@ -80,6 +80,7 @@ class AutomationTool:
                         help="Name of the assignment (cs121hw#)")
     parser.add_argument("--files", nargs="+", help="List of files to check")
     parser.add_argument("--students", nargs="+", help="Students to check")
+    parser.add_argument("--exclude", nargs="+", help="Students to skip")
     parser.add_argument("--after", help="Of the form YYYY-MM-DD, will only "
                                         "grade students who've submitted after "
                                         "that date. Cannot be used with the "
@@ -105,10 +106,10 @@ class AutomationTool:
                         help="Whether or not to output results as a raw JSON "
                              "file")
     args = parser.parse_args()
-    (self.assignment, self.files, self.students, after,
+    (self.assignment, self.files, self.students, exclude, after,
      self.user, self.db, AutomationTool.purge, AutomationTool.dependency,
      AutomationTool.hide_solutions, AutomationTool.raw) = (
-        args.assignment, args.files, args.students, args.after,
+        args.assignment, args.files, args.students, args.exclude, args.after,
         args.user, args.db, args.purge, args.deps, args.hide, args.raw)
 
     # If the assignment argument isn't specified, print usage statement.
@@ -133,6 +134,10 @@ class AutomationTool:
     # If nothing specified for the students, grade all the students.
     if self.students is None or self.students[0] == "*":
       self.students = iotools.get_students(self.assignment, after)
+
+    # Take out students to skip.
+    if exclude:
+      self.students = [s for s in self.students if s not in exclude]
 
 
   def grade_loop(self):

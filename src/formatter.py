@@ -231,9 +231,22 @@ def format_student(student, output, specs, hide_solutions):
         o.write("<h3>Problem " + problem["num"] + "</h3>\n")
         o.write("<div id=\"" + problem["num"] + "\">")
       else:
-        o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3>Problem " +
-                problem["num"] + " (" + str(problem["got_points"]) + "/" +
-                str(problem_specs["points"]) + " Points)</h3></a>\n")
+        # Figure out the color of the header.
+        warn_color = ""
+        if any([t["success"] == "UNDETERMINED" for t in problem["tests"]]):
+          warn_color = " class='warning' "
+        elif problem["got_points"] != problem_specs["points"]:
+          warn_color = " class='error' "
+
+        # Figure out the number of points received; ? if it needs to be
+        # manually graded.
+        points = problem["got_points"]
+        points = "?" if warn_color == " class='warning' " else str(points)
+
+        o.write("<a onclick='toggle(\"" + problem["num"] + "\")'><h3 " +
+                warn_color + ">Problem " + problem["num"] + " (" +
+                points + "/" + str(problem_specs["points"]) +
+                " Points)</h3></a>\n")
         o.write("<div id=\"" + problem["num"] + "\" style='display:none'>")
 
       # If the student did not submit an answer for this problem.

@@ -13,6 +13,12 @@ h3 {
   color: #1B449E;
   margin-bottom: 10px;
 }
+h3.error {
+  color: #990000;
+}
+h3.warning {
+  color: #E68A00;
+}
 h3:visited {
   color: #eeeeee;
 }
@@ -174,7 +180,7 @@ ul {
   white-space: pre-wrap;
 }
 .failed {
-  color: red;
+  color: #990000;
   display: inline;
   font-weight: bold;
 }
@@ -263,7 +269,7 @@ ul {
   z-index: 99999;
 }
 .uncertain {
-  color: orange;
+  color: #E68A00;
   display: inline;
   font-weight: bold;
 }
