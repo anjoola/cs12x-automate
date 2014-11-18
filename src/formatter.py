@@ -226,6 +226,7 @@ def format_student(student, output, specs, hide_solutions):
 
     # Loop through all the problems.
     for (i, problem) in enumerate(f["problems"]):
+      o.write("<div class='problem'>\n")
       problem_specs = specs[f["filename"]][i]
       if hide_solutions:
         o.write("<h3>Problem " + problem["num"] + "</h3>\n")
@@ -255,8 +256,13 @@ def format_student(student, output, specs, hide_solutions):
         o.write("</div>")
         continue
 
+      # Problem statement.
+      if problem_specs.get("question"):
+        o.write("<b>Problem Statement</b>\n")
+        o.write("<div class='question'>" + problem_specs.get("question") +
+                "</div>\n")
       # Print out comments if the specs ask for it.
-      if problem and (problem.get("comments") or problem_specs.get("comments")):
+      if problem.get("comments") or problem_specs.get("comments"):
         o.write("<b>Comments</b>")
         if not problem.get("comments"):
           o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
@@ -286,10 +292,11 @@ def format_student(student, output, specs, hide_solutions):
             o.write("<li>" + str(error) + "</li>\n")
           o.write("</ul>")
 
-      o.write("</div>")
+      o.write("</div>\n</div>")
 
     if not hide_solutions:
-      o.write("<h2>Total: " + str(f["got_points"]) + " Points</h2>")
+      o.write("<div class='total'>Total: " + str(f["got_points"]) +
+              " Points</div>")
       o.write("</html>")
 
       filename = output["name"] + "-" + f["filename"] + ".html"

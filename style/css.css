@@ -11,7 +11,8 @@ body {
 }
 h3 {
   color: #1B449E;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  margin-top: 10px;
 }
 h3.error {
   color: #990000;
@@ -217,6 +218,15 @@ ul {
   display: inline;
   font-weight: bold;
 }
+.problem {
+  background: #fefefe;
+  border-bottom: 3px solid #ababab;
+  border-top: 1px solid #aaaaaa;
+  padding: 10px;
+  margin-bottom: 15px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
 .results {
   background: #fefefe;
   border: 1px solid #cccccc;
@@ -227,9 +237,18 @@ ul {
   margin-top: 5px;
   overflow-x: auto;
 }
-.sql {
+.question {
   background: #efefef;
   border: 1px solid #aaaaaa;
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 7px;
+  margin-top: 5px;
+  overflow-x: auto;
+}
+.sql {
+  background: #E0F0FF;
+  border: 1px solid #0066CC;
   font-family: Consolas, monospace;
   font-size: 12px;
   padding: 10px;
@@ -245,8 +264,8 @@ ul {
   color: #96D2FA;
 }
 .student-page {
-  background: white;
-  padding: 8px;
+  background: #dddddd;
+  margin-top: -5px;
 }
 .test-specs {
   background: #efefef;
@@ -267,6 +286,11 @@ ul {
   position: absolute;
   right: 20px;
   z-index: 99999;
+}
+.total {
+  font-size: 24px;
+  line-height: 200%;
+  text-align: center;
 }
 .uncertain {
   color: #E68A00;
