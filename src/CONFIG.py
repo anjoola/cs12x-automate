@@ -49,6 +49,10 @@ STYLE_DIR_BASE = "style/"
 # Directory where the output files are stored.
 FILE_DIR = "files/"
 
+# MathJax library.
+MATH_JAX = "http://cdn.mathjax.org/mathjax/latest/MathJax.js?" + \
+           "config=TeX-AMS-MML_HTMLorMML"
+
 # Directory where the output files for the students are stored.
 STUDENT_OUTPUT_DIR = "student_output/"
 

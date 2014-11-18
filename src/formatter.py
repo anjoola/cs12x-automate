@@ -13,6 +13,7 @@ from cStringIO import StringIO
 from CONFIG import (
   ASSIGNMENT_DIR,
   FILE_DIR,
+  MATH_JAX,
   RESULT_DIR,
   STUDENT_DIR,
   STUDENT_OUTPUT_DIR,
@@ -208,6 +209,8 @@ def format_student(student, output, specs, hide_solutions):
               STYLE_DIR + "css.css'>\n")
       o.write("<script type='text/javascript' src='" + STYLE_DIR +
               "javascript.js'></script>\n")
+      o.write("<script type='text/javascript' src='" + MATH_JAX +
+              "'></script>\n")
     o.write("<html class='student-page'>\n")
 
     if hide_solutions:
