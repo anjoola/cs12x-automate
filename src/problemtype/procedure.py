@@ -23,7 +23,7 @@ class Procedure(ProblemType):
                                                  is_procedure=True)
       # If there is something wrong with their CREATE PROCEDURE statement.
       except:
-        output["deductions"].append(QueryError.MALFORMD_CREATE_STATEMENT)
+        output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
         return test["points"]
       self.db.execute_sql(self.response.sql)
     after = self.db.execute_sql(table_sql,

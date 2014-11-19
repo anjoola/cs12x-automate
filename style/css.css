@@ -31,7 +31,6 @@ pre {
   background: #efefef;
   border: 1px solid #aaaaaa;
   font-family: Consolas, monospace;
-  font-size: 12px;
   padding: 10px;
   margin-bottom: 15px;
   margin-top: 5px;
@@ -74,7 +73,7 @@ ul {
   bottom: 0px;
   box-shadow: 2px 2px 1px #CCCCCC;
   float: right;
-  font-size: 12px;
+  margin-right: 10px;
   padding: 5px;
   position: absolute;
   right: 20px;
@@ -99,10 +98,9 @@ ul {
   height: 100%;
   overflow: auto;
   width: 100%;
-}                
+}
 #list {
   background: black;
-  border-right: 2px solid #444444;
   color: white;
   float: left;
   height: 100%;
@@ -138,7 +136,7 @@ ul {
   bottom: 0px;
   box-shadow: 2px 2px 1px #CCCCCC;
   float: right;
-  font-size: 12px;
+  margin-right: 10px;
   padding: 5px;
   position: absolute;
   right: 20px;
@@ -154,7 +152,6 @@ ul {
 }
 #title {
   background: #1D578B;
-  box-shadow: 0px 2px 5px #CCCCCC;
   display: block;
   height: 35px;
   position: relative;
@@ -173,7 +170,6 @@ ul {
   background: #efefef;
   border: 1px solid #aaaaaa;
   font-family: Consolas, monospace;
-  font-size: 12px;
   padding: 10px;
   margin-bottom: 7px;
   margin-top: 5px;
@@ -185,20 +181,38 @@ ul {
   display: inline;
   font-weight: bold;
 }
+.file-errors {
+  background: #FFE6E6;
+  border-bottom: 3px solid #AC8F8F;
+  border-top: 1px solid #AC8F8F;
+  padding: 5px;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-bottom: 15px;
+  margin-top: 4px;
+  overflow-x: auto;
+}
+.filename {
+  font-size: 150%;
+  font-weight: bold;
+  text-align: center;
+  padding-top: 12px;
+  padding-bottom: 10px;
+}
 .iframe-container {
   position: relative;
   overflow-y: hidden;
 }
 .label {
-  border-bottom: 3px solid #DDDDDD;
+  border-bottom: 3px solid #cccccc;
   color: white;
   cursor: pointer;
   display: inline;
-  font-size: 14px;
   padding: 4px;
-  padding-top: 0px;
+  padding-bottom: 4px;
   padding-left: 6px;
   padding-right: 6px;
+  padding-top: 0px;
 }
 .label-active {
   border-bottom: 3px solid red;
@@ -226,7 +240,7 @@ ul {
   padding-left: 15px;
   padding-right: 15px;
   margin-bottom: 15px;
-  margin-top: 5px;
+  margin-top: 4px;
   overflow-x: auto;
 }
 .results {
@@ -242,7 +256,6 @@ ul {
 .question {
   background: #efefef;
   border: 1px solid #aaaaaa;
-  font-size: 12px;
   padding: 10px;
   margin-bottom: 7px;
   margin-top: 5px;
@@ -251,7 +264,6 @@ ul {
   background: #E0F0FF;
   border: 1px solid #0066CC;
   font-family: Consolas, monospace;
-  font-size: 12px;
   padding: 10px;
   margin-bottom: 7px;
   margin-top: 5px;
@@ -268,11 +280,14 @@ ul {
   background: #dddddd;
   margin-top: -5px;
 }
+.test-results {
+  padding-bottom: 10px;
+  padding-top: 5px;
+}
 .test-specs {
   background: #efefef;
   border: 1px solid #AAAAAA;
   font-family: Consolas, monospace;
-  font-size: 12px;
   padding: 10px;
   margin-bottom: 7px;
   margin-top: 5px;
@@ -282,7 +297,7 @@ ul {
 .toast {
   background: #cccccc;
   box-shadow: 2px 2px 1px #aaaaaa;
-  font-size: 12px;
+  margin-right: 10px;
   padding: 5px;
   position: absolute;
   right: 20px;

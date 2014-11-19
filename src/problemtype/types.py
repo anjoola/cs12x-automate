@@ -194,6 +194,7 @@ class ProblemType(object):
     """
     # Show minimal information if hiding solutions.
     if hide_solutions:
+      o.write("<div class='test-results'>")
       if any([test["success"] == SuccessType.UNDETERMINED for test in output]):
         o.write("Test results are <div class='uncertain'>UNDETERMINED</div>" +
                 " and require TA input.\n")
@@ -201,6 +202,7 @@ class ProblemType(object):
         o.write("Some tests have <div class='failed'>FAILED</div>!\n")
       else:
         o.write("All tests <div class='passed'>PASSED</div>!\n")
+      o.write("</div>")
 
     # Otherwise show full test output.
     else:

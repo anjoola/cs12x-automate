@@ -214,18 +214,15 @@ def format_student(student, output, specs, hide_solutions):
     o.write("<html class='student-page'>\n")
 
     if hide_solutions:
-      o.write("<h2>" + fname + "</h2>")
+      o.write("<div class='filename'>" + fname + "</div>")
 
     # Print out all errors that have occurred with the file.
     if f.get("errors"):
-      if hide_solutions:
-        o.write("<h3>File Errors</h3><ul>")
-      else:
-        o.write("<h2>File Errors</h2><ul>")
+      o.write("<div class='file-errors'><h3>File Errors</h3><ul>")
 
       for error in f["errors"]:
         o.write("<li>" + error + "</li>")
-      o.write("</ul>")
+      o.write("</ul></div>")
 
     # Loop through all the problems.
     for (i, problem) in enumerate(f["problems"]):
@@ -298,10 +295,7 @@ def format_student(student, output, specs, hide_solutions):
       o.write("</div>\n</div>")
 
     if not hide_solutions:
-      o.write("<div class='total'>Total: " + str(f["got_points"]) +
-              " Points</div>")
       o.write("</html>")
-
       filename = output["name"] + "-" + f["filename"] + ".html"
       out = open(ASSIGNMENT_DIR + specs["assignment"] + "/" + RESULT_DIR +
                  FILE_DIR + filename, "w")
