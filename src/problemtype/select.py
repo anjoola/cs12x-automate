@@ -66,56 +66,38 @@ class Select(ProblemType):
     except DatabaseError:
       raise
 
-    # If the results aren't equal in length, then they are automatically wrong.
-    if len(expected.results) != len(actual.results):
-      output["expected"] = expected.output
-      output["actual"] = actual.output
-      output["success"] = SuccessType.FAILURE
-      return test_points
-
-    # If we don't need to check that the results are ordered, then sort the
-    # results for easier checking.
-    expected_results = expected.results
-    actual_results = actual.results
-    if not test.get("ordered"):
-      expected.results = sorted(expected.results)
-      actual.results = sorted(actual.results)
-
-    # If we don't need to check that the columns are ordered in the same way,
-    # then sort each tuple for easier checking.
-    if not test.get("column-order"):
-      expected.results = \
-          [tuple(sorted([str(x) for x in row])) for row in expected.results]
-      actual.results = \
-          [tuple(sorted([str(x) for x in row])) for row in actual.results]
-
-    # Compare the student's code to the results.
-    if not self.equals(expected.results, actual.results):
+    # Compare the student's code to the results. May not need to check for
+    # row order or column order.
+    if not self.equals(expected,
+                       actual,
+                       test.get("ordered"),
+                       test.get("column-order")):
       output["expected"] = expected.output
       output["actual"] = actual.output
       deductions = test_points
 
-      # Check to see if they forgot to ORDER BY. Convert each row to a string
-      # for easier comparison.
-      if test.get("ordered"):
-        eresults = sorted([str(x) for x in expected.results])
-        aresults = sorted([str(x) for x in actual.results])
-        if aresults == eresults:
-          deductions = 0
-          output["deductions"].append(QueryError.ORDER_BY)
+      # Check to see if they forgot to ORDER BY. Order the results and do a
+      # comparison again.
+      if test.get("ordered") and \
+         self.equals(expected, actual, False, test.get("column-order")):
+        deductions = 0
+        output["deductions"].append(QueryError.ORDER_BY)
 
-      # See if they chose the wrong column order. Convert each column to a
-      # string for easier comparison.
-      if test.get("column-order"):
-        eresults = \
-            [tuple(sorted([str(x) for x in row])) for row in expected_results]
-        aresults = \
-            [tuple(sorted([str(x) for x in row])) for row in actual_results]
-        if eresults == aresults:
-          deductions = 0
-          output["deductions"].append(QueryError.COLUMN_ORDER)
+      # See if they chose the wrong column order. Order the results and do a
+      # comparison again.
+      if test.get("column-order") and \
+         self.equals(expected, actual, test.get("ordered"), False):
+        deductions = 0
+        output["deductions"].append(QueryError.COLUMN_ORDER)
 
-      success = False
+      # If they did both the wrong column order and wrong ORDER BY.
+      if test.get("ordered") and test.get("column-order") and \
+         self.equals(expected, actual):
+        deductions = 0
+        output["deductions"].append(QueryError.ORDER_BY)
+        output["deductions"].append(QueryError.COLUMN_ORDER)
+
+      success = SuccessType.FAILURE
 
     # Check to see if they named aggregates.
     if test.get("rename"):

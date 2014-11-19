@@ -65,10 +65,8 @@ class Delete(ProblemType):
       raise exception
 
     # Compare the remaining expected rows versus the actual. If the results are
-    # not equal in the size, then it is automatically wrong. If the results are
-    # not the same, then they are also wrong.
-    if (len(expected.results) != len(actual.results) or
-        not self.equals(set(expected.results), set(actual.results))):
+    # not the same, then they are wrong.
+    if not self.equals(expected, actual):
       output["expected"] = before.subtract(expected).output
       output["actual"] = before.subtract(actual).output
       return test["points"]

@@ -144,6 +144,9 @@ class Result:
     # The column names of the result.
     self.col_names = []
 
+    # The column types of the result.
+    self.col_types = []
+
     # The actual results.
     self.results = []
 

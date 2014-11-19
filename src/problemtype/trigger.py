@@ -36,11 +36,9 @@ class Trigger(ProblemType):
     if exception:
       raise exception
 
-    # Compare the expected versus the actual results. If the results are not
-    # equal in size, then it is automatically wrong. If the results are not the
-    # same, then they are also wrong.
-    if (len(expected.results) != len(actual.results) or
-        not self.equals(set(expected.results), set(actual.results))):
+    # Compare the expected versus the actual results. If the results are not the
+    # same, then they are wrong.
+    if not self.equals(expected, actual):
       output["expected"] = expected.output
       output["actual"] = actual.output
       return test["points"]

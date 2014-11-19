@@ -60,4 +60,4 @@ STUDENT_OUTPUT_DIR = "student_output/"
 MAX_NUM_RESULTS = 50
 
 # The number of decimal places to compare results with.
-PRECISION = 4
+PRECISION = 2

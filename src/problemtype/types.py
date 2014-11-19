@@ -4,6 +4,7 @@ from cStringIO import StringIO
 
 import mysql.connector
 
+from CONFIG import PRECISION
 from errors import (
   add,
   DatabaseError,
@@ -11,6 +12,8 @@ from errors import (
   TimeoutError,
   QueryError
 )
+
+PRECISION_DIVISOR = float(10 ** PRECISION)
 
 class SuccessType(object):
   """
@@ -270,22 +273,54 @@ class ProblemType(object):
     return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
-  def equals(self, lst1, lst2, check_order=True):
+  def equals(self, res1, res2, check_row_order=False, check_col_order=False):
     """
     Function: equals
     ----------------
-    Compares two lists of tuples to see if their contents are equal.
+    Compares two query results to see if they are equals.
 
-    lst1: The first list.
-    lst2: The second list.
-    check_order: Whether or not to check for the order of the elements.
+    res1: The first result.
+    res2: The second result.
+    check_row_order: Whether or not to check for the row order of results.
+    check_col_order: Whether ot not the check for the column order of results.
     """
-    if check_order:
-      return ([[unicode(x).lower() for x in y] for y in lst1] ==
-              [[unicode(x).lower() for x in y] for y in lst2])
-    else:
-      return ([[unicode(x).lower() for x in y] for y in sorted(lst1)] ==
-              [[unicode(x).lower() for x in y] for y in sorted(lst2)])
+
+    def roundn(val, input_type):
+      """
+      Function: roundn
+      ----------------
+      Rounds numeric values to the specified PRECISION in the config if this
+      is a numeric value.
+      """
+      if input_type != float:
+        return val
+      val = 0.0 if val is None else float(val)
+      return round(val * PRECISION_DIVISOR) / PRECISION_DIVISOR
+
+
+    # If the results do not have the same number of rows or the same number of,
+    # columns, then they are definitely not equal.
+    if len(res1.results) != len(res2.results) or \
+       len(res1.schema) != len(res2.schema):
+      return False
+
+    lst1 = sorted(res1.results) if not check_row_order else res1.results
+    lst2 = sorted(res2.results) if not check_row_order else res2.results
+
+    for row1, row2 in zip(lst1, lst2):
+      (row_converted1, row_converted2) = ([], [])
+      for i, (col1, col2) in enumerate(zip(row1, row2)):
+        row_converted1.append(roundn(col1, res1.col_types[i]))
+        row_converted2.append(roundn(col2, res2.col_types[i]))
+
+      # If the column order doesn't matter, sort the columsn.
+      if not check_col_order:
+        row_converted1 = sorted(row_converted1)
+        row_converted2 = sorted(row_converted2)
+
+      if row_converted1 != row_converted2:
+        return False
+    return True
 
 
   def get_diffs(self, lst1, lst2):

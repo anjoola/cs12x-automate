@@ -63,10 +63,8 @@ class Insert(ProblemType):
       raise exception
 
     # Compare the results of the test insert versus the actual. If the results
-    # are not equal in size, then it is automatically wrong. If the results are
-    # not the same, then they are also wrong.
-    if (len(expected.results) != len(actual.results) or
-        not self.equals(set(expected.results), set(actual.results), False)):
+    # are not the same, then they are wrong.
+    if not self.equals(expected, actual):
       output["expected"] = expected.subtract(before).output
       output["actual"] = actual.subtract(before).output
       return test["points"]

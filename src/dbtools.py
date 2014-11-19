@@ -22,6 +22,10 @@ from models import DatabaseState, Result
 from sqltools import preprocess_sql, split
 from terminator import Terminator
 
+# List of field types that translate to a float in Python (i.e. all numeric
+# field types).
+FLOAT_FIELD_TYPES = [0, 1, 2, 3, 4, 5, 8, 9, 13, 16, 246]
+
 class DBTools:
   """
   Class: DBTools
@@ -371,11 +375,25 @@ class DBTools:
     """
     Function: get_column_names
     --------------------------
-    Gets the column names of the results.
+    Gets the column names of the result.
     """
     if self.cursor.description is None:
       return []
     return [col[0] for col in self.cursor.description]
+
+
+  def get_column_types(self):
+    """
+    Function: get_column_types
+    --------------------------
+    Gets the column types of the result.
+    """
+    if self.cursor.description is None:
+      return []
+    return [
+      (float if col[1] in FLOAT_FIELD_TYPES else str) \
+      for col in self.cursor.description
+    ]
 
 
   def get_results(self):
@@ -392,6 +410,7 @@ class DBTools:
       result.results = rows
       result.schema = self.get_schema()
       result.col_names = self.get_column_names()
+      result.col_types = self.get_column_types()
 
       # Pretty-printed output.
       result.output = prettyprint(result.results, self.get_column_names())

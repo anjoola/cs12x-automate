@@ -27,3 +27,5 @@ class Create(ProblemType):
     if test["success"] == SuccessType.FAILURE:
       o.write("<br><i>SQL was invalid in some way. Check the errors below " +
               "more information.</i>")
+    else:
+      o.write(" There were no syntax errors.")

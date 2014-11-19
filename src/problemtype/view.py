@@ -76,23 +76,15 @@ class View(ProblemType):
     if test.get('updatable') and not self.check_updatable(viewname, output):
       output["deductions"].append(QueryError.NOT_UPDATABLE)
 
-    # If we don't need to check that the columsn are ordered in the same way,
-    # then sort each tuple for easier checking.
-    if not test.get("column-order"):
-      expected.results = [sorted(x) for x in expected.results]
-      actual.results = [sorted(x) for x in actual.results]
-
     # If the view does not contain the same rows as the solution select
     # statement, then their query is wrong.
-    if (len(expected.results) != len(actual.results) or
-        not self.equals(expected.results, actual.results)):
-      # See if they chose the wrong column order.
-      if test.get("column-order"):
-        eresults = [sorted(x) for x in expected.results]
-        aresults = [sorted(x) for x in actual.results]
-        if eresults == aresults:
-          deductions = 0
-          output["deductions"].append(QueryError.COLUMN_ORDER)
+    if not self.equals(expected, actual, False, test.get("column-order")):
+      # See if they chose the wrong column order. Check by ignoring the column
+      # order of the results.
+      if test.get("column-order") and \
+         self.equals(expected, actual, True, False):
+        deductions = 0
+        output["deductions"].append(QueryError.COLUMN_ORDER)
 
       output['expected'] = expected.output
       output['actual'] = actual.output
