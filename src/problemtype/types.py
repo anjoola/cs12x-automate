@@ -289,7 +289,7 @@ class ProblemType(object):
       """
       Function: roundn
       ----------------
-      Rounds numeric values to the specified PRECISION in the config if this
+      Rounds numeric values to the specified PRECISION in CONFIG.py if this
       is a numeric value.
       """
       if input_type != float:
@@ -304,6 +304,7 @@ class ProblemType(object):
        len(res1.schema) != len(res2.schema):
       return False
 
+    # Sort the rows if the row order does not matter.
     lst1 = sorted(res1.results) if not check_row_order else res1.results
     lst2 = sorted(res2.results) if not check_row_order else res2.results
 
@@ -313,7 +314,7 @@ class ProblemType(object):
         row_converted1.append(roundn(col1, res1.col_types[i]))
         row_converted2.append(roundn(col2, res2.col_types[i]))
 
-      # If the column order doesn't matter, sort the columsn.
+      # If the column order doesn't matter, sort the columns.
       if not check_col_order:
         row_converted1 = sorted(row_converted1)
         row_converted2 = sorted(row_converted2)

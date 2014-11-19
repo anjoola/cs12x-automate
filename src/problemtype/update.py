@@ -63,7 +63,7 @@ class Update(ProblemType):
       raise exception
 
     # Compare the expected rows changed versus the actual.
-    if expected.output != actual.output:
+    if not self.equals(expected, actual):
       output["expected"] = expected.subtract(before).output
       output["actual"] = actual.subtract(before).output
       return test["points"]

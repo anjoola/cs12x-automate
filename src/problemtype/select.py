@@ -78,10 +78,12 @@ class Select(ProblemType):
 
       # Check to see if they forgot to ORDER BY. Order the results and do a
       # comparison again.
+      checked = False
       if test.get("ordered") and \
          self.equals(expected, actual, False, test.get("column-order")):
         deductions = 0
         output["deductions"].append(QueryError.ORDER_BY)
+        checked = True
 
       # See if they chose the wrong column order. Order the results and do a
       # comparison again.
@@ -89,10 +91,11 @@ class Select(ProblemType):
          self.equals(expected, actual, test.get("ordered"), False):
         deductions = 0
         output["deductions"].append(QueryError.COLUMN_ORDER)
+        checked = True
 
       # If they did both the wrong column order and wrong ORDER BY.
       if test.get("ordered") and test.get("column-order") and \
-         self.equals(expected, actual):
+         self.equals(expected, actual) and not checked:
         deductions = 0
         output["deductions"].append(QueryError.ORDER_BY)
         output["deductions"].append(QueryError.COLUMN_ORDER)
