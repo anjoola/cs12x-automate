@@ -38,20 +38,23 @@ class Function(ProblemType):
     elif result_type == "float":
       factor = 10.0 ** PRECISION
       expected = int(float(expected) * factor) / factor
-      actual = int((float(actual) if len(actual) > 0 else 0.0) * factor) / factor
+      actual = int((float(actual) if len(actual) > 0 else 0.0) * factor)
+      actual = actual / factor
 
     return expected == actual
 
 
   def grade_test(self, test, output):
     if test.get("run-query"):
-      try:
-        valid_sql = sqltools.parse_func_and_proc(self.response.sql)
-      # If there is something wrong with their CREATE FUNCTION statement.
-      except:
-        output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
-        return test["points"]
-      self.db.execute_sql(valid_sql)
+      # TODO add back later
+      #try:
+      #  valid_sql = sqltools.parse_func_and_proc(self.response.sql)
+      ## If there is something wrong with their CREATE FUNCTION statement.
+      #except:
+      #  output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
+      #  return test["points"]
+      #self.db.execute_sql(valid_sql)
+      self.db.execute_sql(self.response.sql)
     result = self.db.execute_sql(test["query"], teardown=test.get("teardown"))
 
     if result.results and result.results[0]:

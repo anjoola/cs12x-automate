@@ -107,25 +107,37 @@ class Select(ProblemType):
       for col in actual.col_names:
         if col.find("(") + col.find(")") != -2:
           output["deductions"].append(QueryError.RENAME_VALUE)
-          success = False
+          success = SuccessType.FAILURE
           break
 
     # More or fewer columns included.
     if len(expected.col_names) != len(actual.col_names):
       output["deductions"].append(QueryError.WRONG_NUM_COLUMNS)
 
+    # If the expected output is empty, then there is probably something wrong
+    # with the state of the database.
+    if len(expected.output) == 0:
+      success = SuccessType.UNDETERMINED
     output["success"] = success
     return deductions
 
 
   def output_test(self, o, test, specs):
-    # Don't output anything if they are successful.
-    if test["success"] or "expected" not in test:
+    # If the expected results was empty, result is undetermiend.
+    if test["success"] == SuccessType.UNDETERMINED:
+      o.write("<pre class='results'>")
+      o.write("Expected output was empty. This may be an error with the " +
+              "tool!")
+      o.write("</pre>")
+
+    # Test passed.
+    elif test["success"] == SuccessType.SUCCESS or "expected" not in test:
       return
 
-    # Expected and actual output.
-    o.write("<pre class='results'>")
-    self.generate_diffs(test["expected"].split("\n"),
-                        test["actual"].split("\n"),
-                        o)
-    o.write("</pre>")
+    # Expected and actual output for failed test.
+    else:
+      o.write("<pre class='results'>")
+      self.generate_diffs(test["expected"].split("\n"),
+                          test["actual"].split("\n"),
+                          o)
+      o.write("</pre>")

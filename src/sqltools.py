@@ -52,7 +52,10 @@ KEYWORDS = KEYWORDS_DICT.keys()
 CTRL_KEYWORDS = [
   ("CASE", "END CASE"),
   ("IF", "END IF"),
+  ("IF\(", "\)"),
+  ("LOOP", "END LOOP"),
   ("WHILE", "END WHILE"),
+  ("REPEAT", "END REPEAT"),
   ("BEGIN", "END")
 ]
 CTRL_KEYWORDS_IGNORE = [
@@ -200,6 +203,7 @@ def split(raw_sql):
     Function: get_start_idx
     -----------------------
     Checks if this SQL statement starts with this keyword, ignoring comments.
+    Returns the starting index of the keyword if found.
 
     sql: The SQL to search.
     keyword: The keyword to search for.
@@ -245,7 +249,7 @@ def split(raw_sql):
         end_idx = find_keyword(sql.lower(), keyword_end.lower(), start_idx)
         end_idx = end_idx + len(keyword_end) if end_idx != -1 else len(sql)
         sql_list.append(sql[0:end_idx])
-        sql = sql[end_idx + 1:].lstrip(";").strip()
+        sql = sql[end_idx + 1:].strip().strip(";").strip()
         found_sql = True
         break
 
@@ -297,7 +301,8 @@ def parse_func_and_proc(full_sql, is_procedure=False):
   sql_lines = []
   stack = []
 
-  # Make sure this is actually a CREATE PROCEDURE or CREATE FUNCTION statement.
+  # Make sure this is actually a CREATE PROCEDURE or CREATE FUNCTION statement
+  # by seeing if the SQL starts with the proper CREATE statement.
   check_keyword = "CREATE PROCEDURE" if is_procedure else "CREATE FUNCTION"
   check_or_keyword = "CREATE OR REPLACE PROCEDURE" \
                      if is_procedure else "CREATE OR REPLACE FUNCTION"
@@ -315,6 +320,9 @@ def parse_func_and_proc(full_sql, is_procedure=False):
 
   # Go through each line.
   for line in remove_comments(sql).split("\n"):
+    # TODO go through firs tword, then first and second word, etc.
+    # once you find a keyword, look start from there and look at the first word, etc.
+    # TODO problem if open and close at the same line
     for (open, close) in CTRL_KEYWORDS:
       # A close "parenthesis".
       if re.search('(\\W|^)%s(\\W|$)' % close, line, re.IGNORECASE):

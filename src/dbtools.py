@@ -463,10 +463,6 @@ class DBTools:
         # If the query can't be run as a single query, attempt to do it with a
         # multi-line query.
         except mysql.connector.errors.Error as e:
-          # TODO this causes error, and is probably not needed anymore
-          #try:
-          #  self.cursor.execute(sql, multi=True)
-          #except mysql.connector.errors.Error as e:
           raise DatabaseError(e)
 
         query_results = self.get_results()

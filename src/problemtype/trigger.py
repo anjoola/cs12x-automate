@@ -17,12 +17,12 @@ class Trigger(ProblemType):
         self.db.execute_sql(test["setup"])
       if test.get("run-query"):
         self.db.execute_sql(self.response.sql)
-      if test.get("teardown"):
-        self.db.execute_sql(test["teardown"])
 
       # Start a transaction and run the test query to trigger the trigger.
       self.db.start_transaction()
       self.db.execute_sql(test["query"])
+      if test.get("teardown"):
+        self.db.execute_sql(test["teardown"])
 
       # Compare actual and expected results.
       actual = self.db.execute_sql(test["actual"])
