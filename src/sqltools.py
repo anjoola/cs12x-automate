@@ -249,7 +249,11 @@ def split(raw_sql):
         end_idx = find_keyword(sql.lower(), keyword_end.lower(), start_idx)
         end_idx = end_idx + len(keyword_end) if end_idx != -1 else len(sql)
         sql_list.append(sql[0:end_idx])
-        sql = sql[end_idx + 1:].strip().strip(";").strip()
+        sql = sql[end_idx + 1:].strip()
+
+        # Remove start and end semicolons.
+        while sql.startswith(";") or sql.endswith(";"):
+          sql = sql.strip(";").strip()
         found_sql = True
         break
 

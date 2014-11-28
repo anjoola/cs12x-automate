@@ -150,8 +150,12 @@ class ProblemType(object):
 
       # Run the teardown query no matter what.
       finally:
-        if test.get("teardown"):
-          self.db.execute_sql(test["teardown"])
+        try:
+          if test.get("teardown"):
+            self.db.execute_sql(test["teardown"])
+        except DatabaseError as e:
+          lost_points += test["points"]
+          add(self.output["errors"], e)
 
       # Apply deductions.
       if graded_test.get("deductions"):
