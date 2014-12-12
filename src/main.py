@@ -2,8 +2,6 @@ import argparse
 import os
 import sys
 
-import mysql.connector
-
 import dbtools
 import formatter
 import iotools
@@ -12,7 +10,8 @@ import traceback
 from CONFIG import (
   ASSIGNMENT_DIR,
   CONNECTION_TIMEOUT,
-  MAX_TIMEOUT
+  MAX_TIMEOUT,
+  STUDENT_DIR
 )
 from errors import (
   add,
@@ -209,8 +208,8 @@ class AutomationTool:
     log("\n\n" + student + ":")
 
     # Check to see that this student exists. If not, skip this student.
-    path = ASSIGNMENT_DIR + self.assignment + "/students/" + student + "-" + \
-           self.assignment + "/"
+    path = ASSIGNMENT_DIR + self.assignment + "/" + STUDENT_DIR + student + \
+           "-" + self.assignment + "/"
     if not os.path.exists(path):
       err("Student " + student + " does not exist or did not submit!")
       return

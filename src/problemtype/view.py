@@ -29,6 +29,23 @@ class View(ProblemType):
     return result[0][0] == "YES"
 
 
+  def get_view_name(self):
+    """
+    Function: get_view_name
+    -----------------------
+    Gets the name of a view from the CREATE VIEW statement.
+    """
+    sql = self.response.sql
+
+    start_idx = sql.upper().find("CREATE VIEW ") + len("CREATE VIEW ")
+    if start_idx == -1:
+      start_idx = sql.upper().find("CREATE OR REPLACE VIEW ") + \
+                  len("CREATE OR REPLACE VIEW ")
+
+    end_idx = sql.upper().find(" AS")
+    return sql[start_idx:end_idx]
+
+
   def grade_test(self, test, output):
     # See if they actually put a CREATE VIEw statement.
     sql = self.response.sql
@@ -56,14 +73,7 @@ class View(ProblemType):
     except DatabaseError as e:
       # If an exception occurs, they must have not named the view correctly.
       # Attempt to interpret the view name.
-      start_idx = self.response.sql.upper().find("CREATE VIEW ") + \
-                  len("CREATE VIEW ")
-      if start_idx == -1:
-        start_idx = self.response.sql.upper().find("CREATE OR REPLACE VIEW ") +\
-                    len("CREATE OR REPLACE VIEW ")
-
-      end_idx = self.response.sql.upper().find(" AS")
-      viewname = self.response.sql[start_idx:end_idx]
+      viewname = self.get_view_name()
       try:
         actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
       # Give up, some other error.

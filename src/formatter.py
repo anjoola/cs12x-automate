@@ -61,7 +61,7 @@ def generate_student_list(specs):
   """
   students = []
   for f in os.listdir(ASSIGNMENT_DIR + specs["assignment"] + "/" +
-                      RESULT_DIR + "files/"):
+                      RESULT_DIR + FILE_DIR):
     student = f.split("-")[0]
     if student not in students:
       students.append(student)
@@ -161,7 +161,7 @@ def format_raw_file(fname, student, assignment):
   specs: The specs for the assignment.
   """
   try:
-    out = open(ASSIGNMENT_DIR + assignment + "/" + RESULT_DIR + "files/" +
+    out = open(ASSIGNMENT_DIR + assignment + "/" + RESULT_DIR + FILE_DIR +
                student + "-" + fname + ".raw.html", 'w')
     infile = open(ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR +
                   student + "-" + assignment + "/" + fname, 'r')

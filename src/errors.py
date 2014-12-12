@@ -20,7 +20,6 @@ def add(lst, error):
   lst.append(repr(error))
 
 
-
 class Error(Exception):
   """
   Class: Error
@@ -28,7 +27,6 @@ class Error(Exception):
   Generic error class for the automation tool.
   """
   pass
-
 
 
 class FileNotFoundError(Error):
