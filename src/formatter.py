@@ -44,13 +44,13 @@ def create_path(assignment):
       shutil.copy(STYLE_DIR + f, path + RESULT_DIR + STYLE_DIR_BASE + f)
 
 
-def e(text):
+def escape(text):
   """
-  Function: e
-  -----------
+  Function: escape
+  ----------------
   Escapes text so it can be outputted as HTML.
   """
-  return cgi.escape(text)
+  return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
 
 
 def generate_student_list(specs):
@@ -267,14 +267,14 @@ def format_student(student, output, specs, hide_solutions):
         if not problem.get("comments"):
           o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
         else:
-          o.write("<div class='comment'>" + e(problem["comments"]) + "</div>")
+          o.write("<div class='comment'>" + escape(problem["comments"]) + "</div>")
       if hide_solutions:
         o.write("<b>Response</b>")
       else:
         o.write("<b>Student's Response</b>")
       o.write("<div class='sql' contenteditable='true' " +
               "onclick='document.execCommand(\"selectAll\", false, null)'>" +
-              e(problem["sql"]) + "</div>")
+              escape(problem["sql"]) + "</div>")
 
       # Do test output.
       PROBLEM_TYPES[problem_specs["type"]]().do_output(o,

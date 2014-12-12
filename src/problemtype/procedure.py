@@ -59,26 +59,28 @@ class Procedure(ProblemType):
       (diff_type, evalue) = bdiff[bindex]
       # Something that was removed compared to before.
       if diff_type == "remove":
-        o.write("<font color='red'>" + self.e(evalue) + "</font>\n")
+        o.write("<font color='red'>" + formatter.escape(evalue) + "</font>\n")
         bindex += 1
         continue
 
       (diff_type, avalue) = adiff[aindex]
       # Unchanged row.
       if diff_type == "":
-        o.write("<font color='gray'>" + self.e(evalue + "      " + avalue) +
-                "</font>\n")
+        o.write("<font color='gray'>" + formatter.escape(evalue + "      " +
+                avalue) + "</font>\n")
         aindex += 1
         bindex += 1
       # Something that was added compared to before.
       elif diff_type == "add":
-        o.write(space + "<font color='green'>" + self.e(avalue) + "</font>\n")
+        o.write(space + "<font color='green'>" + formatter.escape(avalue) +
+                "</font>\n")
         aindex += 1
 
     # Any remaining added rows.
     while aindex < len(adiff):
       (_, avalue) = adiff[aindex]
-      o.write(space + "<font color='green'>" + self.e(avalue) + "</font>\n")
+      o.write(space + "<font color='green'>" + formatter.escape(avalue) +
+              "</font>\n")
       aindex += 1
 
     o.write("</pre>")

@@ -1,8 +1,9 @@
+import formatter
+import sqltools
+
 from CONFIG import PRECISION
 from errors import QueryError
 from types import ProblemType, SuccessType
-
-import sqltools
 
 class Function(ProblemType):
   """
@@ -77,8 +78,8 @@ class Function(ProblemType):
   def output_test(self, o, test, specs):
     # If the test failed, print out the differences.
     if not test["success"] and test.get("expected"):
-      expected = self.e(test["expected"])
-      actual = self.e(test["actual"])
+      expected = formatter.escape(test["expected"])
+      actual = formatter.escape(test["actual"])
       diff = len(expected) - len("Expected")
 
       o.write("<pre class='results'>\n")

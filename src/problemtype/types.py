@@ -4,6 +4,8 @@ from cStringIO import StringIO
 
 import mysql.connector
 
+import formatter
+
 from CONFIG import PRECISION
 from errors import (
   add,
@@ -31,7 +33,7 @@ class ProblemType(object):
   Class: ProblemType
   ------------------
   A generic problem type. To be implemented for specific types of problems. If
-  initialized with all its parameters set as None, then it would be used as
+  initialized with all its parameters set as None, it would be used as
   a static class.
   """
 
@@ -231,8 +233,8 @@ class ProblemType(object):
           o.write("<li><div class='failed'>FAILED")
 
         # Other test details such as the number of points received, and the
-        # description of the test. Only print the number of points if the test is
-        # not undetermined.
+        # description of the test. Only print the number of points if the test
+        # result is not undetermined.
         if test["success"] != SuccessType.UNDETERMINED:
           o.write(" (" + str(test.get("got_points", 0)) + "/" +
                   str(specs["points"]) + " Points)")
@@ -267,15 +269,6 @@ class ProblemType(object):
     raise NotImplementedError("Must be implemented!")
 
 # ----------------------------- Utility Functions ---------------------------- #
-
-  def e(self, text):
-    """
-    Function: e
-    -----------
-    Escapes text so it can be outputted as HTML.
-    """
-    return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
-
 
   def equals(self, res1, res2, check_row_order=False, check_col_order=False):
     """
@@ -425,32 +418,25 @@ class ProblemType(object):
       (diff_type, evalue) = ediff[eindex]
       # An expected result not found in the actual results.
       if diff_type == "remove":
-        o.write("<font color='red'>" + self.e(evalue) + "</font>\n")
+        o.write("<font color='red'>" + formatter.escape(evalue) + "</font>\n")
         eindex += 1
         continue
 
       (diff_type, avalue) = adiff[aindex]
       # Matching actual and expected results.
       if diff_type == "":
-        o.write(self.e(evalue + "      " + avalue) + "\n")
+        o.write(formatter.escape(evalue + "      " + avalue) + "\n")
         aindex += 1
         eindex += 1
       # An actual result not found in the expected results.
       elif diff_type == "add":
-        o.write(space + "<font color='red'>" + self.e(avalue) + "</font>\n")
+        o.write(space + "<font color='red'>" + formatter.escape(avalue) +
+                "</font>\n")
         aindex += 1
 
     # Any remaining actual results.
     while aindex < len(adiff):
       (_, avalue) = adiff[aindex]
-      o.write(space + "<font color='red'>" + self.e(avalue) + "</font>\n")
+      o.write(space + "<font color='red'>" + formatter.escape(avalue) +
+              "</font>\n")
       aindex += 1
-
-
-def stringify(lst):
-  """
-  Function: stringify
-  -------------------
-  Converts every element into a string to be easily JSONified.
-  """
-  return [str(x) for x in lst]
