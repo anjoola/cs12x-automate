@@ -21,8 +21,6 @@ class Trigger(ProblemType):
       # Start a transaction and run the test query to trigger the trigger.
       self.db.start_transaction()
       self.db.execute_sql(test["query"])
-      if test.get("teardown"):
-        self.db.execute_sql(test["teardown"])
 
       # Compare actual and expected results.
       actual = self.db.execute_sql(test["actual"])
@@ -30,6 +28,8 @@ class Trigger(ProblemType):
     except DatabaseError as e:
       exception = e
     finally:
+      if test.get("teardown"):
+        self.db.execute_sql(test["teardown"])
       self.db.rollback()
 
     # Raise any exceptions now if there was a problem with the student's query.
