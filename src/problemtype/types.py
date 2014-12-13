@@ -1,8 +1,4 @@
-import cgi
 import difflib
-from cStringIO import StringIO
-
-import mysql.connector
 
 import formatter
 
@@ -326,7 +322,7 @@ class ProblemType(object):
     Function: get_diffs
     -------------------
     Gets the diffs of two lists.
-  
+
     lst1: The first list.
     lst2: The second list.
     returns: A tuple containing two lists (one for lst1, one for lst2). The list

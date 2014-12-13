@@ -1,7 +1,5 @@
-import re
 
 from errors import DatabaseError, QueryError
-from models import Result
 from sqltools import check_valid_query, find_valid_sql
 from types import ProblemType
 
@@ -13,7 +11,7 @@ class View(ProblemType):
   selects from it to see if it contains the same rows as the solution query.
   """
 
-  def check_updatable(self, viewname, output):
+  def check_updatable(self, viewname):
     """
     Function: check_updatable
     -------------------------
@@ -83,7 +81,7 @@ class View(ProblemType):
       output["deductions"].append(QueryError.INCORRECT_VIEW_NAME)
 
     # Check if the view is updatable, if necessary. If not, take points off.
-    if test.get('updatable') and not self.check_updatable(viewname, output):
+    if test.get('updatable') and not self.check_updatable(viewname):
       output["deductions"].append(QueryError.NOT_UPDATABLE)
 
     # If the view does not contain the same rows as the solution select
@@ -93,7 +91,6 @@ class View(ProblemType):
       # order of the results.
       if test.get("column-order") and \
          self.equals(expected, actual, True, False):
-        deductions = 0
         output["deductions"].append(QueryError.COLUMN_ORDER)
 
       output['expected'] = expected.output

@@ -5,7 +5,6 @@ Formats the graded output into HTML.
 """
 
 import cgi
-import json
 import os
 import shutil
 from cStringIO import StringIO
@@ -68,10 +67,10 @@ def generate_student_list(specs):
   return students
 
 
-def format(output, specs, studentlst=None):
+def format_output(output, specs, studentlst=None):
   """
-  Function: format
-  ----------------
+  Function: format_output
+  -----------------------
   Formats the JSON output into HTML. This is the formatting for the main page.
 
   output: The graded JSON output.
@@ -267,7 +266,8 @@ def format_student(student, output, specs, hide_solutions):
         if not problem.get("comments"):
           o.write("<br><i>Comments expected but none provided...</i><br><br>\n")
         else:
-          o.write("<div class='comment'>" + escape(problem["comments"]) + "</div>")
+          o.write("<div class='comment'>" + escape(problem["comments"]) +
+                  "</div>")
       if hide_solutions:
         o.write("<b>Response</b>")
       else:

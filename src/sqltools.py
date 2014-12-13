@@ -52,7 +52,7 @@ KEYWORDS = KEYWORDS_DICT.keys()
 CTRL_KEYWORDS = [
   ("CASE", "END CASE"),
   ("IF", "END IF"),
-  ("IF\(", "\)"),
+  ("IF(", ")"),
   ("LOOP", "END LOOP"),
   ("WHILE", "END WHILE"),
   ("REPEAT", "END REPEAT"),
@@ -88,12 +88,14 @@ def check_valid_query(query, query_type):
   # TODO: This is turned off because students like to put code before their
   #       answer, causing this function to return false negatives. Really,
   #       this function needs to be improved.
+  '''
   return (
     # Make sure the query type can be found in the query.
     query.lower().strip().find(query_type.lower()) == 0 and
     # Make sure there is only one SQL statement.
     query.strip().strip().rstrip(";").find(";") == -1
   )
+  '''
 
 
 def find_valid_sql(query, query_type, ignore_irrelevant=False):
@@ -176,7 +178,7 @@ def split(raw_sql):
       # If the keyword is "END", make sure it wasn't an END WHILE, END LOOP,
       # END IF, etc. If it is, continue.
       if keyword.lower() == "end":
-        result = re.sub('\s+', ' ', sql[i:]).strip()
+        result = re.sub(r'\s+', ' ', sql[i:]).strip()
         if not (result.startswith("end;") or
                 result.startswith("end ;") or
                 result == "end"):
@@ -279,7 +281,7 @@ def parse_create(sql):
     if "CREATE TABLE" in line.upper():
       line = line[line.upper().index("CREATE TABLE"):]
       started_table = True
-    end_create = re.search("\)\s*;", line)
+    end_create = re.search(r"\)\s*;", line)
     if end_create and started_table:
       line = line[:line.find(end_create.group()) + len(end_create.group())]
       sql_lines.append(line)

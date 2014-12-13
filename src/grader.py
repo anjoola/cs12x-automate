@@ -1,16 +1,10 @@
-import mysql.connector
-
-import dbtools
-import iotools
-from CONFIG import MAX_TIMEOUT
 from errors import (
   add,
   DatabaseError,
   DependencyError
 )
 from iotools import log
-from models import Response
-from problemtype import *
+from problemtype import PROBLEM_TYPES
 
 class Grader:
   """

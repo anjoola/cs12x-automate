@@ -7,7 +7,6 @@ Contains all models that are passed around and used in the automation tool.
 import json
 from copy import deepcopy
 from datetime import datetime
-from time import strftime
 
 import iotools
 
@@ -58,7 +57,11 @@ class DatabaseState:
     """
 
     def diff(a, b):
-      # Returns the diff between a and b, if a is non-empty.
+      """
+      Function: diff
+      --------------
+      Returns the diff between a and b, if a is non-empty.
+      """
       try:
         return [x for x in a if x not in b]
       except TypeError:
@@ -171,7 +174,7 @@ class Result:
 
     returns: The newly-modified Result object.
     """
-    assert(self.col_names == other.col_names or len(other.col_names) == 0)
+    assert self.col_names == other.col_names or len(other.col_names) == 0
     new_result = deepcopy(self)
     new_result.results += other.results
     new_result.output = iotools.prettyprint(new_result.results,
@@ -190,10 +193,10 @@ class Result:
     """
     if len(self.col_names) == 0:
       return self
-    assert(self.col_names == other.col_names or len(other.col_names) == 0)
+    assert self.col_names == other.col_names or len(other.col_names) == 0
 
     new_result = deepcopy(self)
-    results = filter(lambda row: row not in other.results, new_result.results)
+    results = [row for row in new_result.results if row not in other.results]
     if len(results) != 0:
       new_result.results = results
       new_result.output = iotools.prettyprint(new_result.results,

@@ -42,7 +42,7 @@ class Update(ProblemType):
     finally:
       # Rollback to the savepoint and make sure it occurred properly.
       self.db.rollback('spt_update')
-      assert(before.output == self.db.execute_sql(table_sql).output)
+      assert before.output == self.db.execute_sql(table_sql).output
 
     # Run the solution update statement.
     self.db.execute_sql(test["query"])
@@ -51,7 +51,7 @@ class Update(ProblemType):
     # A self-contained UPDATE. Make sure the rollback occurred properly.
     if test.get("rollback"):
       self.db.rollback()
-      assert(before.output == self.db.execute_sql(table_sql).output)
+      assert before.output == self.db.execute_sql(table_sql).output
 
     # Otherwise, release the savepoint.
     else:

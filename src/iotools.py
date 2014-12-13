@@ -13,10 +13,17 @@ from os.path import getmtime
 
 import prettytable
 
-import dbtools
 import formatter
 import sqltools
-from CONFIG import *
+from CONFIG import (
+  ASSIGNMENT_DIR,
+  ERROR,
+  FILE_DIR,
+  MAX_NUM_RESULTS,
+  RESULT_DIR,
+  STUDENT_DIR,
+  VERBOSE
+)
 from models import Response
 
 PROBLEM_HEADER = "-- [Problem ".lower()
@@ -75,18 +82,17 @@ def get_students(assignment, after=None):
     # filtering.
     except ValueError:
       err("'after' parameter not formatted correctly (must be YYYY-MM-DD)")
-      pass
 
   return [f.replace("-" + assignment, "") for f in files]
 
 
-def output(json, specs, raw=False):
+def output(json_output, specs, raw=False):
   """
   Function: output
   ----------------
   Outputs the graded output to a file.
 
-  json: The graded output.
+  json_output: The graded output.
   specs: The assignment specs.
   raw: Whether or not to output as a raw JSON string. True if so, False
        otherwise.
@@ -103,12 +109,12 @@ def output(json, specs, raw=False):
   # For the raw, JSON output.
   if raw:
     f = open(path + datetime.now().strftime("%Y-%m-%d+%H;%M;%S") + ".json", "w")
-    f.write(str(json))
+    f.write(str(json_output))
 
   # A nicely formatted HTML file.
   else:
     f = open(path + "index.html", "w")
-    f.write(formatter.format(json, specs))
+    f.write(formatter.format_output(json_output, specs))
 
   f.close()
   return f
@@ -262,17 +268,17 @@ def prettyprint(results, col_names):
         new_cols.append(col)
     col_names = new_cols
 
-  output = prettytable.PrettyTable(col_names)
-  output.align = "l"
+  pretty_output = prettytable.PrettyTable(col_names)
+  pretty_output.align = "l"
   for row in results[:MAX_NUM_RESULTS]:
-    output.add_row(row)
+    pretty_output.add_row(row)
 
   # If the results are too long, don't print all of it. Instead, put ellipses
   # and indicate the number of rows that are missing.
   if len(results) > MAX_NUM_RESULTS and len(col_names) >= 1:
-    output.add_row((' ', ) * len(col_names))
+    pretty_output.add_row((' ', ) * len(col_names))
     ellipsis = ('..(%d more)..' % (len(results) - MAX_NUM_RESULTS),) + \
                ('...',) * (len(col_names) - 1)
-    output.add_row(ellipsis)
+    pretty_output.add_row(ellipsis)
 
-  return output.get_string()
+  return pretty_output.get_string()

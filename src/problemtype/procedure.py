@@ -1,4 +1,4 @@
-from errors import QueryError
+import formatter
 from types import ProblemType, SuccessType
 
 class Procedure(ProblemType):
@@ -28,7 +28,7 @@ class Procedure(ProblemType):
       #  return test["points"]
       self.db.execute_sql(self.response.sql)
     after = self.db.execute_sql(table_sql,
-                                setup=test["query"], 
+                                setup=test["query"],
                                 teardown=test.get("teardown"))
 
     output["before"] = before.output

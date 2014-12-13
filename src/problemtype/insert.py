@@ -42,7 +42,7 @@ class Insert(ProblemType):
     finally:
       self.db.rollback('spt_insert')
       # Make sure the rollback occurred properly.
-      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+      assert len(before.results) == len(self.db.execute_sql(table_sql).results)
 
     # Run the solution insert statement.
     self.db.execute_sql(test["query"])
@@ -51,7 +51,7 @@ class Insert(ProblemType):
     # A self-contained INSERT. Make sure the rollback occurred properly.
     if test.get("rollback"):
       self.db.rollback()
-      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+      assert len(before.results) == len(self.db.execute_sql(table_sql).results)
 
     # Otherwise, release the savepoint.
     else:

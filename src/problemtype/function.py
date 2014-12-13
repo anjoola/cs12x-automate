@@ -1,8 +1,6 @@
 import formatter
-import sqltools
 
 from CONFIG import PRECISION
-from errors import QueryError
 from types import ProblemType, SuccessType
 
 class Function(ProblemType):
@@ -28,7 +26,6 @@ class Function(ProblemType):
     result_type: The type of the result.
     """
     if result_type not in Function.RESULT_TYPES:
-      err("Result type %s is not valid. Using string as default." % result_type)
       result_type = "string"
 
     if result_type == "boolean":

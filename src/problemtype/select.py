@@ -22,14 +22,14 @@ class Select(ProblemType):
     and select_sql is the SQL for the SELECT statement. view_sql is blank if
     they did not create a view.
     """
-    if (sql.upper().strip().startswith("CREATE VIEW") or \
+    if (sql.upper().strip().startswith("CREATE VIEW") or
         sql.upper().strip().startswith("CREATE OR REPLACE VIEW")):
       view_sql = sql[0:sql.find(";") + 1]
       sql = sql[sql.find(";") + 1:]
       return (view_sql, sql)
 
-    elif (sql.upper().strip().startswith("DROP VIEW") and \
-          ("CREATE VIEW" in sql.upper() or \
+    elif (sql.upper().strip().startswith("DROP VIEW") and
+          ("CREATE VIEW" in sql.upper() or
            "CREATE OR REPLACE VIEW" in sql.upper())):
       view_sql = sql[0:sql.find(";", sql.upper().find("CREATE")) + 1]
       sql = sql[sql.find(";", sql.upper().find("CREATE")) + 1:]

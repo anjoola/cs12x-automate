@@ -27,16 +27,16 @@ import sys
 
 MAX_LINE_LENGTH = 80
 
-S                   = "[^\>\<\=\(\) \t\n\r\f\v]"
+S                   = r"[^\>\<\=\(\) \t\n\r\f\v]"
 
-header              = re.compile("-- \[Problem (([0-9])+([a-zA-Z])*|[a-zA-Z])\]")
-bad_header          = re.compile("-- \[Problem([^\]])*\]")
+header              = re.compile(r"-- \[Problem (([0-9])+([a-zA-Z])*|[a-zA-Z])\]")
+bad_header          = re.compile(r"-- \[Problem([^\]])*\]")
 comment             = re.compile(r"\s*--.|/\*.|\*/.")
 tabs                = re.compile(r"\t+")
-comma_space         = re.compile(",[^ ][^\n]")
+comma_space         = re.compile(r",[^ ][^\n]")
 negative_num        = re.compile(r"\-([0-9]*\.?[0-9]+)")
-count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
-double_quote        = re.compile("\"([^\"])*\"")
+count_star          = re.compile(r"\(\*\)|\(DISTINCT \*\)")
+double_quote        = re.compile(r"\"([^\"])*\"")
 HAS_HEADER = False
 MULTILINE_COMMENT = False
 

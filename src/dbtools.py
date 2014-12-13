@@ -11,7 +11,13 @@ import mysql.connector
 import mysql.connector.errors
 
 from cache import Cache
-from CONFIG import *
+from CONFIG import (
+  ASSIGNMENT_DIR,
+  CONNECTION_TIMEOUT,
+  HOST,
+  LOGIN,
+  PORT
+)
 from errors import DatabaseError, TimeoutError
 from iotools import (
   err,
@@ -74,7 +80,8 @@ class DBTools:
     """
     if self.db:
       # Consume remaining output.
-      for _ in self.cursor: pass
+      for _ in self.cursor:
+        pass
 
       # Kill any remaining queries and close the database connection.
       try:
@@ -82,7 +89,7 @@ class DBTools:
         self.cursor.close()
         self.db.close()
       # Can't do anything if there is a database error.
-      except mysql.connector.errors.Error as e:
+      except mysql.connector.errors.Error:
         pass
 
 
@@ -159,7 +166,7 @@ class DBTools:
     returns: A DatabaseState object which contains the current state.
     """
     state = DatabaseState()
-  
+
     try:
       # Get tables and their foreign keys.
       state.tables = self.execute_sql(
@@ -198,7 +205,8 @@ class DBTools:
     --------------------
     Kills the running query by terminating the connection.
     """
-    if not self.db or not self.db.is_connected(): return
+    if not self.db or not self.db.is_connected():
+      return
 
     thread_id = self.db.connection_id
     try:
@@ -260,11 +268,11 @@ class DBTools:
         self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
       for func in new.functions:
         self.execute_sql("DROP FUNCTION IF EXISTS %s" % func)
-  
+
       # Drop views.
       for view in new.views:
         self.execute_sql("DROP VIEW IF EXISTS %s" % view)
-  
+
       # Drop tables. First must drop foreign keys on the tables in order to be
       # able to drop the tables without any errors.
       for (table, fk) in new.foreign_keys:
@@ -485,7 +493,7 @@ class DBTools:
     ----------------------
     Imports raw data files into the database. This uses the "mysqlimport"
     command on the terminal. We will have to invoke the command via Python.
-  
+
     assignment: The assignment name, which is prepended to all the files.
     f: The file to import.
     """
@@ -528,6 +536,7 @@ class DBTools:
         continue
       # Otherwise execute each line. Output must be consumed for the query
       # to actually be executed.
-      for _ in self.cursor.execute(sql.rstrip(), multi=True): pass
+      for _ in self.cursor.execute(sql.rstrip(), multi=True):
+        pass
       self.commit()
     f.close()

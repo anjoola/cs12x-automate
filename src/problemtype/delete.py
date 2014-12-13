@@ -44,7 +44,7 @@ class Delete(ProblemType):
     finally:
       self.db.rollback('spt_delete')
       # Make sure the rollback occurred properly.
-      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+      assert len(before.results) == len(self.db.execute_sql(table_sql).results)
 
     # Run the solution delete statement.
     self.db.execute_sql(test["query"])
@@ -53,7 +53,7 @@ class Delete(ProblemType):
     # A self-contained DELETE. Make sure the rollback occurred properly.
     if test.get("rollback"):
       self.db.rollback()
-      assert(len(before.results) == len(self.db.execute_sql(table_sql).results))
+      assert len(before.results) == len(self.db.execute_sql(table_sql).results)
 
     # Otherwise, release the savepoint.
     else:

@@ -6,7 +6,6 @@ from CONFIG import (
   MAX_TIMEOUT,
   PORT
 )
-from dbcommands import KILL_QUERY
 
 class Terminator:
   """
@@ -38,4 +37,4 @@ class Terminator:
 
     thread_id: ID of the connection.
     """
-    self.cursor.execute(KILL_QUERY % thread_id)
+    self.cursor.execute("KILL %d" % thread_id)

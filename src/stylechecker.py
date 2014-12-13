@@ -1,22 +1,20 @@
 import collections
-import os
 import re
-import sys
 
 from errors import StyleError
 
 MAX_LINE_LENGTH = 80
 
-S                   = "[^\>\<\=\(\) \t\n\r\f\v]"
+S                   = r"[^\>\<\=\(\) \t\n\r\f\v]"
 
-header              = re.compile("-- \[Problem (([0-9])+([a-zA-Z])*|[a-zA-Z])\]")
-bad_header          = re.compile("-- \[Problem([^\]])*\]")
+header              = re.compile(r"-- \[Problem (([0-9])+([a-zA-Z])*|[a-zA-Z])\]")
+bad_header          = re.compile(r"-- \[Problem([^\]])*\]")
 comment             = re.compile(r"\s*--.|/\*.|\*/.")
 tabs                = re.compile(r"\t+")
-comma_space         = re.compile(",[^ ][^\n]")
+comma_space         = re.compile(r",[^ ][^\n]")
 negative_num        = re.compile(r"\-([0-9]*\.?[0-9]+)")
-count_star          = re.compile("\(\*\)|\(DISTINCT \*\)")
-double_quote        = re.compile("\"([^\"])*\"")
+count_star          = re.compile(r"\(\*\)|\(DISTINCT \*\)")
+double_quote        = re.compile(r"\"([^\"])*\"")
 
 class StyleChecker:
   """
@@ -58,7 +56,7 @@ class StyleChecker:
     # Check every line.
     for i in range(num_lines):
       line = lines[i][:-1]
-      cls.check_line(line, i + 1)
+      cls.check_line(line)
 
     error_list = []
     for e in cls.errors:
@@ -68,12 +66,12 @@ class StyleChecker:
 
 
   @classmethod
-  def check_line(cls, line, line_number):
+  def check_line(cls, line):
     """
     Function: check_line
     --------------------
     Checks a line of a file for style violations.
-  
+
     line: The line to check.
     line_number: The line number of the line to check.
     """
@@ -88,7 +86,7 @@ class StyleChecker:
       cls.has_header = True
     if not cls.has_header and line.strip().startswith("/*"):
       cls.multiline_comment = True
-  
+
     # Check for style mistakes.
     if bad_header.search(line) and not header.search(line):
       cls.errors[StyleError.BAD_HEADER] += 1
@@ -102,7 +100,7 @@ class StyleChecker:
         cls.errors[StyleError.SPACING] += 1
       if double_quote.search(line):
         cls.errors[StyleError.DOUBLE_QUOTES] += 1
-  
+
     # Continue checking for problem header mistakes.
     if not (cls.has_header or
             cls.multiline_comment or

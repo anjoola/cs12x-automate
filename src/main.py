@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import sys
 
@@ -20,7 +21,7 @@ from errors import (
 )
 from grader import Grader
 from iotools import err, log
-from models import *
+from models import GradedOutput
 from stylechecker import StyleChecker
 
 class AutomationTool:
@@ -220,7 +221,6 @@ class AutomationTool:
 
     # Parse student's response.
     response = {}
-    style_errors = set()
     for filename in self.files:
       # Add this file to the graded output.
       graded_file = {

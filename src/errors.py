@@ -6,8 +6,6 @@ automation tool.
 """
 from math import ceil
 
-import mysql.connector.errors
-
 def add(lst, error):
   """
   Function: add
@@ -36,6 +34,7 @@ class FileNotFoundError(Error):
   Occurs when a file cannot be found for grading.
   """
   def __init__(self, filename):
+    super(FileNotFoundError, self).__init__()
     self.filename = filename
 
   def __repr__(self):
@@ -201,6 +200,8 @@ class DatabaseError(Error):
   - http://dev.mysql.com/doc/refman/5.7/en/error-messages-client.html
   """
   def __init__(self, error):
+    super(DatabaseError, self).__init__()
+
     # The MySQL error number.
     self.errno = error.errno
 
@@ -224,8 +225,10 @@ class DependencyError(DatabaseError):
   Occurs when there is a problem with a dependent query.
   """
   def __init__(self, dep_file, num, error):
+    super(DependencyError, self).__init__()
+
     # The dependent file.
-    self.f = dep_file
+    self.dep_file = dep_file
 
     # The problem number in the file.
     self.num = num
@@ -239,7 +242,8 @@ class DependencyError(DatabaseError):
 
   def __repr__(self):
     return ("DependencyError (%d): Dependent query from problem %s in file " +
-            "%s got error \"%s\".") % (self.errno, self.num, self.f, self.msg)
+            "%s got error \"%s\".") % (self.errno, self.num, self.dep_file,
+            self.msg)
 
 
 
@@ -251,6 +255,8 @@ class MissingKeywordError(Error):
   The value of the error is a list of keywords that were missing.
   """
   def __init__(self, keywords):
+    super(MissingKeywordError, self).__init__()
+
     # The list of keywords that are missing.
     self.keywords = keywords
 
@@ -269,7 +275,7 @@ class TimeoutError(DatabaseError):
   Occurs when a query times out.
   """
   def __init__(self):
-    pass
+    super(TimeoutError, self).__init__()
 
 
   def __repr__(self):
