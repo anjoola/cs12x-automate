@@ -1,7 +1,6 @@
 import difflib
 
 import formatter
-
 from CONFIG import PRECISION
 from errors import (
   add,
@@ -10,6 +9,7 @@ from errors import (
   TimeoutError,
   QueryError
 )
+from sqltools import is_valid
 
 PRECISION_DIVISOR = float(10 ** PRECISION)
 
@@ -105,6 +105,10 @@ class ProblemType(object):
 
     returns: The number of points received for this response.
     """
+    # Checks to see if this query is valid.
+    if not is_valid(self.response.sql):
+      self.output["deductions"].append(QueryError.BAD_QUERY)
+
     # Run each test for the problem.
     for test in self.specs["tests"]:
       lost_points = 0
