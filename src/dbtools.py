@@ -25,7 +25,7 @@ from iotools import (
   prettyprint
 )
 from models import DatabaseState, Result
-from sqltools import preprocess_sql, split
+from sqltools import preprocess_sql, parse_sql
 from terminator import Terminator
 
 # List of field types that translate to a float in Python (i.e. all numeric
@@ -349,13 +349,33 @@ class DBTools:
 
   # ----------------------------- Query Utilities ---------------------------- #
 
-  def execute_sql_list(self, sql):
+  def execute_sql_list(self, sql_list, setup=None, teardown=None, cached=False):
     """
     Function: execute_sql_list
     --------------------------
     Executes a list of SQL statements.
+
+    sql_list: List of SQL statements to run.
+    setup: The setup query to run before executing the list of SQL statements.
+    teardown: The teardown query to run after executing the list of SQL
+              statements.
+    cached: Whether or not the result should be pulled from the cache. True if
+            so, False otherwise.
+
+    returns: A Result object containing the result.
     """
-    [self.execute_sql(s) for s in sql]
+    if setup is not None:
+      self.execute_sql(setup)
+
+    result = Result()
+    # Get the largest result if they have multiple SQL queries.
+    for sql in sql_list:
+      result = result.compare(self.execute_sql(sql, cached=cached))
+
+    if teardown is not None:
+      self.execute_sql(teardown)
+
+    return result
 
 
   def execute_sql(self, sql, setup=None, teardown=None, cached=False):
@@ -537,7 +557,7 @@ class DBTools:
     except IOError:
       err("Could not find or open sourced file %s!" % fname, True)
 
-    sql_list = split(preprocess_sql(f))
+    sql_list = parse_sql(preprocess_sql(f))
     for sql in sql_list:
       # Skip this line if there is nothing in it.
       if len(sql.strip()) == 0:

@@ -182,6 +182,18 @@ class Result:
     return new_result
 
 
+  def compare(self, other):
+    """
+    Function: compare
+    -----------------
+    Returns the larger of the two Results. The size is determined by the number
+    of rows in the result.
+
+    returns: The larger of self and other.
+    """
+    return self if len(self.results) > len(other.results) else other
+
+
   def subtract(self, other):
     """
     Function: subtract

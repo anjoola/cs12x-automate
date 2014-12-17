@@ -1,5 +1,4 @@
 from errors import DatabaseError, QueryError
-from sqltools import check_valid_query, find_valid_sql
 from types import ProblemType, SuccessType
 
 class Update(ProblemType):

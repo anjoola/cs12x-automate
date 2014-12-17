@@ -1,6 +1,5 @@
 from errors import DatabaseError
 from types import ProblemType, SuccessType
-from sqltools import parse_create
 
 class Create(ProblemType):
   """
