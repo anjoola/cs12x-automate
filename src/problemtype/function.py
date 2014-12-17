@@ -44,15 +44,7 @@ class Function(ProblemType):
 
   def grade_test(self, test, output):
     if test.get("run-query"):
-      # TODO add back later
-      #try:
-      #  valid_sql = sqltools.parse_func_and_proc(self.response.sql)
-      ## If there is something wrong with their CREATE FUNCTION statement.
-      #except:
-      #  output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
-      #  return test["points"]
-      #self.db.execute_sql(valid_sql)
-      self.db.execute_sql(self.response.sql)
+      self.db.execute_sql_list(self.sql_list)
     result = self.db.execute_sql(test["query"], teardown=test.get("teardown"))
 
     if result.results and result.results[0]:

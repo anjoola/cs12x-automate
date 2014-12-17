@@ -40,6 +40,16 @@ class FileNotFoundError(Error):
   def __repr__(self):
     return "FileNotFoundError: File %s could not be found." % self.filename
 
+
+class ParseError(Error):
+  """
+  Class: ParseError
+  -----------------
+  Occurs when there is a problem parsing a student's SQL query.
+  """
+  def __init__(self):
+    super(ParseError, self).__init__()
+
 # ------------------------------ Grading Errors ----------------------------- #
 
 class StyleError(Error):

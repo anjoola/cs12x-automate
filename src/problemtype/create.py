@@ -13,7 +13,7 @@ class Create(ProblemType):
   def grade_test(self, test, output):
     if test.get("run-query"):
       try:
-        self.db.execute_sql(parse_create(self.response.sql))
+        self.db.execute_sql_list(self.sql_list)
       except DatabaseError:
         output["success"] = SuccessType.FAILURE
         raise

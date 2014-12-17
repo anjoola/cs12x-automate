@@ -16,14 +16,6 @@ class Insert(ProblemType):
                 (", ".join(test["columns"]) if test.get("columns") else "*") + \
                 " FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
-    sql = self.response.sql
-
-    # Make sure the student did not submit a malicious query or malformed query.
-    if not check_valid_query(sql, "insert"):
-      output["deductions"].append(QueryError.BAD_QUERY)
-      sql = find_valid_sql(sql, "insert")
-      if sql is None:
-        return test["points"]
 
     # Start a transaction in order to rollback if this is a self-contained
     # INSERT test.
@@ -33,9 +25,9 @@ class Insert(ProblemType):
     exception = None
     self.db.savepoint('spt_insert')
     try:
-      self.db.execute_sql(sql,
-                          setup=test.get("setup"),
-                          teardown=test.get("teardown"))
+      self.db.execute_sql_list(self.sql_list,
+                               setup=test.get("setup"),
+                               teardown=test.get("teardown"))
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:
       exception = e

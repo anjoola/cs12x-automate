@@ -349,6 +349,15 @@ class DBTools:
 
   # ----------------------------- Query Utilities ---------------------------- #
 
+  def execute_sql_list(self, sql):
+    """
+    Function: execute_sql_list
+    --------------------------
+    Executes a list of SQL statements.
+    """
+    [self.execute_sql(s) for s in sql]
+
+
   def execute_sql(self, sql, setup=None, teardown=None, cached=False):
     """
     Function: execute_sql
@@ -367,15 +376,15 @@ class DBTools:
     # Run the query setup.
     result = Result()
     if setup is not None:
-      self.run_multi(setup)
+      self.run_query(setup)
 
     try:
-      result = self.run_multi(sql, cached)
+      result = self.run_query(sql, cached)
 
     # Run the query teardown.
     finally:
       if teardown is not None:
-        self.run_multi(teardown)
+        self.run_query(teardown)
     return result
 
 
@@ -436,48 +445,47 @@ class DBTools:
     return self.cursor.description
 
 
-  def run_multi(self, queries, cached=False):
+  def run_query(self, sql, cached=False):
     """
-    Function: run_multi
+    Function: run_query
     -------------------
-    Runs multiple SQL statements at once.
+    Runs the given SQL query. If the results of the query is cached, then
+    return the cached results instead.
     """
     # Consume old results if needed.
     [row for row in self.cursor]
-    sql_list = split(queries)
-
     result = Result()
-    for sql in sql_list:
-      sql = sql.rstrip().rstrip(";")
-      if len(sql) == 0:
-        continue
+    sql = sql.rstrip().rstrip(";")
+    if len(sql) == 0:
+      return
 
-      query_results = Cache.get(sql)
+    query_results = Cache.get(sql)
 
-      # Results are not to be cached or are not in the cache and needs to
-      # be cached. Run the query.
-      if not query_results or not cached:
-        try:
-          self.cursor.execute(sql)
+    # Results are not to be cached or are not in the cache and needs to
+    # be cached. Run the query.
+    if not query_results or not cached:
+      try:
+        self.cursor.execute(sql)
 
-        # If the query times out.
-        except mysql.connector.errors.OperationalError:
-          raise TimeoutError
+      # If the query times out.
+      except mysql.connector.errors.OperationalError:
+        raise TimeoutError
 
-        # If something is wrong with their query.
-        except mysql.connector.errors.ProgrammingError as e:
-          raise DatabaseError(e)
+      # If something is wrong with their query.
+      except mysql.connector.errors.ProgrammingError as e:
+        raise DatabaseError(e)
 
-        # If the query can't be run as a single query, attempt to do it with a
-        # multi-line query.
-        except mysql.connector.errors.Error as e:
-          raise DatabaseError(e)
+      # If the query can't be run as a single query, attempt to do it with a
+      # multi-line query.
+      except mysql.connector.errors.Error as e:
+        raise DatabaseError(e)
 
-        query_results = self.get_results()
-        if cached:
-          Cache.put(sql, query_results)
+      query_results = self.get_results()
+      # Store the results in the cache to be used later.
+      if cached:
+        Cache.put(sql, query_results)
 
-      result = query_results
+    result = query_results
 
     # If no longer in a transaction, remove all savepoints.
     if not self.db.in_transaction:

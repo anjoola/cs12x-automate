@@ -6,10 +6,11 @@ from errors import (
   add,
   DatabaseError,
   MissingKeywordError,
+  ParseError,
   TimeoutError,
   QueryError
 )
-from sqltools import is_valid
+from sqltools import parse_sql
 
 PRECISION_DIVISOR = float(10 ** PRECISION)
 
@@ -50,6 +51,10 @@ class ProblemType(object):
     # out with the maximum number of points, and points get deducted as the
     # tests go on.
     self.got_points = (0 if not self.specs else self.specs["points"])
+
+    # A list of SQL statements after parsing. Is None if there was a problem
+    # going through the student's response.
+    self.sql_list = None
 
 
   def get_errors(self, errors, points):
@@ -105,9 +110,14 @@ class ProblemType(object):
 
     returns: The number of points received for this response.
     """
-    # Checks to see if this query is valid.
-    if not is_valid(self.response.sql):
+    # Parse their SQL and split it into separate SQL statements if they have
+    # multiple statements. If there is a problem parsing their SQL statement,
+    # then does not run any tests.
+    try:
+      self.sql_list = parse_sql(self.response.sql)
+    except ParseError:
       self.output["deductions"].append(QueryError.BAD_QUERY)
+      return 0
 
     # Run each test for the problem.
     for test in self.specs["tests"]:

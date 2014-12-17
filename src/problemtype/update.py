@@ -18,14 +18,6 @@ class Update(ProblemType):
                 (", ".join(test["columns"]) if test.get("columns") else "*") + \
                 " FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
-    sql = self.response.sql
-
-    # Make sure the student did not submit a malicious query or malformed query.
-    if not check_valid_query(sql, "update"):
-      output["deductions"].append(QueryError.BAD_QUERY)
-      sql = find_valid_sql(sql, "update")
-      if sql is None:
-        return test["points"]
 
     # Start a transaction in order to rollback if this is a self-contained
     # UPDATE test.
@@ -35,7 +27,7 @@ class Update(ProblemType):
     exception = None
     self.db.savepoint('spt_update')
     try:
-      self.db.execute_sql(sql)
+      self.db.execute_sql_list(self.sql_list)
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:
       exception = e

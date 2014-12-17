@@ -16,7 +16,7 @@ class Trigger(ProblemType):
       if test.get("setup"):
         self.db.execute_sql(test["setup"])
       if test.get("run-query"):
-        self.db.execute_sql(self.response.sql)
+        self.db.execute_sql_list(self.sql_list)
 
       # Start a transaction and run the test query to trigger the trigger.
       self.db.start_transaction()

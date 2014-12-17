@@ -45,17 +45,6 @@ class View(ProblemType):
 
 
   def grade_test(self, test, output):
-    # See if they actually put a CREATE VIEw statement.
-    sql = self.response.sql
-    if not (check_valid_query(sql, "create view") or
-            check_valid_query(sql, "create or replace view")):
-      output["deductions"].append(QueryError.BAD_QUERY)
-      # Don't want any extra statements before or after a CREATE VIEW.
-      sql = find_valid_sql(sql, "create view", True) or \
-            find_valid_sql(sql, "create or replace view", True)
-      if sql is None:
-        return test["points"]
-
     # Get the rows that are expected.
     expected = self.db.execute_sql(test['select'])
 
@@ -63,7 +52,7 @@ class View(ProblemType):
     # what is in the view.
     viewname = test["view"]
     try:
-      self.db.execute_sql(sql)
+      self.db.execute_sql_list(self.sql_list)
     except DatabaseError as e:
       raise e
     try:

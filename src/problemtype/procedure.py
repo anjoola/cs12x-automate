@@ -18,15 +18,7 @@ class Procedure(ProblemType):
     if test.get("setup"):
       self.db.execute_sql(test["setup"])
     if test.get("run-query"):
-      # TODO add back
-      #try:
-      #  valid_sql = sqltools.parse_func_and_proc(self.response.sql,
-      #                                           is_procedure=True)
-      ## If there is something wrong with their CREATE PROCEDURE statement.
-      #except:
-      #  output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
-      #  return test["points"]
-      self.db.execute_sql(self.response.sql)
+      self.db.execute_sql_list(self.sql_list)
     after = self.db.execute_sql(table_sql,
                                 setup=test["query"],
                                 teardown=test.get("teardown"))

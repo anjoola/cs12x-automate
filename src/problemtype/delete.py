@@ -20,14 +20,6 @@ class Delete(ProblemType):
                 (", ".join(test["columns"]) if test.get("columns") else "*") + \
                 " FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
-    sql = self.response.sql
-
-    # Make sure the student did not submit a malicious query or malformed query.
-    if not check_valid_query(sql, "delete"):
-      output["deductions"].append(QueryError.BAD_QUERY)
-      sql = find_valid_sql(sql, "delete")
-      if sql is None:
-        return test["points"]
 
     # Start a transaction in order to rollback if this is a self-contained
     # DELETE test.
@@ -37,7 +29,7 @@ class Delete(ProblemType):
     exception = None
     self.db.savepoint('spt_delete')
     try:
-      self.db.execute_sql(sql)
+      self.db.execute_sql_list(self.sql_list)
       actual = self.db.execute_sql(table_sql)
     except DatabaseError as e:
       exception = e

@@ -14,7 +14,7 @@ class Manual(ProblemType):
 
     if test.get("run-query"):
       try:
-        self.db.execute_sql(self.response.sql)
+        self.db.execute_sql_list(self.sql_list)
       except DatabaseError:
         raise
 
