@@ -26,6 +26,7 @@ KEYWORDS_DICT = {
   "CREATE OR REPLACE PROCEDURE": ";",
   "CREATE PROCEDURE": ";",
   "CREATE TABLE" : ";",
+  "CREATE TEMPORARY TABLE": ";",
   "CREATE OR REPLACE TRIGGER": ";",
   "CREATE TRIGGER": ";",
   "CREATE OR REPLACE VIEW": ";",
@@ -85,8 +86,11 @@ KEYWORDS_IGNORE = [
   "BEFORE INSERT ON",
   "BEFORE DELETE ON",
   "BEFORE UPDATE ON",
-  "ON DUPLICATE KEY UPDATE"
+  "ON DELETE",
+  "ON DUPLICATE KEY UPDATE",
+  "ON UPDATE"
 ]
+
 # TODO comment
 KEYWORDS_IGNORE_PREV = {
   "SELECT": ["DECLARE", "IF", "INSERT", "CREATE VIEW", "CREATE OR REPLACE VIEW"],
@@ -97,23 +101,26 @@ ALL_KEYWORDS = KEYWORDS_START + KEYWORDS_END + KEYWORDS_IGNORE
 
 def parse_sql(in_sql):
   """
-  Function: is_valid
-  ------------------
-  Returns whether or not a SQL statement is valid. TODO also have it split SQL?
+  Function: parse_sql
+  -------------------
+  Parses given SQL into separate SQL statements. If the SQL is invalid, then
+  throws a ParseError.
   """
+  # The parsed list of SQL statements and current SQL that is being constructed.
   sql_list = []
   sql = ""
-  
-  
+
   # Stores start keywords. Pops from this when a corresponding end keyword is
   # found.
   stack = []
+  # Stores whether or not the stack was just popped from.
+  just_popped = [False]
+  # True if the previously added keyword was a special case for end keywords.
+  was_special_case = False
+
   # State variables.
   prev = ""
   curr = ""
-  just_popped = [False] # TODO halp
-  # True if the previously added keyword was a special case.
-  was_special_case = False # TODO name better
   # List of keywords to find matches from. This should get smaller as the
   # possible keyword gets longer.
   keyword_matches = ALL_KEYWORDS
@@ -121,11 +128,17 @@ def parse_sql(in_sql):
   # Split the SQL statement into word tokens. Cleans up the SQL by:
   #   - Removing comments
   #   - Replacing newlines with spaces
-  #   - Removing extra spaces TODO
   #   - Treating semicolons as keywords
-  #   - Change to uppercase
-  # TODO remove stuff within strings
-  words_iter = iter([x for x in remove_comments(in_sql).replace("\n", " ").replace(";", " ; ").replace(")", " ) ").replace("(", " ( ").split(" ") if len(x) > 0])
+  # TODO ignore stuff within strings
+  #   - Removing extra spaces TODO
+  words_iter = iter([x for x in
+    remove_comments(in_sql).replace("\n", " ")
+                           .replace(";", " ; ")
+                           .replace(")", " ) ")
+                           .replace("(", " ( ")
+                           .split(" ")
+    if len(x) > 0])
+
   def add_keyword(keyword, sql, sql_list):
     """
     Function: add_keyword
@@ -174,7 +187,7 @@ def parse_sql(in_sql):
       prev = curr
       next_word = words_iter.next()
       curr = (curr + " " + next_word).strip().upper()
-      # Add to the current SQL
+      # Add to the current SQL statement.
       sql += next_word + " "
 
       # Get the keywords that match the current token.
@@ -226,19 +239,18 @@ def parse_sql(in_sql):
       else:
         keyword_matches = new_keyword_matches
 
-      #print stack
-      # If adding this causes the stack to become empty, then we found a complete
-      # SQL statement.
+      # If adding this causes the stack to become empty, then we found a
+      # complete SQL statement.
       if len(stack) == 0 and just_popped[0]:
         just_popped[0] = False
-        sql_list.append(sql) # don't want to remove things in strings then..
+        sql_list.append(sql)
         sql = ""
 
     # No more words to consume.
     except StopIteration:
       break
 
-  # Add remaining SQL
+  # Add remaining SQL as final SQL statement.
   if len(sql) > 0:
     sql_list.append(sql)
 

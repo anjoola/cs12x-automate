@@ -284,9 +284,5 @@ class TimeoutError(DatabaseError):
   -------------------
   Occurs when a query times out.
   """
-  def __init__(self):
-    super(TimeoutError, self).__init__()
-
-
   def __repr__(self):
     return "TimeoutError: Query timed out."

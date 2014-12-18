@@ -49,7 +49,7 @@ def escape(text):
   ----------------
   Escapes text so it can be outputted as HTML.
   """
-  return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
+  return cgi.escape(text)
 
 
 def generate_student_list(specs):

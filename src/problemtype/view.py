@@ -51,9 +51,6 @@ class View(ProblemType):
     viewname = test["view"]
     try:
       self.db.execute_sql_list(self.sql_list)
-    except DatabaseError as e:
-      raise e
-    try:
       actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
     except DatabaseError as e:
       # If an exception occurs, they must have not named the view correctly.
