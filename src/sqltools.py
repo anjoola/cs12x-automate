@@ -65,6 +65,7 @@ KEYWORDS_DICT = {
   "CASE": "END CASE",
   "IF": "END IF",
   "IF (": ")",
+  "IFNULL (": ")",
   "LOOP": "END LOOP",
   "WHILE": "END WHILE",
   "REPEAT": "END REPEAT",
@@ -86,18 +87,54 @@ KEYWORDS_IGNORE = [
   "BEFORE INSERT ON",
   "BEFORE DELETE ON",
   "BEFORE UPDATE ON",
+  "FOR EACH ROW CALL",
   "ON DELETE",
+  "ON DELETE SET",
   "ON DUPLICATE KEY UPDATE",
-  "ON UPDATE"
+  "ON UPDATE",
+  "ON UPDATE SET"
 ]
 
 # TODO comment
+# keyword: [before]
 KEYWORDS_IGNORE_PREV = {
+  "DO": ["WHILE"],
   "SELECT": ["DECLARE", "IF", "INSERT", "CREATE VIEW", "CREATE OR REPLACE VIEW"],
   "SET": ["UPDATE"]
 }
 
 ALL_KEYWORDS = KEYWORDS_START + KEYWORDS_END + KEYWORDS_IGNORE
+
+# Possible things to drop.
+DROP_KEYWORDS = ["FUNCTION", "PROCEDURE", "TABLE", "TRIGGER", "VIEW"]
+
+def fix_drop_statement(sql):
+  """
+  Function: fix_drop_statement
+  ----------------------------
+  Fixes DROP * statements, since they won't work in the autograder. Replaces
+  them by DROP * IF EXISTS statements.
+  """
+  for drop in DROP_KEYWORDS:
+    # Fix if they did not use IF EXISTS.
+    if "DROP " + drop in sql and "DROP " + drop + " IF EXISTS" not in sql:
+      sql = sql.replace("DROP " + sql, "DROP " + sql + " IF EXISTS")
+    elif "drop " + drop.lower() in sql and \
+         "drop " + drop.lower() + " if exists" not in sql:
+      sql = sql.replace("drop " + drop.lower(),
+                        "drop " + drop.lower() + " if exists")
+  return sql
+
+
+def fix_sql(sql):
+  """
+  Function: fix_sql
+  -----------------
+  Applies various fixes to a SQL statement, including:
+    - Fix DROP statements so they all have IF EXISTS.
+  """
+  return fix_drop_statement(sql)
+
 
 def parse_sql(in_sql):
   """
@@ -166,7 +203,7 @@ def parse_sql(in_sql):
         # colon was part of a previous end keyword).
         if KEYWORDS_DICT[start] != keyword and \
            (not was_special_case and keyword == ";"):
-          return False
+          raise ParseError
         elif KEYWORDS_DICT[start] == keyword:
           just_popped[0] = True
           stack.pop()
@@ -175,7 +212,7 @@ def parse_sql(in_sql):
       # previous keyword was a special case.
       except IndexError:
         if not was_special_case and keyword == ";":
-          return False
+          raise ParseError
 
     # Otherwise, successfully modified the stack.
     return True
@@ -198,8 +235,7 @@ def parse_sql(in_sql):
       # keywords.
       if len(new_keyword_matches) == 0:
         if prev in keyword_matches:
-          if not add_keyword(prev, sql, sql_list):
-            return False
+          add_keyword(prev, sql, sql_list)
 
           # Set the special case variable.
           if prev in SPECIAL:
@@ -221,8 +257,7 @@ def parse_sql(in_sql):
       elif (len(new_keyword_matches) == 1 and new_keyword_matches[0] == curr) \
            or curr == ";":
         add_word = curr if curr == ";" else new_keyword_matches[0]
-        if not add_keyword(add_word, sql, sql_list):
-          return False
+        add_keyword(add_word, sql, sql_list)
 
         # Set the special case variable.
         if add_word in SPECIAL:
@@ -243,7 +278,8 @@ def parse_sql(in_sql):
       # complete SQL statement.
       if len(stack) == 0 and just_popped[0]:
         just_popped[0] = False
-        sql_list.append(sql)
+        # Fix the SQL statement if necessary.
+        sql_list.append(fix_sql(sql))
         sql = ""
 
     # No more words to consume.
@@ -251,8 +287,10 @@ def parse_sql(in_sql):
       break
 
   # Add remaining SQL as final SQL statement.
-  if len(sql) > 0:
+  if len(sql) > 0 and len(stack) <= 1:
     sql_list.append(sql)
+  elif len(stack) > 1:
+    raise ParseError
 
   return sql_list
 

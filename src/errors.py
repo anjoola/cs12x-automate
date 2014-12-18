@@ -50,6 +50,9 @@ class ParseError(Error):
   def __init__(self):
     super(ParseError, self).__init__()
 
+  def __repr__(self):
+    return "ParseError: There was an error parsing the query."
+
 # ------------------------------ Grading Errors ----------------------------- #
 
 class StyleError(Error):
@@ -278,11 +281,14 @@ class MissingKeywordError(Error):
 
 
 
-class TimeoutError(DatabaseError):
+class TimeoutError(Error):
   """
   Class: TimeoutError
   -------------------
   Occurs when a query times out.
   """
+  def __init__(self):
+    super(TimeoutError, self).__init__()
+
   def __repr__(self):
     return "TimeoutError: Query timed out."

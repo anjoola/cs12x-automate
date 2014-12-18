@@ -115,8 +115,8 @@ class ProblemType(object):
     # then does not run any tests.
     try:
       self.sql_list = parse_sql(self.response.sql)
-    except ParseError:
-      self.output["deductions"].append(QueryError.BAD_QUERY)
+    except ParseError as e:
+      add(self.output["errors"], e)
       return 0
 
     # Run each test for the problem.
