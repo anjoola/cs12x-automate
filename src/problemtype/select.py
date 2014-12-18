@@ -42,25 +42,8 @@ class Select(ProblemType):
     deductions = 0
     test_points = test["points"]
 
-    '''
-    TODO remove
-    # See if they suck and did a CREATE VIEW statement.
-    (view_sql, sql) = self.check_view(self.response.sql)
-
-    # Make sure the student did not submit a malicious query or malformed query.
-    if not check_valid_query(sql, "select"):
-      output["deductions"].append(QueryError.BAD_QUERY)
-    sql = find_valid_sql(sql, "select")
-    if sql is None:
-      return test["points"]
-    '''
-
     # Run the test query and the student's query.
     try:
-      '''
-      if len(view_sql.strip()) > 0:
-        self.db.execute_sql(view_sql)
-      '''
       expected = self.db.execute_sql(test["query"],
                                      test.get("setup"),
                                      test.get("teardown"))

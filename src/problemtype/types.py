@@ -1,3 +1,4 @@
+import datetime
 import difflib
 
 import formatter
@@ -304,6 +305,16 @@ class ProblemType(object):
       val = 0.0 if val is None else float(val)
       return round(val * PRECISION_DIVISOR) / PRECISION_DIVISOR
 
+    def sort_cols(row):
+      """
+      Function: sort_cols
+      -------------------
+      Sorts the columns in a given row.
+      """
+      # Special case for datetime columns.
+      return [col if type(col) != datetime.datetime else col.utcoffset() \
+              for col in row]
+
 
     # If the results do not have the same number of rows or the same number of,
     # columns, then they are definitely not equal.
@@ -323,8 +334,8 @@ class ProblemType(object):
 
       # If the column order doesn't matter, sort the columns.
       if not check_col_order:
-        row_converted1 = sorted(row_converted1)
-        row_converted2 = sorted(row_converted2)
+        row_converted1 = sort_cols(row_converted1)
+        row_converted2 = sort_cols(row_converted2)
 
       if row_converted1 != row_converted2:
         return False

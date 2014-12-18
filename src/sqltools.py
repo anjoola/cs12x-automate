@@ -99,7 +99,15 @@ KEYWORDS_IGNORE = [
 # keyword: [before]
 KEYWORDS_IGNORE_PREV = {
   "DO": ["WHILE"],
-  "SELECT": ["DECLARE", "IF", "INSERT", "CREATE VIEW", "CREATE OR REPLACE VIEW"],
+  "SELECT": [
+    "CREATE TABLE",
+    "CREATE TEMPORARY TABLE",
+    "DECLARE",
+    "IF",
+    "INSERT",
+    "CREATE VIEW",
+    "CREATE OR REPLACE VIEW"
+  ],
   "SET": ["UPDATE"]
 }
 
