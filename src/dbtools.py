@@ -394,10 +394,10 @@ class DBTools:
     returns: A Result object containing the result.
     """
     # Run the query setup.
-    result = Result()
     if setup is not None:
       self.run_query(setup)
 
+    result = Result()
     try:
       result = self.run_query(sql, cached)
 
@@ -433,24 +433,25 @@ class DBTools:
     ]
 
 
-  def get_results(self):
+  def get_results(self, iterator):
     """
     Function: results
     -----------------
     Get the results of a query.
     """
+    returned_result = Result()
     result = Result()
 
     # Get the query results and schema.
-    rows = [row for row in self.cursor]
-    if len(rows) > 0:
-      result.results = rows
-      result.schema = self.get_schema()
-      result.col_names = self.get_column_names()
-      result.col_types = self.get_column_types()
-
-      # Pretty-printed output.
-      result.output = prettyprint(result.results, self.get_column_names())
+    for item in iterator:
+      if item.with_rows:
+        result.results = item.fetchall()
+        result.schema = self.get_schema()
+        result.col_names = self.get_column_names()
+        result.col_types = self.get_column_types()
+        result.output = prettyprint(result.results, self.get_column_names())
+        # Get the most complete result (assumed to be the largest result).
+        returned_result = returned_result.compare(result)
 
     return result
 
@@ -477,7 +478,7 @@ class DBTools:
     result = Result()
     sql = sql.rstrip().rstrip(";")
     if len(sql) == 0:
-      return
+      return None
 
     query_results = Cache.get(sql)
 
@@ -485,22 +486,15 @@ class DBTools:
     # be cached. Run the query.
     if not query_results or not cached:
       try:
-        self.cursor.execute(sql)
+        query_results = self.get_results(self.cursor.execute(sql, multi=True))
 
-      # If the query times out.
       except mysql.connector.errors.OperationalError:
         raise TimeoutError
 
-      # If something is wrong with their query.
-      except mysql.connector.errors.ProgrammingError as e:
-        raise DatabaseError(e)
-
-      # If the query can't be run as a single query, attempt to do it with a
-      # multi-line query.
+      # Other database errors.
       except mysql.connector.errors.Error as e:
         raise DatabaseError(e)
 
-      query_results = self.get_results()
       # Store the results in the cache to be used later.
       if cached:
         Cache.put(sql, query_results)

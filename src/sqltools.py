@@ -116,35 +116,53 @@ ALL_KEYWORDS = KEYWORDS_START + KEYWORDS_END + KEYWORDS_IGNORE
 # Possible things to drop.
 DROP_KEYWORDS = ["FUNCTION", "PROCEDURE", "TABLE", "TRIGGER", "VIEW"]
 
-def fix_drop_statement(sql):
-  """
-  Function: fix_drop_statement
-  ----------------------------
-  Fixes DROP * statements, since they won't work in the autograder. Replaces
-  them by DROP * IF EXISTS statements.
-  """
-  for drop in DROP_KEYWORDS:
-    # Fix if they did not use IF EXISTS.
-    if "DROP " + drop in sql and "DROP " + drop + " IF EXISTS" not in sql:
-      sql = sql.replace("DROP " + sql, "DROP " + sql + " IF EXISTS")
-    elif "drop " + drop.lower() in sql and \
-         "drop " + drop.lower() + " if exists" not in sql:
-      sql = sql.replace("drop " + drop.lower(),
-                        "drop " + drop.lower() + " if exists")
-  return sql
-
-
-def fix_sql(sql):
+def fix_sql(in_sql):
   """
   Function: fix_sql
   -----------------
   Applies various fixes to a SQL statement, including:
     - Fix DROP statements so they all have IF EXISTS.
+    - Remove SET statements (they are disallowed).
   """
-  return fix_drop_statement(sql)
+
+  def fix_drop_statement(sql):
+    """
+    Function: fix_drop_statement
+    ----------------------------
+    Fixes DROP * statements, since they won't work in the autograder. Replaces
+    them by DROP * IF EXISTS statements.
+    """
+    for drop in DROP_KEYWORDS:
+      # Fix if they did not use IF EXISTS.
+      if "DROP " + drop in sql and "DROP " + drop + " IF EXISTS" not in sql:
+        sql = sql.replace("DROP " + drop, "DROP " + drop + " IF EXISTS")
+      elif "drop " + drop.lower() in sql and \
+           "drop " + drop.lower() + " if exists" not in sql:
+        sql = sql.replace("drop " + drop.lower(),
+                          "drop " + drop.lower() + " if exists")
+    return sql
 
 
+  def remove_set_statement(sql):
+    """
+    Function: remove_set_statement
+    ------------------------------
+    Removes any SET statements.
+    """
+    if sql.strip().upper().startswith("SET"):
+      return ""
+    return sql
+
+
+  return fix_drop_statement(remove_set_statement(in_sql))
+
+# TODO
+import sqlparse
 def parse_sql(in_sql):
+  return filter(lambda sql: len(sql) > 0,
+                [fix_sql(sql) for sql in sqlparse.split(in_sql)])
+
+def parse_sql2(in_sql):
   """
   Function: parse_sql
   -------------------

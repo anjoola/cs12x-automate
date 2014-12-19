@@ -191,6 +191,8 @@ class Result:
 
     returns: The larger of self and other.
     """
+    if other is None:
+      return self
     return self if len(self.results) > len(other.results) else other
 
 

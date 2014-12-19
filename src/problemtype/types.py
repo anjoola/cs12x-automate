@@ -312,8 +312,8 @@ class ProblemType(object):
       Sorts the columns in a given row.
       """
       # Special case for datetime columns.
-      return [col if type(col) != datetime.datetime else col.utcoffset() \
-              for col in row]
+      return sorted([col if type(col) != datetime.datetime else col.utcoffset()\
+             for col in row])
 
 
     # If the results do not have the same number of rows or the same number of,
@@ -322,13 +322,14 @@ class ProblemType(object):
        len(res1.schema) != len(res2.schema):
       return False
 
-    # Sort the rows if the row order does not matter.
-    lst1 = sorted(res1.results) if not check_row_order else res1.results
-    lst2 = sorted(res2.results) if not check_row_order else res2.results
+    lst1 = res1.results
+    lst2 = res2.results
+    (newlst1, newlst2) = ([], [])
 
     for row1, row2 in zip(lst1, lst2):
       (row_converted1, row_converted2) = ([], [])
       for i, (col1, col2) in enumerate(zip(row1, row2)):
+        # Rounds numeric values for better comparison.
         row_converted1.append(roundn(col1, res1.col_types[i]))
         row_converted2.append(roundn(col2, res2.col_types[i]))
 
@@ -337,9 +338,18 @@ class ProblemType(object):
         row_converted1 = sort_cols(row_converted1)
         row_converted2 = sort_cols(row_converted2)
 
-      if row_converted1 != row_converted2:
+      # If the row order does matter, no need to sort the rows and can just
+      # compare the columns.
+      if check_row_order and row_converted1 != row_converted2:
         return False
-    return True
+      newlst1.append(row_converted1)
+      newlst2.append(row_converted2)
+
+    # Sort the rows if the row order does not matter.
+    newlst1 = sorted(newlst1) if not check_row_order else newlst1
+    newlst2 = sorted(newlst2) if not check_row_order else newlst2
+
+    return newlst1 == newlst2
 
 
   def get_diffs(self, lst1, lst2):

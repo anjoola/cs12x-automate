@@ -1,4 +1,9 @@
-from errors import DatabaseError, QueryError
+from errors import (
+  add,
+  DatabaseError,
+  ParseError,
+  QueryError
+)
 from types import ProblemType
 
 class View(ProblemType):
@@ -34,11 +39,15 @@ class View(ProblemType):
     sql = self.response.sql
 
     start_idx = sql.upper().find("CREATE VIEW ") + len("CREATE VIEW ")
-    if start_idx == -1:
+    if start_idx - len("CREATE VIEW ") == -1:
       start_idx = sql.upper().find("CREATE OR REPLACE VIEW ") + \
                   len("CREATE OR REPLACE VIEW ")
 
     end_idx = sql.upper().find(" AS")
+
+    # Could not get their view name. Most likely a malformed CREATE VIEW.
+    if start_idx - len("CREATE OR REPLACE VIEW ") == -1 or end_idx == -1:
+      raise ParseError
     return sql[start_idx:end_idx]
 
 
@@ -49,15 +58,21 @@ class View(ProblemType):
     # Run the student's create view statement and select from that view to see
     # what is in the view.
     viewname = test["view"]
+    self.db.execute_sql_list(self.sql_list)
     try:
-      self.db.execute_sql_list(self.sql_list)
       actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
-    except DatabaseError as e:
-      # If an exception occurs, they must have not named the view correctly.
-      # Attempt to interpret the view name.
-      viewname = self.get_view_name()
+    except DatabaseError:
       try:
+        # If an exception occurs, they must have not named the view correctly.
+        # Attempt to interpret the view name.
+        viewname = self.get_view_name()
         actual = self.db.execute_sql('SELECT * FROM %s' % viewname)
+
+      # Could not interpret view name.
+      except ParseError as e:
+        add(self.output["errors"], e)
+        return test['points']
+
       # Give up, some other error.
       except DatabaseError as e:
         raise e
@@ -81,7 +96,7 @@ class View(ProblemType):
       output['actual'] = actual.output
       return test['points']
 
-    # Otherwise, their CREATE VIEW statement is corret.
+    # Otherwise, their CREATE VIEW statement is correct.
     output['success'] = True
     return 0
 
