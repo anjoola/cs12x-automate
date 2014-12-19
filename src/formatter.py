@@ -103,7 +103,7 @@ def format_output(output, specs, studentlst=None):
   students = generate_student_list(specs) if studentlst is None else studentlst
 
   # List students out in alphabetical order.
-  for student in sorted(students):
+  for student in sorted(students, key=lambda name: name.lower()):
     o.write("<a class='student-link' onclick='changeStudent(\"" + student +
             "\")' id=\"" + student + "\">" + student + "</a><br>\n")
   o.write("</div></div>\n")

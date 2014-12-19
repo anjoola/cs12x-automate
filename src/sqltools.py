@@ -8,6 +8,8 @@ import itertools
 import re
 from cStringIO import StringIO
 
+import sqlparse
+
 from errors import ParseError
 
 # Used to find delimiters in the file.
@@ -162,12 +164,18 @@ def fix_sql(in_sql):
 
   return fix_drop_statement(remove_disallowed_statements(in_sql))
 
-# TODO
-import sqlparse
+
 def parse_sql(in_sql):
+  """
+  Function: parse_sql
+  -------------------
+  Parses given SQL into separate SQL statements.
+  """
   return filter(lambda sql: len(sql) > 0,
                 [fix_sql(sql) for sql in sqlparse.split(in_sql)])
 
+
+# TODO keep for now, may want to remove later
 def parse_sql2(in_sql):
   """
   Function: parse_sql
@@ -331,12 +339,13 @@ def preprocess_sql(sql_file):
   """
   Function: preprocess_sql
   ------------------------
-  Preprocess the SQL in order to handle the DELIMITER statements.
+  Preprocess the SQL in order to handle DELIMITER statements.
 
   sql_file: The SQL file to preprocess.
   returns: The newly-processed SQL string.
   """
   lines = StringIO()
+  prev_line = ""
   delimiter = ';'
   for line in sql_file:
     # See if there is a new delimiter defined. Possible that they have multiple
@@ -352,7 +361,18 @@ def preprocess_sql(sql_file):
     # Replace delimiters. # TODO want to ignore inside string
     if delimiter in line.strip():
       line = line.replace(delimiter, ";")
+
+    # Handle if replacing DELIMITER statements causes there two be two
+    # semicolons next to each other. Will have to remove one of them.
+    if line.replace(" ", "").replace("\t", "").endswith(";;"):
+      line = line.strip()[0:-1]
+    # If the previous line ended in a semicolon and this line also contains an
+    # extra semicolon.
+    if prev_line.strip().endswith(";") and line.strip().startswith(";"):
+      line = line.strip()[1:]
+
     lines.write(line)
+    prev_line = line
 
   return lines.getvalue()
 

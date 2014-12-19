@@ -36,8 +36,12 @@ class Function(ProblemType):
     elif result_type == "float":
       factor = 10.0 ** PRECISION
       expected = int(float(expected) * factor) / factor
-      actual = int((float(actual) if len(actual) > 0 else 0.0) * factor)
-      actual = actual / factor
+      try:
+        actual = int((float(actual) if len(actual) > 0 else 0.0) * factor)
+        actual = actual / factor
+      except ValueError:
+        # Could not convert. Keep it as is.
+        pass
 
     return expected == actual
 
