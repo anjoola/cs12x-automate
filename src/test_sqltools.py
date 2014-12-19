@@ -5,51 +5,6 @@ import unittest
 
 class TestSQLTools(unittest.TestCase):
 
-  def test_is_valid(self):
-
-    self.assertEqual(
-      sqltools.is_valid(
-      '''
-      CREATE FUNCTION avg_submit_interval(input_sub_id INTEGER) RETURNS DOUBLE
-BEGIN
-    -- Average submit interval (in seconds), initially set to 0.
-    DECLARE avg_interval INTEGER DEFAULT 0;
-    
-    -- Find the latest sub_date and earliest sub_date for a given
-    -- submission, and count how many submissions were made.
-    -- The sub_dates are stored as Unix timestamps.
-    DECLARE earliest_sub_date INTEGER;
-    DECLARE latest_sub_date INTEGER;
-    DECLARE num_submissions INTEGER;
-    
-    -- Take the Unix timestamp *after* finding the relevant sub_dates.
-    -- This reduces the number of operations needed.
-    SELECT UNIX_TIMESTAMP(MIN(sub_date)),
-           UNIX_TIMESTAMP(MAX(sub_date)),
-           COUNT(*)
-    INTO earliest_sub_date, latest_sub_date, num_submissions
-    FROM fileset
-    WHERE sub_id = input_sub_id;
-    
-
-    -- Return NULL when < 2 submissions
-    IF num_submissions < 2 THEN
-        RETURN NULL;
-    END IF;
-
-    -- Otherwise, take the difference between the latest and earliest
-    -- sub_dates to get the total time interval in seconds. Then divide
-    -- by num_submissions - 1 (number of intervals).
-    RETURN (latest_sub_date-earliest_sub_date)/(num_submissions-1);
-
-END !
-      '''),
-      True
-    )
-
-    
-
-
   def test_preprocess_sql(self):
 
     self.assertEqual(

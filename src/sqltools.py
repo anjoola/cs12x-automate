@@ -11,7 +11,7 @@ from cStringIO import StringIO
 from errors import ParseError
 
 # Used to find delimiters in the file.
-DELIMITER_RE = re.compile(r"delimiter\s*([^\s]+)", re.I)
+DELIMITER_RE = re.compile(r"delimiter\s+([^\s]+)", re.I)
 
 # Contains a dictionary with the key as the start keyword and the value as the
 # corresponding end keyword.
@@ -113,6 +113,9 @@ KEYWORDS_IGNORE_PREV = {
 
 ALL_KEYWORDS = KEYWORDS_START + KEYWORDS_END + KEYWORDS_IGNORE
 
+# Disallowed statements.
+DISALLOWED_STATEMENTS = ["SET", "USE"]
+
 # Possible things to drop.
 DROP_KEYWORDS = ["FUNCTION", "PROCEDURE", "TABLE", "TRIGGER", "VIEW"]
 
@@ -134,6 +137,8 @@ def fix_sql(in_sql):
     """
     for drop in DROP_KEYWORDS:
       # Fix if they did not use IF EXISTS.
+      if "IF EXISTS" in sql.upper():
+        return sql
       if "DROP " + drop in sql and "DROP " + drop + " IF EXISTS" not in sql:
         sql = sql.replace("DROP " + drop, "DROP " + drop + " IF EXISTS")
       elif "drop " + drop.lower() in sql and \
@@ -143,18 +148,19 @@ def fix_sql(in_sql):
     return sql
 
 
-  def remove_set_statement(sql):
+  def remove_disallowed_statements(sql):
     """
-    Function: remove_set_statement
-    ------------------------------
-    Removes any SET statements.
+    Function: remove_disallowed_statements
+    --------------------------------------
+    Removes any statements that should not be run.
     """
-    if sql.strip().upper().startswith("SET"):
-      return ""
+    for statement in DISALLOWED_STATEMENTS:
+      if sql.strip().upper().startswith(statement):
+        return ""
     return sql
 
 
-  return fix_drop_statement(remove_set_statement(in_sql))
+  return fix_drop_statement(remove_disallowed_statements(in_sql))
 
 # TODO
 import sqlparse
@@ -343,8 +349,8 @@ def preprocess_sql(sql_file):
              line[line.index(match.group(0)) + len(match.group(0)):]
       match = re.search(DELIMITER_RE, line)
 
-    # If we've reached the end of a statement.
-    if line.strip().endswith(delimiter):
+    # Replace delimiters. # TODO want to ignore inside string
+    if delimiter in line.strip():
       line = line.replace(delimiter, ";")
     lines.write(line)
 

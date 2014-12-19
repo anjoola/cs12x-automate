@@ -251,7 +251,8 @@ def format_student(student, output, specs, hide_solutions):
 
       # If the student did not submit an answer for this problem.
       if problem.get("notexist"):
-        o.write("<i>Did not submit a response for this question!</i>")
+        o.write("<i>Did not submit a response for this question! Check the " +
+                "raw file to make sure!</i>")
         o.write("</div></div>")
         continue
 
