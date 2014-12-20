@@ -25,7 +25,12 @@ from iotools import (
   prettyprint
 )
 from models import DatabaseState, Result
-from sqltools import preprocess_sql, parse_sql
+from sqltools import (
+  get_proc_name_and_args,
+  is_call_statement,
+  preprocess_sql,
+  parse_sql
+)
 from terminator import Terminator
 
 # List of field types that translate to a float in Python (i.e. all numeric
@@ -466,6 +471,17 @@ class DBTools:
     return self.cursor.description
 
 
+  def run_call_proc(self, sql):
+    """
+    Function: run_call_proc
+    -----------------------
+    Runs a CALL statement.
+    """
+    (procname, args) = get_proc_name_and_args(sql)
+    self.cursor.callproc(procname, args)
+    self.db.commit()
+
+
   def run_query(self, sql, cached=False):
     """
     Function: run_query
@@ -479,6 +495,11 @@ class DBTools:
     sql = sql.rstrip().rstrip(";")
     if len(sql) == 0:
       return None
+
+    # If this is a CALL statement, use that function instead.
+    if is_call_statement(sql):
+      self.run_call_proc(sql)
+      return result
 
     query_results = Cache.get(sql)
 

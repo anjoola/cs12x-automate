@@ -14,7 +14,9 @@ class Manual(ProblemType):
 
     if test.get("run-query"):
       try:
-        self.db.execute_sql_list(self.sql_list)
+        self.db.execute_sql_list(self.sql_list,
+                                 setup=test.get("setup"),
+                                 teardown=test.get("teardown"))
       except DatabaseError:
         raise
 

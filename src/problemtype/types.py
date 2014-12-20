@@ -1,5 +1,6 @@
 import datetime
 import difflib
+import time
 
 import formatter
 from CONFIG import PRECISION
@@ -115,7 +116,7 @@ class ProblemType(object):
     # multiple statements. If there is a problem parsing their SQL statement,
     # then does not run any tests.
     try:
-      self.sql_list = parse_sql(self.response.sql)
+      self.sql_list = parse_sql(self.response.sql, is_student=True)
     except ParseError as e:
       add(self.output["errors"], e)
       return 0
@@ -312,8 +313,10 @@ class ProblemType(object):
       Sorts the columns in a given row.
       """
       # Special case for datetime columns.
-      return sorted([col if type(col) != datetime.datetime else col.utcoffset()\
-             for col in row])
+      return sorted([
+        time.mktime(col.timetuple()) \
+          if type(col) == datetime.datetime or type(col) == datetime.date \
+          else col for col in row])
 
 
     # If the results do not have the same number of rows or the same number of,

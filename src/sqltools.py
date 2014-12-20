@@ -121,13 +121,49 @@ DISALLOWED_STATEMENTS = ["SET", "USE"]
 # Possible things to drop.
 DROP_KEYWORDS = ["FUNCTION", "PROCEDURE", "TABLE", "TRIGGER", "VIEW"]
 
-def fix_sql(in_sql):
+def get_proc_name_and_args(in_sql):
+  """
+  Function: get_proc_name_and_args
+  --------------------------------
+  Parses a CALL statement and gets the name of the procedure called and the
+  arguments. Returns a tuple of the form (procedure name, arguments), where
+  arguments is a tuple containing the arguments.
+  """
+  sql = in_sql.strip()
+  # Invalid CALL statement.
+  if not("CALL" in sql.upper() and "(" in sql.upper() and ")" in sql.upper()):
+    raise ParseError
+
+  procname = sql[sql.upper().index("CALL") + len("CALL"):sql.index("(")].strip()
+  args_list = sql[sql.index("(") + 1:sql.index(")")].split(",")
+  args = []
+
+  # Go through the arguments. Need to make sure they are of the correct type.
+  for arg in args_list:
+    arg = arg.strip()
+    # If the argument is a numeric.
+    if len(arg.strip("'").strip("\"")) == len(arg):
+      arg = float(arg)
+
+    # Otherwise, argument is a string.
+    else:
+      arg = str(arg.strip("'").strip("\"").strip())
+    # Otherwise, argument is a string.
+    args.append(arg)
+
+  return (str(procname), tuple(args))
+
+
+def fix_sql(in_sql, is_student):
   """
   Function: fix_sql
   -----------------
   Applies various fixes to a SQL statement, including:
     - Fix DROP statements so they all have IF EXISTS.
     - Remove SET statements (they are disallowed).
+
+  in_sql: SQL to fix.
+  is_student: Whether or not this is a student's query.
   """
 
   def fix_drop_statement(sql):
@@ -161,18 +197,33 @@ def fix_sql(in_sql):
         return ""
     return sql
 
-
+  # Don't do any kind of fixes if this is not a student query.
+  if not is_student:
+    return in_sql
   return fix_drop_statement(remove_disallowed_statements(in_sql))
 
 
-def parse_sql(in_sql):
+def is_call_statement(sql):
+  """
+  Function: is_call_statment
+  --------------------------
+  Returns whether or not the given SQL is a CALL statement.
+  """
+  return sql.strip().upper().startswith("CALL")
+
+
+def parse_sql(in_sql, is_student=False):
   """
   Function: parse_sql
   -------------------
   Parses given SQL into separate SQL statements.
+
+  in_sql: SQL to parse.
+  is_student: Whether or not this is a student's query. If so, need to do some
+              extra processing.
   """
   return filter(lambda sql: len(sql) > 0,
-                [fix_sql(sql) for sql in sqlparse.split(in_sql)])
+                [fix_sql(sql, is_student) for sql in sqlparse.split(in_sql)])
 
 
 # TODO keep for now, may want to remove later
