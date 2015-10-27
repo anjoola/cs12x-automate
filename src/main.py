@@ -12,7 +12,8 @@ from CONFIG import (
   ASSIGNMENT_DIR,
   CONNECTION_TIMEOUT,
   MAX_TIMEOUT,
-  STUDENT_DIR
+  STUDENT_DIR,
+  VERBOSE
 )
 from errors import (
   add,
@@ -61,6 +62,9 @@ class AutomationTool:
     # The students to grade.
     self.students = None
 
+    # Which student to start with.
+    self.start_with = None
+
     # The username for the database connection.
     self.user = None
 
@@ -80,6 +84,7 @@ class AutomationTool:
                         help="Name of the assignment (cs121hw#)")
     parser.add_argument("--files", nargs="+", help="List of files to check")
     parser.add_argument("--students", nargs="+", help="Students to check")
+    parser.add_argument("--startwith", nargs="+", help="Which student to start with")
     parser.add_argument("--exclude", nargs="+", help="Students to skip")
     parser.add_argument("--after", help="Of the form YYYY-MM-DD, will only "
                                         "grade students who've submitted after "
@@ -106,11 +111,11 @@ class AutomationTool:
                         help="Whether or not to output results as a raw JSON "
                              "file")
     args = parser.parse_args()
-    (self.assignment, self.files, self.students, exclude, after,
+    (self.assignment, self.files, self.students, self.start_with, exclude, after,
      self.user, self.db, AutomationTool.purge, AutomationTool.dependency,
      AutomationTool.hide_solutions, AutomationTool.raw) = (
-        args.assignment, args.files, args.students, args.exclude, args.after,
-        args.user, args.db, args.purge, args.deps, args.hide, args.raw)
+        args.assignment, args.files, args.students, args.startwith, args.exclude,
+        args.after, args.user, args.db, args.purge, args.deps, args.hide, args.raw)
 
     # If the assignment argument isn't specified, print usage statement.
     if self.assignment is None:
@@ -134,6 +139,14 @@ class AutomationTool:
     # If nothing specified for the students, grade all the students.
     if self.students is None or self.students[0] == "*":
       self.students = iotools.get_students(self.assignment, after)
+
+    if self.start_with:
+      self.start_with = self.start_with[0]
+      try:
+        start_index = self.students.index(self.start_with)
+        self.students = self.students[start_index:]
+      except ValueError:
+        err("Couldn't find %s in students." % self.start_with, True)
 
     # Take out students to skip.
     if exclude:
@@ -279,10 +292,19 @@ class AutomationTool:
     if self.specs.get("setup"):
       for item in self.specs.get("setup"):
         if item["type"] == "dependency" and AutomationTool.dependency:
+          if VERBOSE:
+            print("Sourcing dependency file %s" % item["file"])
+
           self.db.source_file(self.assignment, item["file"])
         elif item["type"] == "import" and AutomationTool.dependency:
+          if VERBOSE:
+            print("Importing file %s" % item["file"])
+
           self.db.import_file(self.assignment, item["file"])
-        elif item["type"] == "queries":
+        elif item["type"] == "queries": 
+          if VERBOSE:
+            print("Running initial queries:\n * %s" % '\n * '.join(item["queries"]))
+
           for q in item["queries"]: self.db.execute_sql(q)
 
     # Initialize the grading tool.

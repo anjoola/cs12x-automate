@@ -11,13 +11,7 @@ import mysql.connector
 import mysql.connector.errors
 
 from cache import Cache
-from CONFIG import (
-  ASSIGNMENT_DIR,
-  CONNECTION_TIMEOUT,
-  HOST,
-  LOGIN,
-  PORT
-)
+from CONFIG import *
 from errors import DatabaseError, TimeoutError
 from iotools import (
   err,
@@ -262,16 +256,40 @@ class DBTools:
 
     try:
       # Drop all functions procedures, and triggers first.
+      # if VERBOSE:
+      #   print("-" * 78)
+      #   print("Resetting state.")
+          
       for trig in new.triggers:
-        self.execute_sql("DROP TRIGGER IF EXISTS %s" % trig)
+        sql = "DROP TRIGGER IF EXISTS %s" % trig
+        # if VERBOSE:
+        #   print(sql)
+          
+        self.execute_sql(sql)
+        
       for proc in new.procedures:
-        self.execute_sql("DROP PROCEDURE IF EXISTS %s" % proc)
+        sql = "DROP PROCEDURE IF EXISTS %s" % proc
+        # if VERBOSE:
+        #   print(sql)
+          
+        self.execute_sql(sql)
+        
       for func in new.functions:
-        self.execute_sql("DROP FUNCTION IF EXISTS %s" % func)
+        sql = "DROP FUNCTION IF EXISTS %s" % func
+        
+        # if VERBOSE:
+        #   print(sql)
+          
+        self.execute_sql(sql)
 
       # Drop views.
       for view in new.views:
-        self.execute_sql("DROP VIEW IF EXISTS %s" % view)
+        sql = "DROP VIEW IF EXISTS %s" % view
+
+        # if VERBOSE:
+        #   print(sql)
+        
+        self.execute_sql(sql)
 
       # Drop tables. First must drop foreign keys on the tables in order to be
       # able to drop the tables without any errors.
@@ -370,11 +388,19 @@ class DBTools:
       self.run_multi(setup)
 
     try:
+      # if VERBOSE:
+      #   print("-" * 78)
+      #   print("Running SQL statement:\n%s\n(use cached result = %s)" % (sql, str(cached)))
+
       result = self.run_multi(sql, cached)
 
     # Run the query teardown.
     finally:
       if teardown is not None:
+        # if VERBOSE:
+        #   print("-" * 78)
+        #   print("Running teardown:\n%s" % teardown)
+
         self.run_multi(teardown)
     return result
 
@@ -461,8 +487,8 @@ class DBTools:
           self.cursor.execute(sql)
 
         # If the query times out.
-        except mysql.connector.errors.OperationalError:
-          raise TimeoutError
+        except mysql.connector.errors.OperationalError as e:
+          raise TimeoutError(e)
 
         # If something is wrong with their query.
         except mysql.connector.errors.ProgrammingError as e:
@@ -508,14 +534,14 @@ class DBTools:
                       self.user + " -p" + LOGIN[self.user] +
                       " --delete --local " + self.database + " " + filename)
     except OSError:
-      err("Could not import file %s! The 'mysqlimport' library does not exist!",
+      err("Could not import file %s! The 'mysqlimport' utility does not exist!" % filename,
           True)
 
 
   def source_file(self, assignment, f):
     """
-    Function: source_files
-    ----------------------
+    Function: source_file
+    ---------------------
     Sources a file into the database. Since the "source" command is for the
     MySQL command-line interface, we have to parse the source file and run
     each command one at a time.
@@ -536,7 +562,10 @@ class DBTools:
         continue
       # Otherwise execute each line. Output must be consumed for the query
       # to actually be executed.
-      for _ in self.cursor.execute(sql.rstrip(), multi=True):
-        pass
+      sql = sql.rstrip()
+      # if VERBOSE:
+      #   print("-" * 78)
+      #   print("source_file(%s):  Running SQL command:\n%s" % (fname, sql))
+      for _ in self.cursor.execute(sql, multi=True): pass
       self.commit()
     f.close()
