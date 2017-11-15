@@ -42,6 +42,7 @@ def err(msg, fatal=False):
   """
   if VERBOSE or ERROR:
     print "(ERROR)", msg
+    sys.stdout.flush()
   if fatal:
     sys.exit(1)
 
@@ -54,6 +55,7 @@ def log(string):
   """
   if VERBOSE:
     print string,
+    sys.stdout.flush()
 
 # ---------------------------------- Other ---------------------------------- #
 
