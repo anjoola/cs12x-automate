@@ -6,7 +6,12 @@ class Create(ProblemType):
   """
   Class: Create
   -------------
-  Tests a create table statement. Simply executes the CREATE TABLE statements
+  Tests one or more create table statements.
+
+   - If "run-query" is true then the statements are run to check for correct
+     syntax.
+   - If "source-file" is set to a filename then the specified SQL file is sourced
+     after the commands are run, to verify that data can be loaded properly.
   to make sure they have the correct syntax.
   """
 
@@ -17,6 +22,15 @@ class Create(ProblemType):
       except DatabaseError:
         output["success"] = SuccessType.FAILURE
         raise
+
+      f = test.get("source-file")
+      if f is not None:
+        try:
+          print("sourcing %s" % f),
+          self.db.source_file(self.assignment, f)
+        except DatabaseError:
+          output["success"] = SuccessType.FAILURE
+          raise
 
     output["success"] = SuccessType.UNDETERMINED
     return 0
@@ -29,3 +43,6 @@ class Create(ProblemType):
               "more information.</i>")
     else:
       o.write(" There were no syntax errors.")
+      if specs.get("run-query") and specs.get("source-file") is not None:
+        o.write(" Successfully imported %s." % specs["source-file"])
+

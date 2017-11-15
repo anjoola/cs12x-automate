@@ -10,13 +10,14 @@ class Procedure(ProblemType):
   """
 
   def grade_test(self, test, output):
+    # Setup queries.
+    if test.get("setup"):
+      self.db.execute_sql(test["setup"])
+
     # Get the table before and after the stored procedure is called.
     table_sql = "SELECT * FROM " + test["table"]
     before = self.db.execute_sql(table_sql)
 
-    # Setup queries.
-    if test.get("setup"):
-      self.db.execute_sql(test["setup"])
     if test.get("run-query"):
       # TODO add back
       #try:
@@ -27,6 +28,7 @@ class Procedure(ProblemType):
       #  output["deductions"].append(QueryError.MALFORMED_CREATE_STATEMENT)
       #  return test["points"]
       self.db.execute_sql(self.response.sql)
+
     after = self.db.execute_sql(table_sql,
                                 setup=test["query"],
                                 teardown=test.get("teardown"))

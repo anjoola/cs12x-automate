@@ -33,7 +33,10 @@ class ProblemType(object):
   a static class.
   """
 
-  def __init__(self, db=None, specs=None, response=None, output=None):
+  def __init__(self, assignment=None, db=None, specs=None, response=None, output=None):
+    # Which assignment this is for.
+    self.assignment = assignment
+
     # The database connection.
     self.db = db
 
@@ -150,6 +153,7 @@ class ProblemType(object):
       finally:
         try:
           if test.get("teardown"):
+            # print("RUNNING TEARDOWN FROM PROBLEMTYPES")
             self.db.execute_sql(test["teardown"])
         except DatabaseError as e:
           lost_points += test["points"]
@@ -309,8 +313,14 @@ class ProblemType(object):
 
       # If the column order doesn't matter, sort the columns.
       if not check_col_order:
-        row_converted1 = sorted(row_converted1)
-        row_converted2 = sorted(row_converted2)
+        try:
+          row_converted1 = sorted(row_converted1)
+          row_converted2 = sorted(row_converted2)
+        except TypeError as e:
+          print("Couldn't sort columns.")
+          print("row_converted1 = %s" % str(row_converted1))
+          print("row_converted2 = %s" % str(row_converted2))
+          return False
 
       if row_converted1 != row_converted2:
         return False

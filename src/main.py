@@ -172,9 +172,12 @@ class AutomationTool:
     if len(self.students) == 0:
       err("No students to grade!")
 
+    i_student = 0
+    n_students = len(self.students)
     for student in self.students:
+      i_student += 1
       try:
-        self.grade_student(student)
+        self.grade_student(student, i_student, n_students)
         # If we've managed to grade this student, remove them from the students
         # that we could not grade.
         if student in failed_grading:
@@ -211,7 +214,7 @@ class AutomationTool:
       print ", ".join(possibly_failed_grading)
 
 
-  def grade_student(self, student):
+  def grade_student(self, student, i_student, n_students):
     """
     Function: grade_student
     -----------------------
@@ -219,7 +222,7 @@ class AutomationTool:
 
     student: The student's name.
     """
-    log("\n\n" + student + ":")
+    log("\n\n%s (%d/%d):" % (student, i_student, n_students))
 
     # Check to see that this student exists. If not, skip this student.
     path = ASSIGNMENT_DIR + self.assignment + "/" + STUDENT_DIR + student + \
@@ -309,7 +312,7 @@ class AutomationTool:
 
     # Initialize the grading tool.
     self.db.get_db_connection(CONNECTION_TIMEOUT)
-    self.grader = Grader(self.specs, self.db)
+    self.grader = Grader(self.assignment, self.specs, self.db)
 
 
   def teardown(self):

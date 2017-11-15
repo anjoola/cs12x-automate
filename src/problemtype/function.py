@@ -28,11 +28,31 @@ class Function(ProblemType):
     if result_type not in Function.RESULT_TYPES:
       result_type = "string"
 
+    # Handle "None" separately, since it confuses the type conversion code
+    if actual == "None":
+        return expected == "None"
+
     if result_type == "boolean":
       actual = "true" if actual == "1" else "false"
     elif result_type == "int":
       expected = int(expected)
-      actual = int(actual) if len(actual) > 0 else 0
+
+      # If the student's value is NUMERIC or FLOAT/DOUBLE instead of
+      # INTEGER, clean up the brain damage here.
+      if type(actual) == str and '.' in actual:
+          while actual[-1] == '0':
+              actual = actual[:-1]
+
+          if actual[-1] == '.':
+              actual = actual[:-1]
+
+      try:
+          actual = int(actual) if len(actual) > 0 else 0
+      except ValueError:
+          print("ERROR:  Couldn't convert value \"%s\" to int" % str(actual))
+          print("type = %s" % str(type(actual)))
+          actual = 0
+
     elif result_type == "float":
       factor = 10.0 ** PRECISION
       expected = int(float(expected) * factor) / factor

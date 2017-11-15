@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from errors import (
   add,
   DatabaseError,
@@ -5,6 +7,10 @@ from errors import (
 )
 from iotools import log
 from problemtype import PROBLEM_TYPES
+
+from CONFIG import VERBOSE
+
+VERBOSE_LEVEL = 0
 
 class Grader:
   """
@@ -14,7 +20,10 @@ class Grader:
   of tests on that problem.
   """
 
-  def __init__(self, specs, db):
+  def __init__(self, assignment, specs, db):
+    # Which assignment this is for
+    self.assignment = assignment
+
     # The specifications for this assignment.
     self.specs = specs
 
@@ -65,6 +74,7 @@ class Grader:
       if problem.get("teardown"):
         for q in problem["teardown"]:
           self.db.execute_sql(q)
+        self.db.commit()
 
     except DatabaseError:
       raise
@@ -87,14 +97,49 @@ class Grader:
     for f in self.specs["files"]:
       # Skip this file if it doesn't exist.
       if f not in response.keys():
+        if VERBOSE_LEVEL > 0:
+          print("No file %s in student submission; skipping." % f)
+
         continue
 
       log("\n  - " + f + ": ")
       (responses, graded_file) = (response[f], output["files"][f])
       got_points = 0
 
+      if VERBOSE_LEVEL > 0:
+        print("Submission %s contains responses for problems:  %s" %
+              (f, ",".join([num for num in responses])))
+
+      # Do we need to do any setup for this file?
+      filespec = self.specs[f]
+      if isinstance(filespec, dict):
+        if "tests" not in filespec:
+          err("Spec for file %s has no \"tests\"!" % f, true)
+        problems = filespec["tests"]
+
+        # If there is any setup for this file, do it.
+        if "setup" in filespec:
+          for item in filespec["setup"]:
+            if item["type"] == "source":
+              if VERBOSE:
+                print("Sourcing file %s" % item["file"], end='')
+
+              self.db.source_file(self.assignment, item["file"])
+
+            elif item["type"] == "queries":
+              if VERBOSE:
+                print("Running initial queries:\n * %s" % '\n * '.join(item["queries"]))
+
+              for q in item["queries"]: self.db.execute_sql(q)
+
+            else:
+              err("Unrecognized setup item type \"%s\" for file %s" % (item["type"], f), true)
+
+      else:
+        # The problems are just in a list for the file.
+        problems = filespec
+
       # Grade each problem in the assignment.
-      problems = self.specs[f]
       for problem in problems:
         # Add this graded problem to the list in the graded file.
         num = problem["number"]
@@ -115,7 +160,7 @@ class Grader:
           # Call the grade function on the specific class corresponding to this
           # problem type.
           grade_fn = PROBLEM_TYPES[problem["type"]]
-          grade_fn = grade_fn(self.db, problem, responses[num], graded_problem)
+          grade_fn = grade_fn(self.assignment, self.db, problem, responses[num], graded_problem)
           grade_fn.preprocess()
 
           # Run dependent query.

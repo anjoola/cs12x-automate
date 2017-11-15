@@ -367,6 +367,15 @@ class DBTools:
 
   # ----------------------------- Query Utilities ---------------------------- #
 
+  def clear_cursor(self):
+    try:
+      self.cursor.fetchall()
+    except Exception as e:
+      if str(e) == 'No result set to fetch from.':
+          pass
+      else:
+          raise
+
   def execute_sql(self, sql, setup=None, teardown=None, cached=False):
     """
     Function: execute_sql
@@ -472,6 +481,14 @@ class DBTools:
     [row for row in self.cursor]
     sql_list = split(queries)
 
+    # Consume any additional result-sets that might have been left
+    # on the connection.
+    # try:
+    #     while self.cursor.nextset():
+    #         pass
+    # except Error:
+    #     pass
+
     result = Result()
     for sql in sql_list:
       sql = sql.rstrip().rstrip(";")
@@ -484,7 +501,15 @@ class DBTools:
       # be cached. Run the query.
       if not query_results or not cached:
         try:
+          self.clear_cursor()
           self.cursor.execute(sql)
+
+        # except DatabaseError as e:
+        #     if 'already exists' in str(e):
+        #         print("[warning: %s]" % str(e))
+        #     else:
+        #         # Reraise the exception
+        #         raise e
 
         # If the query times out.
         except mysql.connector.errors.OperationalError as e:
@@ -492,11 +517,16 @@ class DBTools:
 
         # If something is wrong with their query.
         except mysql.connector.errors.ProgrammingError as e:
-          raise DatabaseError(e)
+          if 'already exists' in str(e):
+              log("[warning: %s]" % str(e))
+          else:
+              raise DatabaseError(e)
 
         # If the query can't be run as a single query, attempt to do it with a
         # multi-line query.
         except mysql.connector.errors.Error as e:
+          print("ERROR while executing SQL:  %s" % sql)
+          print(str(e))
           raise DatabaseError(e)
 
         query_results = self.get_results()
@@ -532,7 +562,7 @@ class DBTools:
     try:
       subprocess.call("mysqlimport -h " + HOST + " -P " + PORT + " -u " +
                       self.user + " -p" + LOGIN[self.user] +
-                      " --delete --local " + self.database + " " + filename)
+                      " --delete --local " + self.database + " " + filename, shell=True)
     except OSError:
       err("Could not import file %s! The 'mysqlimport' utility does not exist!" % filename,
           True)
@@ -566,6 +596,6 @@ class DBTools:
       # if VERBOSE:
       #   print("-" * 78)
       #   print("source_file(%s):  Running SQL command:\n%s" % (fname, sql))
-      for _ in self.cursor.execute(sql, multi=True): pass
+      for _ in self.cursor.execute(sql, multi=True): self.clear_cursor()
       self.commit()
     f.close()

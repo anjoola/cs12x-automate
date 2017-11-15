@@ -50,8 +50,12 @@ def escape(text):
   Escapes text so it can be outputted as HTML.
   """
   # return cgi.escape(text.encode('ascii', 'xmlcharrefreplace'))
-  enc = text.decode('utf8').encode('utf8', 'xmlcharrefreplace')
-  return cgi.escape(enc)
+  try:
+    enc = text.decode('utf8').encode('utf8', 'xmlcharrefreplace')
+    return cgi.escape(enc)
+  except:
+    # We tried... but we couldn't deal with the encoding...
+    return text
 
 
 def generate_student_list(specs):
@@ -167,6 +171,12 @@ def format_raw_file(fname, student, assignment):
     infile = open(ASSIGNMENT_DIR + assignment + "/" + STUDENT_DIR +
                   student + "-" + assignment + "/" + fname, 'r')
     contents = infile.read()
+
+    # HTML-ize the file.
+    contents = contents.replace("&", "&amp;")
+    contents = contents.replace("<", "&lt;")
+    contents = contents.replace(">", "&gt;")
+
     out.write("<pre style='font-family: Consolas, monospace; " +
               "font-size: 12px;'>" + contents + "</pre>")
     out.close()
@@ -228,7 +238,12 @@ def format_student(student, output, specs, hide_solutions):
     # Loop through all the problems.
     for (i, problem) in enumerate(f["problems"]):
       o.write("<div class='problem'>\n")
-      problem_specs = specs[f["filename"]][i]
+
+      problem_specs = specs[f["filename"]]
+      if isinstance(problem_specs, dict):
+        problem_specs = problem_specs["tests"]
+      problem_specs = problem_specs[i]
+
       if hide_solutions:
         o.write("<h3>Problem " + problem["num"] + "</h3>\n")
         o.write("<div id=\"" + problem["num"] + "\">")
