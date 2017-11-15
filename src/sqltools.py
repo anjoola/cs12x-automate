@@ -7,11 +7,20 @@ Contains tools to help with parsing and checking SQL.
 import re
 from cStringIO import StringIO
 
+from CONFIG import VERBOSE
+
 # Used to find delimiters in the file.
 DELIMITER_RE = re.compile(r"^\s*delimiter\s*([^\s]+)\s*$", re.I)
 
 # Dictionary of keywords of the form <start keyword> : <end keyword>. If
 # <end keyword> is empty, then this kind of statement ends with a semicolon.
+#
+# IMPORTANT NOTE:
+#   If any of these keyword-specified ranges can overlap, then the one that
+#   matches earlier should be specified first!  For example, this is important
+#   to properly handle the "WITH" clause on a "SELECT" statement, or the
+#   "CREATE VIEW" statement which includes a "SELECT" statement.
+#
 KEYWORDS_DICT = {
   "ALTER TABLE": "",
   "CALL": "",
@@ -21,10 +30,16 @@ KEYWORDS_DICT = {
   "CREATE INDEX": "",
   "CREATE OR REPLACE PROCEDURE": "END",
   "CREATE PROCEDURE": "END",
-  "CREATE TABLE" : ");",
+
+  # "CREATE TABLE" : ");",
+  # Must come before SELECT so we can handle "CREATE TABLE t AS SELECT ..."
+  "CREATE TABLE" : "",
+
   "CREATE OR REPLACE TRIGGER": "END",
   "CREATE TRIGGER": "END",
   "CREATE OR REPLACE VIEW": "",
+
+  # Must come before SELECT since views are specified in terms of SELECT.
   "CREATE VIEW": "",
   "DELETE": "",
   "DO": "",
@@ -41,7 +56,10 @@ KEYWORDS_DICT = {
   "REPLACE": "",
   "ROLLBACK": "",
   "SAVEPOINT": "",
+
+  "WITH": "",   # WITH must come before SELECT
   "SELECT": "",
+
   "SET": "",
   "START TRANSACTION": "",
   "UPDATE": "",
@@ -149,10 +167,16 @@ def split(raw_sql):
     quotes = []
     comment_type = None
 
+    # if VERBOSE:
+    #   print("Searching for keyword '%s', starting at index %d" % (keyword, start_idx))
+
     while True:
       idx = sql.find(keyword, start_idx)
       if idx == -1:
         return -1
+
+      # if VERBOSE:
+      #   print("Found keyword '%s' at index %d" % (keyword, idx))
 
       # Make sure not surrounded by quotes.
       for i in range(start_idx, idx):
@@ -163,7 +187,7 @@ def split(raw_sql):
         elif comment_type == "block" and sql[i:].startswith("*/"):
           comment_type = None
           i += 1
-        elif sql[i:].startswith("--"):
+        elif sql[i:].startswith("--") or sql[i:].startswith("#"):
           comment_type = "single"
           i += 1
         elif comment_type == "single" and sql[i:].startswith("\n"):
@@ -209,7 +233,7 @@ def split(raw_sql):
 
     sql: The SQL to search.
     keyword: The keyword to search for.
-    returns: THe starting index of the keyword if found, -1 otherwise.
+    returns: The starting index of the keyword if found, -1 otherwise.
     """
     start_idx = 0
     while start_idx < len(sql):
@@ -223,7 +247,7 @@ def split(raw_sql):
           return -1
         else:
           start_idx = end_idx + len("*/")
-      elif clean_sql.startswith("--"):
+      elif clean_sql.startswith("--") or clean_sql.startswith("#"):
         end_idx = sql.find("\n", start_idx)
         if end_idx == -1:
           return -1
@@ -244,14 +268,27 @@ def split(raw_sql):
   sql_list = []
   while len(sql) > 0:
     found_sql = False
+
+    # if VERBOSE:
+    #   print("Looking for SQL");
+
     for keyword in KEYWORDS:
+      # print("Looking for keyword %s" % keyword)
+
       start_idx = get_start_idx(sql.lower(), keyword.lower())
       if start_idx != -1:
         keyword_end = KEYWORDS_DICT[keyword] or ";"
+
+        # if VERBOSE:
+        #   print("Found keyword '%s' at index %d.  Searching for end-keyword '%s'." % (keyword, start_idx, keyword_end))
+
         end_idx = find_keyword(sql.lower(), keyword_end.lower(), start_idx)
         end_idx = end_idx + len(keyword_end) if end_idx != -1 else len(sql)
         sql_list.append(sql[0:end_idx])
         sql = sql[end_idx + 1:].strip()
+
+        # if VERBOSE:
+        #   print("End-keyword found at index %d.  Remaining SQL is:\n%s" % (end_idx, sql))
 
         # Remove start and end semicolons.
         while sql.startswith(";") or sql.endswith(";"):
@@ -371,6 +408,8 @@ def preprocess_sql(sql_file):
     # See if there is a new delimiter.
     match = re.match(DELIMITER_RE, line)
     if match:
+      # if VERBOSE:
+      #   print("preprocess_sql():  Matched DELIMITER spec line:  %s" % line)
       delimiter = match.group(1)
       continue
 
@@ -378,6 +417,8 @@ def preprocess_sql(sql_file):
     if line.strip().endswith(delimiter):
       line = line.replace(delimiter, ";")
     lines.write(line)
+    # if VERBOSE:
+    #   print("Appended line to lines:  %s" % line)
 
   return lines.getvalue()
 
