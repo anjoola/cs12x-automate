@@ -1,4 +1,5 @@
-import json, shutil, sys, os, tarfile, zipfile
+import json, shutil, sys, os
+import tarfile, zipfile, rarfile
 
 
 class SubmissionError(Exception):
@@ -31,14 +32,35 @@ def load_spec_file(spec_filename):
 def process_submission(moodle_filename, files_to_extract, warnings):
     initial_warnings = len(warnings)
 
+    # Parse the Moodle submission filename
+
     moodle_parts = moodle_filename.split('_')
-    if len(moodle_parts) != 3:
+
+    if len(moodle_parts) == 3:
+        student_name = moodle_parts[0]
+        filename_parts = moodle_parts[1].split('-')
+
+        extension_parts = moodle_parts[2].split('.')
+        extension = '.'.join(extension_parts[1:])
+
+    elif len(moodle_parts) == 5:
+        # Robert Abrahamson_13910_assignsubmission_file_cs121hw3-rabraham.tgz
+        student_name = moodle_parts[0]
+        filename_parts = moodle_parts[4].split('-')
+
+        extension_parts = filename_parts[-1].split('.')
+        filename_parts[-1] = extension_parts[0]
+        extension = '.'.join(extension_parts[1:])
+
+        # print("filename_parts[] = %s" % str(filename_parts))
+        # print("extension_parts[] = %s" % str(extension_parts))
+        # print("extension = '%s'" % extension)
+
+    else:
         raise SubmissionError(moodle_filename, 'Can\'t parse Moodle archive ' \
             'name.  Does the student\'s filename contain underscores?')
 
-    student_name = moodle_parts[0]
-
-    filename_parts = moodle_parts[1].split('-')
+    # Parse the student-named part of the filename
 
     if len(filename_parts) != 2:
         raise SubmissionError(moodle_filename, 'Can\'t parse student ' \
@@ -56,6 +78,8 @@ def process_submission(moodle_filename, files_to_extract, warnings):
         raise SubmissionError(moodle_filename, 'Student submission filename ' \
             'doesn\'t seem to follow required naming convention.')
 
+    # Create the target path for where files will be extracted to
+
     # This is where the files will be extracted to.
     target_path = 'students/%s-%s' % (username, hwname)
 
@@ -64,9 +88,6 @@ def process_submission(moodle_filename, files_to_extract, warnings):
 
     if not os.path.isdir(target_path):
         os.makedirs(target_path)
-
-    extension_parts = moodle_parts[2].split('.')
-    extension = '.'.join(extension_parts[1:])
 
     # print('Extension = "%s"' % extension)
 
@@ -111,6 +132,25 @@ def process_submission(moodle_filename, files_to_extract, warnings):
 
         archive.close()
 
+    elif rarfile.is_rarfile(moodle_filename):
+
+        if extension != 'rar' or \
+           (extension.endswith('.rar') and extension.contains('rar')):
+            warnings.append(SubmissionWarning(moodle_filename, 'Rar file ' \
+                'submission doesn\'t have a suitable extension!'))
+
+        archive = rarfile.RarFile(moodle_filename)
+
+        # print('Archive file names:  %s' % str(archive.namelist()))
+
+        for fname in files_to_extract:
+            try:
+                extract_rar_member(moodle_filename, archive, fname, target_path)
+            except SubmissionWarning as w:
+                warnings.append(w)
+
+        archive.close()
+
     else:
         raise SubmissionError(moodle_filename, 'Unrecognized archive format')
 
@@ -139,7 +179,7 @@ def extract_tar_member(moodle_filename, archive, fname, target_path):
             'required file "%s"!' % fname)
 
     src_file = archive.extractfile(member)
-    dst_file = open(target_path + '/' + fname, 'w')
+    dst_file = open(target_path + '/' + fname, 'wb')
     shutil.copyfileobj(src_file, dst_file)
     src_file.close()
     dst_file.close()
@@ -161,7 +201,29 @@ def extract_zip_member(moodle_filename, archive, fname, target_path):
             'required file "%s"!' % fname)
 
     src_file = archive.open(member)
-    dst_file = open(target_path + '/' + fname, 'w')
+    dst_file = open(target_path + '/' + fname, 'wb')
+    shutil.copyfileobj(src_file, dst_file)
+    src_file.close()
+    dst_file.close()
+
+
+def extract_rar_member(moodle_filename, archive, fname, target_path):
+    member = None
+    for m in archive.infolist():
+        m_name = m.filename.split('\\')[-1]
+        if m_name == fname:
+            if member is not None:
+                raise SubmissionError(moodle_filename, 'Archive contains ' \
+                    'multiple copies of file "%s"!' % fname)
+
+            member = m
+
+    if member is None:
+        raise SubmissionWarning(moodle_filename, 'Archive doesn\'t contain ' \
+            'required file "%s"!' % fname)
+
+    src_file = archive.open(member)
+    dst_file = open(target_path + '/' + fname, 'wb')
     shutil.copyfileobj(src_file, dst_file)
     src_file.close()
     dst_file.close()
